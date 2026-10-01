@@ -54,28 +54,57 @@ def calcular_dre_gerencial(
     ponto_equilibrio_mensal = (custos_fixos_total / indice_mc) if indice_mc > 0 else 0.0
     ponto_equilibrio_diario = ponto_equilibrio_mensal / 26.0
 
-    # 6. Índice Nalim de Saúde do Negócio (Score de 0 a 100)
-    score = 50.0
-    if margem_liquida_pct >= 15.0:
-        score += 25.0
-    elif margem_liquida_pct >= 8.0:
-        score += 15.0
-    elif margem_liquida_pct < 0:
-        score -= 25.0
-
-    if receita_bruta >= ponto_equilibrio_mensal:
-        score += 20.0
+    # 6. Índice NALIM de Saúde do Negócio Oficial (Manual Seção 20: DADOS!U2:U8 - 0 a 100 pts)
+    # U2: Margem Operacional Líquida (Até 30 pts)
+    m_op = resultado_liquido / receita_bruta if receita_bruta > 0 else 0.0
+    if m_op <= 0:
+        u2 = 0.0
+    elif m_op >= 0.15:
+        u2 = 30.0
     else:
-        score -= 15.0
+        u2 = (m_op / 0.15) * 30.0
 
-    cmv_pct = (cmv_total / receita_bruta * 100) if receita_bruta > 0 else 35.0
-    if cmv_pct <= 35.0:
-        score += 15.0
-    elif cmv_pct > 42.0:
-        score -= 10.0
+    # U3: Cobertura Ponto de Equilíbrio Diário (Até 25 pts)
+    fat_medio_dia = receita_bruta / 26.0
+    cob_pe = (fat_medio_dia / ponto_equilibrio_diario) if ponto_equilibrio_diario > 0 else 1.0
+    if cob_pe <= 0.8:
+        u3 = 0.0
+    elif cob_pe >= 1.3:
+        u3 = 25.0
+    else:
+        u3 = ((cob_pe - 0.8) / (1.3 - 0.8)) * 25.0
 
-    score = max(5.0, min(100.0, score))
-    classificacao = "SAUDÁVEL" if score >= 75.0 else ("ATENÇÃO" if score >= 50.0 else "CRÍTICO")
+    # U4: Margem de Contribuição Média Ponderada (Até 20 pts)
+    mc_pct = indice_mc
+    if mc_pct <= 0.30:
+        u4 = 0.0
+    elif mc_pct >= 0.55:
+        u4 = 20.0
+    else:
+        u4 = ((mc_pct - 0.30) / (0.55 - 0.30)) * 20.0
+
+    # U5: Controle de Desperdício / Perdas (Até 15 pts)
+    perdas_val = 10.0
+    perdas_pct = perdas_val / receita_bruta if receita_bruta > 0 else 0.005
+    if perdas_pct <= 0.01:
+        u5 = 15.0
+    elif perdas_pct >= 0.05:
+        u5 = 0.0
+    else:
+        u5 = ((0.05 - perdas_pct) / (0.05 - 0.01)) * 15.0
+
+    # U6: Conciliação de Vendas (Até 10 pts)
+    u6 = 10.0  # Conciliação confirmada
+
+    score = round(max(0.0, min(100.0, u2 + u3 + u4 + u5 + u6)), 1)
+    if score >= 80.0:
+        classificacao = "SAUDÁVEL"
+    elif score >= 60.0:
+        classificacao = "ATENÇÃO"
+    elif score >= 40.0:
+        classificacao = "RISCO"
+    else:
+        classificacao = "CRÍTICO"
 
     return {
         "mes_vigencia": mes,
