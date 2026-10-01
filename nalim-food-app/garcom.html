@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NALIM Garçom — Comanda Mobile</title>
+  <meta name="theme-color" content="#059669">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            forest: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .custom-scroll::-webkit-scrollbar { display: none; }
+    .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .animate-slide-up {
+      animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-200">
+
+  <!-- ============================================================== -->
+  <!-- TOPO DO APP DO GARÇOM                                          -->
+  <!-- ============================================================== -->
+  <header class="bg-white border-b border-slate-200 px-4 pt-3 pb-2.5 sticky top-0 z-30 shadow-xs">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-forest-600 flex items-center justify-center text-white font-extrabold text-sm shadow-xs">
+          N
+        </div>
+        <div>
+          <span class="text-xs font-black text-slate-900 tracking-tight leading-none block" id="garcom-nome-label">Pedro Lucas (Garçom)</span>
+          <span class="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            Cozinha Online
+          </span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <!-- Seletor de Mesa / Comanda Ativa -->
+        <button onclick="abrirModalMesas()" class="flex items-center gap-1.5 bg-forest-50 border border-forest-200 text-forest-800 px-2.5 py-1.5 rounded-xl font-extrabold text-xs shadow-2xs active:scale-95 transition">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-forest-600"></i>
+          <span id="label-mesa-ativa">Mesa 03</span>
+          <i data-lucide="chevron-down" class="w-3 h-3 text-forest-600"></i>
+        </button>
+
+        <!-- Botão Sair -->
+        <button onclick="fazerLogoutGarcom()" title="Sair da Conta" class="p-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de Pesquisa Rápida -->
+    <div class="relative mt-2.5">
+      <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+      <input type="text" id="input-busca" oninput="buscarProdutos(this.value)" placeholder="Buscar hambúrguer, bebida ou porção..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-500">
+      <button onclick="limparBusca()" id="btn-limpar-busca" class="hidden absolute right-2.5 top-2.5 text-slate-400 text-xs">✕</button>
+    </div>
+
+    <!-- Categorias Deslizantes (Carrossel Horizontal) -->
+    <div class="flex items-center gap-2 overflow-x-auto custom-scroll pt-2 pb-0.5 text-xs font-extrabold" id="category-pills">
+      <button onclick="filtrarCategoria('todos')" class="cat-pill px-3 py-1 rounded-full bg-forest-700 text-white shrink-0 shadow-2xs" data-cat="todos">
+        Todos
+      </button>
+      <button onclick="filtrarCategoria('Hambúrguer')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Hambúrguer">
+        🍔 Burgers
+      </button>
+      <button onclick="filtrarCategoria('Combo')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Combo">
+        🍟 Combos
+      </button>
+      <button onclick="filtrarCategoria('Bebida')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Bebida">
+        🥤 Bebidas
+      </button>
+      <button onclick="filtrarCategoria('Porção')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Porção">
+        🍗 Porções
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- LISTA DE PRODUTOS DO CARDÁPIO (TOUCH FRIENDLY)                 -->
+  <!-- ============================================================== -->
+  <main class="flex-1 p-3.5 space-y-2.5 overflow-y-auto custom-scroll pb-28" id="produtos-container">
+    <!-- Renderizado dinamicamente pelo JavaScript -->
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- BARRA FLUTUANTE DA COMANDA DO GARÇOM (FIXA EMBAIXO)             -->
+  <!-- ============================================================== -->
+  <div id="barra-comanda-flutuante" class="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-3 z-40 hidden">
+    <button onclick="abrirDrawerComanda()" class="w-full bg-forest-600 hover:bg-forest-700 active:scale-[0.98] text-white p-3.5 rounded-2xl shadow-xl flex items-center justify-between transition border border-forest-500">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-forest-800 text-white font-extrabold flex items-center justify-center text-xs shadow-inner" id="comanda-badge-qtd">
+          1
+        </div>
+        <div class="text-left">
+          <span class="text-xs font-black block leading-none" id="comanda-resumo-mesa">Comanda • Mesa 03</span>
+          <span class="text-[11px] text-forest-100 font-medium" id="comanda-resumo-itens">1 produto selecionado</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-black text-white" id="comanda-total-flutuante">R$ 32,00</span>
+        <i data-lucide="chevron-up" class="w-4 h-4 text-forest-200"></i>
+      </div>
+    </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL BOTTOM SHEET: PERSONALIZAR ITEM (SEM CEBOLA / EXTRAS)    -->
+  <!-- ============================================================== -->
+  <div id="modal-personalizar" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex flex-col justify-end">
+    <div class="bg-white rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto custom-scroll animate-slide-up shadow-2xl border-t border-slate-100">
+      
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <span id="cust-item-cat" class="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-forest-100 text-forest-800">Hambúrguer</span>
+          <h3 id="cust-item-nome" class="font-extrabold text-base text-slate-900 mt-1">Burger Clássico Nalim</h3>
+        </div>
+        <button onclick="fecharModalPersonalizar()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 1. Retirar Ingredientes -->
+      <div>
+        <label class="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <i data-lucide="minus-circle" class="w-3.5 h-3.5 text-rose-500"></i>
+          Retirar Ingredientes (Desmarque para tirar):
+        </label>
+        <div class="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200" id="cust-ingredientes-list">
+          <!-- Injetado dinamicamente -->
+        </div>
+      </div>
+
+      <!-- 2. Adicionar Extras -->
+      <div>
+        <label class="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+          <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+          Adicionais & Extras:
+        </label>
+        <div class="flex gap-2">
+          <select id="cust-select-extra" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none">
+            <!-- Opções de insumos com preço extra -->
+          </select>
+          <button type="button" onclick="adicionarExtraModal()" class="bg-emerald-600 text-white font-extrabold px-4 rounded-xl text-xs flex items-center gap-1 shadow-xs">
+            + Incluir
+          </button>
+        </div>
+        <div id="cust-lista-extras-adicionados" class="mt-2 space-y-1">
+          <!-- Adicionados -->
+        </div>
+      </div>
+
+      <!-- 3. Observação do Cliente -->
+      <div>
+        <label class="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+          <i data-lucide="message-square" class="w-3.5 h-3.5 text-slate-500"></i>
+          Ponto da Carne / Observações:
+        </label>
+        <input type="text" id="cust-obs-input" placeholder="Ex: Carne bem passada, no prato, etc." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-forest-500">
+      </div>
+
+      <!-- Botão de Confirmação com Preço Final -->
+      <div class="pt-2">
+        <button type="button" onclick="confirmarItemNaComanda()" class="w-full bg-forest-600 hover:bg-forest-700 active:scale-[0.98] text-white font-black py-3.5 px-4 rounded-2xl shadow-lg transition flex items-center justify-between text-sm">
+          <span>Adicionar ao Pedido</span>
+          <span id="cust-preco-total-btn" class="bg-forest-800 px-3 py-1 rounded-xl text-xs">R$ 32,00</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- DRAWER: REVISÃO DA COMANDA & ENVIAR PARA A COZINHA             -->
+  <!-- ============================================================== -->
+  <div id="drawer-comanda" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex flex-col justify-end">
+    <div class="bg-white rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto custom-scroll animate-slide-up shadow-2xl border-t border-slate-100 flex flex-col justify-between">
+      
+      <div>
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-xl bg-forest-50 text-forest-700 flex items-center justify-center font-black text-xs">
+              🍽️
+            </div>
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900 leading-tight">Comanda de Atendimento</h3>
+              <span class="text-xs text-forest-700 font-bold" id="drawer-mesa-label">Mesa 03 • Salão</span>
+            </div>
+          </div>
+          <button onclick="fecharDrawerComanda()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl bg-slate-100">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Lista de Itens Adicionados -->
+        <div class="mt-3 space-y-2 max-h-56 overflow-y-auto custom-scroll pr-1" id="drawer-itens-lista">
+          <!-- Injetado dinamicamente -->
+        </div>
+
+        <!-- Forma de Pagamento Prevista -->
+        <div class="mt-3 pt-3 border-t border-slate-100">
+          <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Pagamento Previsto:</label>
+          <div class="grid grid-cols-3 gap-1.5 text-xs font-bold">
+            <button type="button" onclick="setPagto('PIX')" class="pay-btn py-1.5 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center" data-method="PIX">PIX</button>
+            <button type="button" onclick="setPagto('Cartão')" class="pay-btn py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center" data-method="Cartão">Cartão</button>
+            <button type="button" onclick="setPagto('Dinheiro')" class="pay-btn py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center" data-method="Dinheiro">Dinheiro</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumo Total e Botão Gigante de Enviar para a Cozinha -->
+      <div class="pt-3 border-t border-slate-100 space-y-2.5">
+        <div class="flex justify-between items-center text-sm font-black text-slate-900">
+          <span class="text-xs text-slate-500 font-bold uppercase">TOTAL DA COMANDA:</span>
+          <span class="text-xl text-forest-700" id="drawer-total-valor">R$ 0,00</span>
+        </div>
+
+        <button type="button" onclick="enviarPedidoCozinhaGarcom()" id="btn-enviar-cozinha" class="w-full bg-forest-600 hover:bg-forest-700 active:scale-[0.98] text-white font-extrabold py-4 px-4 rounded-2xl shadow-xl transition flex items-center justify-center gap-2 text-sm tracking-wide">
+          <i data-lucide="send" class="w-5 h-5"></i>
+          <span>ENVIAR P/ COZINHA AGORA</span>
+        </button>
+
+        <button type="button" onclick="limparComandaGarcom()" class="w-full text-center text-xs text-rose-500 font-bold py-1">
+          Cancelar e Limpar Itens
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: SELETOR DE MESAS & AMBIENTES                            -->
+  <!-- ============================================================== -->
+  <div id="modal-mesas" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 max-w-xs w-full space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-extrabold text-sm text-slate-900">Selecione a Mesa / Comanda</h3>
+        <button onclick="fecharModalMesas()" class="text-slate-400 p-1">✕</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-xs font-black">
+        <button onclick="selecionarMesa('Mesa 01')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 01</button>
+        <button onclick="selecionarMesa('Mesa 02')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 02</button>
+        <button onclick="selecionarMesa('Mesa 03')" class="p-3 rounded-2xl border-2 border-forest-600 bg-forest-50 text-forest-800">Mesa 03</button>
+        <button onclick="selecionarMesa('Mesa 04')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 04</button>
+        <button onclick="selecionarMesa('Mesa 05')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 05</button>
+        <button onclick="selecionarMesa('Mesa 06')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 06</button>
+        <button onclick="selecionarMesa('Mesa 07')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 07</button>
+        <button onclick="selecionarMesa('Mesa 08')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 08</button>
+        <button onclick="selecionarMesa('Balcão')" class="p-3 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900">Balcão</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SUCESSO: PEDIDO DESPACHADO                                     -->
+  <!-- ============================================================== -->
+  <div id="overlay-sucesso" class="fixed inset-0 bg-slate-900/80 z-50 hidden flex flex-col items-center justify-center p-6 text-center text-white backdrop-blur-xs">
+    <div class="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center text-white text-3xl mb-3 shadow-lg animate-bounce">
+      ✓
+    </div>
+    <h3 class="text-xl font-black">PEDIDO ENVIADO!</h3>
+    <p class="text-xs text-slate-300 mt-1" id="sucesso-detalhes">Ticket #106 caiu na chapa da cozinha agora.</p>
+    <button onclick="fecharOverlaySucesso()" class="mt-5 bg-white text-forest-800 font-extrabold text-xs px-6 py-3 rounded-xl shadow-lg">
+      Atender Próxima Mesa
+    </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT DO APP MOBILE DO GARÇOM                             -->
+  <!-- ============================================================== -->
+  <script>
+    const API_BASE = window.location.origin.includes(':8000') 
+      ? window.location.origin 
+      : 'http://localhost:8000';
+    
+    let authToken = null;
+    let mesaAtiva = 'Mesa 03';
+    let formaPagto = 'PIX';
+    let categoriaAtiva = 'todos';
+
+    // Estado da Comanda
+    const comanda = {
+      itens: []
+    };
+
+    // Item em personalização no modal
+    let itemEmCustomizacao = {
+      produto: null,
+      precoBase: 0,
+      removidos: [],
+      adicionados: [],
+      obs: ''
+    };
+
+    // Cardápio de Produtos (Carregado da API ou Fallback local)
+    let cardapioProdutos = [
+      {
+        codigo: 'PRD-01',
+        nome: 'Burger Clássico Nalim',
+        categoria: 'Hambúrguer',
+        descricao: 'Pão brioche, blend 160g, queijo cheddar inglês, cebola roxa e molho.',
+        preco: 32.00,
+        ingredientes: ['Pão Brioche Artesanal', 'Blend Bovino 160g', 'Queijo Cheddar Inglês', 'Cebola Roxa', 'Molho Especial Nalim']
+      },
+      {
+        codigo: 'PRD-02',
+        nome: 'Burger Bacon Supremo',
+        categoria: 'Hambúrguer',
+        descricao: 'Blend 160g, fatias crocantes de bacon artesanal, dobro de cheddar e molho especial.',
+        preco: 38.00,
+        ingredientes: ['Pão Brioche Artesanal', 'Blend Bovino 160g', 'Queijo Cheddar Inglês', 'Bacon Artesanal Defumado', 'Molho Especial Nalim']
+      },
+      {
+        codigo: 'PRD-03',
+        nome: 'Combo Clássico Completo',
+        categoria: 'Combo',
+        descricao: 'Burger Clássico + Batata Frita individual sequinha + Coca-Cola 350ml gelada.',
+        preco: 46.00,
+        ingredientes: ['Pão Brioche Artesanal', 'Blend Bovino 160g', 'Queijo Cheddar Inglês', 'Batata Palito', 'Refrigerante 350ml']
+      },
+      {
+        codigo: 'PRD-04',
+        nome: 'Batata Rústica Individual',
+        categoria: 'Porção',
+        descricao: '200g de batatas rústicas com páprica doce e maionese defumada.',
+        preco: 22.00,
+        ingredientes: ['Batata Palito', 'Molho Especial Nalim']
+      },
+      {
+        codigo: 'PRD-05',
+        nome: 'Coca-Cola Original 350ml',
+        categoria: 'Bebida',
+        descricao: 'Lata 350ml servida estupidamente gelada com copo e gelo.',
+        preco: 7.00,
+        ingredientes: ['Refrigerante Lata']
+      }
+    ];
+
+    const insumosExtrasDisponiveis = [
+      { codigo: 'INS-04', nome: 'Bacon Artesanal Extra', preco: 4.00 },
+      { codigo: 'INS-03', nome: 'Queijo Cheddar Fatiado Extra', preco: 3.50 },
+      { codigo: 'INS-02', nome: 'Hambúrguer Blend 160g Extra', preco: 10.00 },
+      { codigo: 'INS-06', nome: 'Molho Especial Pote Extra', preco: 2.50 }
+    ];
+
+    function fazerLogoutGarcom() {
+      localStorage.removeItem('nalim_token');
+      localStorage.removeItem('nalim_role');
+      localStorage.removeItem('nalim_nome');
+      localStorage.removeItem('nalim_email');
+      window.location.href = '/login';
+    }
+
+    // Inicialização com Verificação Estrita de Autenticação
+    async function initGarcomApp() {
+      const token = localStorage.getItem('nalim_token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+      authToken = token;
+
+      const nome = localStorage.getItem('nalim_nome') || 'Pedro Lucas (Garçom)';
+      const nomeLabel = document.getElementById('garcom-nome-label');
+      if (nomeLabel) nomeLabel.textContent = nome;
+
+      carregarCardapioApi();
+      renderProdutos();
+      lucide.createIcons();
+    }
+
+    // Puxa produtos reais do backend
+    async function carregarCardapioApi() {
+      if (!authToken) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/operacional/cardapio`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.produtos && data.produtos.length > 0) {
+            cardapioProdutos = data.produtos.map(p => ({
+              codigo: p.codigo,
+              nome: p.nome,
+              categoria: p.categoria,
+              descricao: p.descricao,
+              preco: p.preco_salao,
+              ingredientes: p.ingredientes || []
+            }));
+            renderProdutos();
+          }
+        }
+      } catch (err) {
+        console.log('[APP GARÇOM] Usando cardápio local:', err);
+      }
+    }
+
+    // Renderiza a grade de produtos
+    function renderProdutos(filtroTexto = '') {
+      const container = document.getElementById('produtos-container');
+      container.innerHTML = '';
+
+      let list = cardapioProdutos;
+      if (categoriaAtiva !== 'todos') {
+        list = list.filter(p => p.categoria.toLowerCase().includes(categoriaAtiva.toLowerCase()));
+      }
+      if (filtroTexto) {
+        list = list.filter(p => p.nome.toLowerCase().includes(filtroTexto) || p.categoria.toLowerCase().includes(filtroTexto));
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-400">
+            <i data-lucide="search-x" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            <span class="text-xs font-bold">Nenhum produto encontrado.</span>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      list.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs flex items-center justify-between gap-3 active:scale-[0.99] transition cursor-pointer';
+        card.onclick = () => abrirModalPersonalizar(p.codigo);
+
+        card.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-forest-50 text-forest-700">
+                ${p.categoria}
+              </span>
+            </div>
+            <h4 class="font-extrabold text-sm text-slate-900 leading-tight">${p.nome}</h4>
+            <p class="text-[11px] text-slate-400 line-clamp-1 mt-0.5">${p.descricao || 'Receita padrão da casa.'}</p>
+            <span class="text-sm font-black text-forest-700 mt-1 block">R$ ${p.preco.toFixed(2)}</span>
+          </div>
+
+          <button class="w-10 h-10 rounded-xl bg-forest-600 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-xs active:bg-forest-700">
+            +
+          </button>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    // Modal de Personalização
+    function abrirModalPersonalizar(codigo) {
+      const prod = cardapioProdutos.find(p => p.codigo === codigo);
+      if (!prod) return;
+
+      itemEmCustomizacao = {
+        produto: prod,
+        precoBase: prod.preco,
+        removidos: [],
+        adicionados: [],
+        obs: ''
+      };
+
+      document.getElementById('cust-item-nome').textContent = prod.nome;
+      document.getElementById('cust-item-cat').textContent = prod.categoria;
+      document.getElementById('cust-obs-input').value = '';
+
+      // Lista de ingredientes removíveis
+      const ingDiv = document.getElementById('cust-ingredientes-list');
+      ingDiv.innerHTML = '';
+      if (prod.ingredientes && prod.ingredientes.length > 0) {
+        prod.ingredientes.forEach(ing => {
+          const lbl = document.createElement('label');
+          lbl.className = 'flex items-center gap-2.5 text-xs font-bold text-slate-700 cursor-pointer p-1 rounded';
+          lbl.innerHTML = `
+            <input type="checkbox" checked onchange="toggleRemover('${ing}', this.checked)" class="rounded text-forest-600 w-4 h-4">
+            <span>${ing}</span>
+          `;
+          ingDiv.appendChild(lbl);
+        });
+      } else {
+        ingDiv.innerHTML = '<span class="text-[11px] text-slate-400 block py-1">Produto sem ingredientes configurados para alteração.</span>';
+      }
+
+      // Select de extras
+      const extraSelect = document.getElementById('cust-select-extra');
+      extraSelect.innerHTML = insumosExtrasDisponiveis
+        .map(i => `<option value="${i.codigo}">${i.nome} (+ R$ ${i.preco.toFixed(2)})</option>`)
+        .join('');
+
+      renderExtrasModal();
+      atualizarPrecoModal();
+
+      document.getElementById('modal-personalizar').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharModalPersonalizar() {
+      document.getElementById('modal-personalizar').classList.add('hidden');
+    }
+
+    function toggleRemover(ing, manter) {
+      if (!manter) {
+        if (!itemEmCustomizacao.removidos.includes(ing)) itemEmCustomizacao.removidos.push(ing);
+      } else {
+        itemEmCustomizacao.removidos = itemEmCustomizacao.removidos.filter(i => i !== ing);
+      }
+    }
+
+    function adicionarExtraModal() {
+      const cod = document.getElementById('cust-select-extra').value;
+      const extra = insumosExtrasDisponiveis.find(i => i.codigo === cod);
+      if (extra) {
+        itemEmCustomizacao.adicionados.push(extra);
+        renderExtrasModal();
+        atualizarPrecoModal();
+      }
+    }
+
+    function removerExtraModal(idx) {
+      itemEmCustomizacao.adicionados.splice(idx, 1);
+      renderExtrasModal();
+      atualizarPrecoModal();
+    }
+
+    function renderExtrasModal() {
+      const box = document.getElementById('cust-lista-extras-adicionados');
+      box.innerHTML = '';
+      itemEmCustomizacao.adicionados.forEach((ex, idx) => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between bg-white border border-slate-200 px-2 py-1 rounded-lg text-xs';
+        div.innerHTML = `
+          <span class="font-bold text-slate-700">+ ${ex.nome} (+ R$ ${ex.preco.toFixed(2)})</span>
+          <button onclick="removerExtraModal(${idx})" class="text-rose-500 font-bold px-1">✕</button>
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    function atualizarPrecoModal() {
+      let tot = itemEmCustomizacao.precoBase;
+      itemEmCustomizacao.adicionados.forEach(ex => tot += ex.preco);
+      document.getElementById('cust-preco-total-btn').textContent = `R$ ${tot.toFixed(2)}`;
+    }
+
+    function confirmarItemNaComanda() {
+      const obs = document.getElementById('cust-obs-input').value.trim();
+      let tot = itemEmCustomizacao.precoBase;
+      itemEmCustomizacao.adicionados.forEach(ex => tot += ex.preco);
+
+      const mods = [];
+      if (itemEmCustomizacao.removidos.length > 0) mods.push(`SEM ${itemEmCustomizacao.removidos.join(', ')}`);
+      if (itemEmCustomizacao.adicionados.length > 0) mods.push(`+ EXTRA: ${itemEmCustomizacao.adicionados.map(a => a.nome).join(', ')}`);
+      if (obs) mods.push(obs);
+
+      comanda.itens.push({
+        produtoCodigo: itemEmCustomizacao.produto.codigo,
+        nome: itemEmCustomizacao.produto.nome,
+        precoUnit: tot,
+        qtd: 1,
+        modificacoes: mods.join(' • ')
+      });
+
+      fecharModalPersonalizar();
+      atualizarBarraComanda();
+    }
+
+    function atualizarBarraComanda() {
+      const bar = document.getElementById('barra-comanda-flutuante');
+      if (comanda.itens.length === 0) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+
+      let totalQtd = 0;
+      let totalValor = 0;
+      comanda.itens.forEach(it => {
+        totalQtd += it.qtd;
+        totalValor += it.precoUnit * it.qtd;
+      });
+
+      document.getElementById('comanda-badge-qtd').textContent = totalQtd;
+      document.getElementById('comanda-resumo-mesa').textContent = `Comanda • ${mesaAtiva}`;
+      document.getElementById('comanda-resumo-itens').textContent = `${totalQtd} ${totalQtd === 1 ? 'item selecionado' : 'itens selecionados'}`;
+      document.getElementById('comanda-total-flutuante').textContent = `R$ ${totalValor.toFixed(2)}`;
+    }
+
+    // Drawer de Revisão da Comanda
+    function abrirDrawerComanda() {
+      document.getElementById('drawer-mesa-label').textContent = `${mesaAtiva} • Atendimento Presencial`;
+      renderItensDrawer();
+      document.getElementById('drawer-comanda').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharDrawerComanda() {
+      document.getElementById('drawer-comanda').classList.add('hidden');
+    }
+
+    function renderItensDrawer() {
+      const box = document.getElementById('drawer-itens-lista');
+      box.innerHTML = '';
+
+      let total = 0;
+      comanda.itens.forEach((it, idx) => {
+        const itemTot = it.precoUnit * it.qtd;
+        total += itemTot;
+
+        const row = document.createElement('div');
+        row.className = 'p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1';
+        row.innerHTML = `
+          <div class="flex items-center justify-between text-xs font-black">
+            <span class="text-slate-900">${it.nome}</span>
+            <div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-0.5">
+              <button onclick="alterarQtdComanda(${idx}, -1)" class="text-slate-400 font-bold px-1">－</button>
+              <span>${it.qtd}</span>
+              <button onclick="alterarQtdComanda(${idx}, 1)" class="text-slate-600 font-bold px-1">＋</button>
+            </div>
+            <span class="text-forest-700 min-w-[60px] text-right">R$ ${itemTot.toFixed(2)}</span>
+          </div>
+          ${it.modificacoes ? `<div class="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded font-bold border border-amber-200/50">⚡ ${it.modificacoes}</div>` : ''}
+        `;
+        box.appendChild(row);
+      });
+
+      document.getElementById('drawer-total-valor').textContent = `R$ ${total.toFixed(2)}`;
+    }
+
+    function alterarQtdComanda(idx, delta) {
+      comanda.itens[idx].qtd += delta;
+      if (comanda.itens[idx].qtd <= 0) {
+        comanda.itens.splice(idx, 1);
+      }
+      renderItensDrawer();
+      atualizarBarraComanda();
+      if (comanda.itens.length === 0) fecharDrawerComanda();
+    }
+
+    function limparComandaGarcom() {
+      comanda.itens = [];
+      fecharDrawerComanda();
+      atualizarBarraComanda();
+    }
+
+    function setPagto(metodo) {
+      formaPagto = metodo;
+      document.querySelectorAll('.pay-btn').forEach(b => {
+        if (b.dataset.method === metodo) {
+          b.className = 'pay-btn py-1.5 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-extrabold';
+        } else {
+          b.className = 'pay-btn py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold';
+        }
+      });
+    }
+
+    // Enviar Pedido direto para a Cozinha
+    async function enviarPedidoCozinhaGarcom() {
+      if (comanda.itens.length === 0) return;
+
+      const btn = document.getElementById('btn-enviar-cozinha');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-pulse">DESPACHANDO P/ COZINHA...</span>`;
+
+      let totalValor = 0;
+      comanda.itens.forEach(it => totalValor += it.precoUnit * it.qtd);
+
+      const payload = {
+        canal: "Salão",
+        identificacao: `${mesaAtiva} (Salão)`,
+        forma_pagto: formaPagto,
+        itens: comanda.itens.map(it => ({
+          produto_codigo: it.produtoCodigo,
+          quantidade: it.qtd,
+          modificacoes: it.modificacoes,
+          preco_unitario: it.precoUnit
+        }))
+      };
+
+      try {
+        if (authToken) {
+          const res = await fetch(`${API_BASE}/api/operacional/pedidos`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          document.getElementById('sucesso-detalhes').textContent = `Comanda #${data.numero_comanda || 106} da ${mesaAtiva} caiu na chapa agora!`;
+        } else {
+          document.getElementById('sucesso-detalhes').textContent = `Comanda da ${mesaAtiva} enviada com sucesso para a cozinha!`;
+        }
+      } catch (err) {
+        document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} enviado em modo local para a chapa.`;
+      }
+
+      fecharDrawerComanda();
+      comanda.itens = [];
+      atualizarBarraComanda();
+
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i><span>ENVIAR P/ COZINHA AGORA</span>`;
+      lucide.createIcons();
+
+      document.getElementById('overlay-sucesso').classList.remove('hidden');
+    }
+
+    function fecharOverlaySucesso() {
+      document.getElementById('overlay-sucesso').classList.add('hidden');
+    }
+
+    // Modal de Mesas
+    function abrirModalMesas() {
+      document.getElementById('modal-mesas').classList.remove('hidden');
+    }
+
+    function fecharModalMesas() {
+      document.getElementById('modal-mesas').classList.add('hidden');
+    }
+
+    function selecionarMesa(mesa) {
+      mesaAtiva = mesa;
+      document.getElementById('label-mesa-ativa').textContent = mesa;
+      fecharModalMesas();
+      atualizarBarraComanda();
+    }
+
+    // Filtros e busca
+    function filtrarCategoria(cat) {
+      categoriaAtiva = cat;
+      document.querySelectorAll('.cat-pill').forEach(b => {
+        if (b.dataset.cat === cat) {
+          b.className = 'cat-pill px-3 py-1 rounded-full bg-forest-700 text-white shrink-0 shadow-2xs font-extrabold';
+        } else {
+          b.className = 'cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 font-bold';
+        }
+      });
+      renderProdutos();
+    }
+
+    function buscarProdutos(termo) {
+      const btn = document.getElementById('btn-limpar-busca');
+      if (termo) {
+        btn.classList.remove('hidden');
+      } else {
+        btn.classList.add('hidden');
+      }
+      renderProdutos(termo.toLowerCase().trim());
+    }
+
+    function limparBusca() {
+      document.getElementById('input-busca').value = '';
+      buscarProdutos('');
+    }
+
+    // Start
+    window.addEventListener('DOMContentLoaded', initGarcomApp);
+  </script>
+</body>
+</html>
