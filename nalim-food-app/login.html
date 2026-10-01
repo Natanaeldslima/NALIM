@@ -222,12 +222,16 @@
         localStorage.setItem('nalim_nome', data.nome);
         localStorage.setItem('nalim_email', email);
 
-        // REDIRECIONAMENTO ESTRITO POR CARGO:
+        // Se for operador acessando de celular/mobile, pode ir pro garçom, ou para a versão PC se estiver no computador
         if (data.role === 'operador') {
-          // Garçom vai DIRETO e EXCLUSIVAMENTE para a tela de comandas do celular
-          window.location.href = '/garcom';
+          const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+          if (isMobileDevice) {
+            window.location.href = '/garcom';
+          } else {
+            window.location.href = '/app';
+          }
         } else {
-          // Dono e Gerente vão para a aplicação com permissões ativas
+          // Dono e Gerente vão para a gestão
           window.location.href = '/app';
         }
 

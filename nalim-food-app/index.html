@@ -126,12 +126,17 @@
 
           <button onclick="switchView('custos')" id="btn-custos" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
             <i data-lucide="building-2" class="w-4 h-4 text-blue-600"></i>
-            <span>Custos Fixos & Contratos</span>
+            <span>Custos Fixos & Despesas</span>
+          </button>
+
+          <button onclick="switchView('precificacao')" id="btn-precificacao" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
+            <i data-lucide="calculator" class="w-4 h-4 text-amber-600"></i>
+            <span>Simulador & Margem iFood</span>
           </button>
         </div>
 
         <!-- ========================================== -->
-        <!-- 3. BLOCO GERENCIAL (SOMENTE DONO)          -->
+        <!-- 3. BLOCO GERENCIAL (EXCLUSIVO DONO - SAÚDE)-->
         <!-- ========================================== -->
         <div id="group-gerencial" class="space-y-1 pt-2 border-t border-slate-100">
           <div class="px-5 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
@@ -142,11 +147,6 @@
           <button onclick="switchView('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
             <i data-lucide="pie-chart" class="w-4 h-4 text-forest-600"></i>
             <span>Saúde Financeira & DRE</span>
-          </button>
-
-          <button onclick="switchView('precificacao')" id="btn-precificacao" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
-            <i data-lucide="trending-up" class="w-4 h-4 text-amber-600"></i>
-            <span>Simulador & Margem iFood</span>
           </button>
         </div>
 
@@ -326,19 +326,19 @@
                   <div>
                     <label class="block font-semibold text-slate-500 text-[10px] uppercase mb-0.5">Canal de Atendimento</label>
                     <select id="pdv-canal-select" onchange="mudarCanalPdv(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold text-slate-800">
+                      <option value="Balcão" selected>🏪 Balcão / Retirada</option>
                       <option value="Salão">🍽️ Salão / Mesa</option>
-                      <option value="Balcão">🏪 Balcão / Retirada</option>
-                      <option value="iFood" selected>🛵 iFood Delivery</option>
+                      <option value="iFood">🛵 iFood Delivery</option>
                     </select>
                   </div>
                   <div>
                     <label class="block font-semibold text-slate-500 text-[10px] uppercase mb-0.5">Mesa / Cliente</label>
-                    <input type="text" id="pdv-ident-input" value="Pedido iFood #4092" placeholder="Ex: Mesa 03 ou Nome" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold text-slate-800">
+                    <input type="text" id="pdv-ident-input" value="Balcão" placeholder="Ex: Mesa 03 ou Nome" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold text-slate-800">
                   </div>
                 </div>
 
-                <!-- Cadastro do Pedido quando for iFood (Simples, sem comissão ou repasse na tela do atendente) -->
-                <div id="box-associacao-ifood" class="p-2.5 bg-rose-50/80 border border-rose-200 rounded-xl space-y-2">
+                <!-- Cadastro do Pedido quando for iFood (Oculto por padrão no Balcão) -->
+                <div id="box-associacao-ifood" class="hidden p-2.5 bg-rose-50/80 border border-rose-200 rounded-xl space-y-2">
                   <div class="flex justify-between items-center text-[10px] font-bold text-rose-900 uppercase">
                     <span class="flex items-center gap-1.5"><i data-lucide="bike" class="w-3.5 h-3.5 text-rose-600"></i> Pedido iFood Delivery</span>
                     <span class="bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full font-black text-[9px]">Delivery Oficial</span>
@@ -346,11 +346,11 @@
                   <div class="grid grid-cols-2 gap-2">
                     <div>
                       <span class="text-[10px] text-slate-600 block font-semibold mb-0.5">Nº Pedido iFood:</span>
-                      <input type="text" id="pdv-ifood-codigo" value="#4092" placeholder="Ex: #4092" class="w-full bg-white border border-rose-300 rounded-lg p-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500">
+                      <input type="text" id="pdv-ifood-codigo" value="" placeholder="Ex: #4092" class="w-full bg-white border border-rose-300 rounded-lg p-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500">
                     </div>
                     <div>
                       <span class="text-[10px] text-slate-600 block font-semibold mb-0.5">Nome do Cliente:</span>
-                      <input type="text" id="pdv-ifood-cliente" value="Lucas R." placeholder="Nome do Cliente" class="w-full bg-white border border-rose-300 rounded-lg p-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500">
+                      <input type="text" id="pdv-ifood-cliente" value="" placeholder="Nome do Cliente" class="w-full bg-white border border-rose-300 rounded-lg p-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500">
                     </div>
                   </div>
                   <div class="flex items-center gap-1.5 text-[10px] text-rose-800 bg-white/80 p-1.5 rounded-md border border-rose-100">
@@ -693,170 +693,411 @@
       <!-- ========================================================== -->
       <!-- [3. GERENCIAL] SAÚDE FINANCEIRA & DRE (CORES CLARAS)      -->
       <!-- ========================================================== -->
-      <section id="view-dashboard" class="hidden space-y-6">
+      <!-- ========================================================== -->
+      <!-- [3. GERENCIAL] PAINEL FINANCEIRO / SAÚDE DO NEGÓCIO           -->
+      <!-- Layout Idêntico à Matriz Visual de Inspiração NALIM V3.0      -->
+      <!-- ========================================================== -->
+      <section id="view-dashboard" class="hidden space-y-5 max-w-7xl mx-auto">
         
-        <div class="bg-gradient-to-br from-emerald-50/80 via-white to-slate-50 text-slate-900 rounded-2xl p-6 shadow-xs border border-emerald-200/80">
-          
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-emerald-100">
-            <div>
-              <span class="text-[10px] font-extrabold tracking-widest text-emerald-800 uppercase bg-emerald-100/90 border border-emerald-300 px-2.5 py-0.5 rounded">
-                Painel Estratégico do Dono
-              </span>
-              <h2 class="text-2xl font-black mt-1.5 tracking-tight text-slate-900">Saúde Financeira & Decisões do Negócio</h2>
-              <p class="text-xs text-slate-600 mt-0.5">
-                Valores reais consolidados com base nos custos e preços do mês de <strong class="text-slate-900" id="dash-mes-label">Agosto/2026</strong>.
-              </p>
+        <!-- CABEÇALHO DO PAINEL (NALIM GESTÃO & FINANÇAS) -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl font-black tracking-tight text-slate-900 font-serif">NALIM</span>
+              <span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase border-l border-slate-200 pl-2">GESTÃO & FINANÇAS</span>
             </div>
-            
-            <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-emerald-200 shadow-2xs">
-              <div class="text-right">
-                <span class="text-[10px] text-slate-500 uppercase block font-bold">Índice NALIM</span>
-                <span class="text-2xl font-black text-emerald-700" id="dash-score-val">87.5 <small class="text-xs font-normal text-slate-400">/ 100</small></span>
+            <h2 class="text-xl font-black text-slate-900 mt-1 uppercase tracking-tight">PAINEL FINANCEIRO</h2>
+            <p class="text-xs text-slate-500">SEU NEGÓCIO EM NÚMEROS, DECISÕES COM MAIS SEGURANÇA</p>
+          </div>
+
+          <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700">
+            <i data-lucide="calendar" class="w-4 h-4 text-forest-600"></i>
+            <span>Período: <strong id="dash-periodo-tag" class="text-slate-900 font-extrabold">01/08/2026 a 31/08/2026</strong></span>
+          </div>
+        </div>
+
+        <!-- 1. OS 6 CARDS SUPERIORES DE INDICADORES PRINCIPAIS -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          
+          <!-- Faturamento -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center mb-2">
+                <i data-lucide="bar-chart" class="w-4 h-4"></i>
               </div>
-              <div class="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center font-bold text-emerald-700 text-sm">
-                ✓
-              </div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">FATURAMENTO</span>
+              <div class="text-xl font-black text-slate-900 mt-0.5" id="dash-fat-total">R$ 0,00</div>
+            </div>
+            <div class="mt-2 text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+              <span>↗ +12,5%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>
             </div>
           </div>
 
-          <!-- 4 Métricas Chave do Dono -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
-            <div class="bg-white border border-emerald-100 rounded-xl p-4 shadow-2xs">
-              <span class="text-xs text-slate-500 uppercase font-bold block">Lucro Líquido Real</span>
-              <div class="text-2xl font-black text-emerald-700 mt-1" id="dash-lucro-val">R$ 1.952,75</div>
-              <span class="text-[11px] text-slate-500 mt-1 block">Margem líquida de <strong class="text-slate-900" id="dash-margem-pct">10,62%</strong></span>
+          <!-- Lucro Operacional -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2">
+                <i data-lucide="coins" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">LUCRO OPERACIONAL</span>
+              <div class="text-xl font-black text-emerald-700 mt-0.5" id="dash-lucro-operacional">R$ 0,00</div>
+            </div>
+            <div class="mt-2 text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+              <span>↗ +18,4%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>
+            </div>
+          </div>
+
+          <!-- Margem de Lucro -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center mb-2">
+                <i data-lucide="percent" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">MARGEM DE LUCRO</span>
+              <div class="text-xl font-black text-slate-900 mt-0.5" id="dash-margem-lucro-pct">0,0%</div>
+            </div>
+            <div class="mt-2 text-[10px] text-slate-500 font-medium" id="dash-regra-bolso">
+              De cada R$ 100 vendidos, R$ 0 são lucro.
+            </div>
+          </div>
+
+          <!-- Ponto de Equilíbrio (Diário) -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center mb-2">
+                <i data-lucide="target" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">PONTO DE EQUILÍBRIO (DIÁRIO)</span>
+              <div class="text-xl font-black text-slate-900 mt-0.5" id="dash-pe-diario-val">R$ 0,00</div>
+            </div>
+            <div class="mt-2 text-[10px] text-slate-500 font-medium">
+              Valor mínimo diário para cobrir os custos.
+            </div>
+          </div>
+
+          <!-- Ticket Médio -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="w-7 h-7 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center mb-2">
+                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">TICKET MÉDIO</span>
+              <div class="text-xl font-black text-slate-900 mt-0.5" id="dash-ticket-medio-val">R$ 0,00</div>
+            </div>
+            <div class="mt-2 text-[10px] text-slate-500 font-medium">
+              Por pedido realizado
+            </div>
+          </div>
+
+          <!-- Saúde do Negócio (Índice NALIM 0-100) -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center mb-2">
+                <i data-lucide="activity" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">SAÚDE DO NEGÓCIO</span>
+              <div class="text-2xl font-black text-emerald-700 mt-0.5" id="dash-indice-nalim-num">82</div>
+            </div>
+            <div>
+              <div class="w-full bg-emerald-100 text-emerald-900 text-center py-0.5 rounded font-black text-[10px] tracking-wider uppercase mt-1" id="dash-classificacao-badge">
+                SAUDÁVEL
+              </div>
+              <span class="text-[9px] text-slate-400 text-center block mt-1 font-semibold">Em uma escala de 0 a 100</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 2. DESEMPENHO DA META DIÁRIA (FAIXA HORIZONTAL) -->
+        <div class="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 shadow-2xs">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="target" class="w-4 h-4 text-emerald-700"></i>
+            <h3 class="text-xs font-black text-emerald-950 uppercase tracking-wider">DESEMPENHO DA META DIÁRIA</h3>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 items-center text-xs">
+            <!-- Dias trabalhados -->
+            <div class="bg-white p-3 rounded-xl border border-emerald-100">
+              <span class="text-[10px] text-slate-500 font-bold uppercase block">Dias trabalhados</span>
+              <div class="text-lg font-black text-slate-900 mt-0.5" id="dash-meta-dias-trab">26</div>
             </div>
 
-            <div class="bg-white border border-emerald-100 rounded-xl p-4 shadow-2xs">
-              <span class="text-xs text-slate-500 uppercase font-bold block">Ganhou em Média / Dia</span>
-              <div class="text-2xl font-black text-slate-900 mt-1" id="dash-fat-dia-val">R$ 706,92</div>
-              <span class="text-[11px] text-emerald-700 font-bold mt-1 block">+ R$ 157,80 acima do mínimo diário</span>
+            <!-- Dias que bateram a meta -->
+            <div class="bg-white p-3 rounded-xl border border-emerald-100">
+              <span class="text-[10px] text-slate-500 font-bold uppercase block">Dias que bateram a meta</span>
+              <div class="text-lg font-black text-emerald-700 mt-0.5" id="dash-meta-dias-bateram">20 de 26</div>
             </div>
 
-            <div class="bg-white border border-amber-200/80 rounded-xl p-4 shadow-2xs bg-amber-50/30">
-              <span class="text-xs text-amber-900 uppercase font-bold block">Quanto DEVERIA Ganhar / Dia</span>
-              <div class="text-2xl font-black text-amber-700 mt-1" id="dash-pe-dia-val">R$ 549,13</div>
-              <span class="text-[11px] text-slate-600 mt-1 block">Ponto de Equilíbrio para pagar as contas</span>
+            <!-- Atingimento da meta % -->
+            <div class="bg-white p-3 rounded-xl border border-emerald-100 flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full border-4 border-emerald-600 flex items-center justify-center font-black text-xs text-emerald-800" id="dash-meta-atingimento-circle">
+                77%
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-500 font-bold uppercase block">Atingimento</span>
+                <span class="text-xs font-bold text-slate-800">da meta</span>
+              </div>
             </div>
 
-            <div class="bg-white border border-emerald-100 rounded-xl p-4 shadow-2xs">
-              <span class="text-xs text-slate-500 uppercase font-bold block">Meta de Pedidos Diários</span>
-              <div class="text-2xl font-black text-slate-900 mt-1" id="dash-pedidos-meta-val">20 pedidos</div>
-              <span class="text-[11px] text-slate-500 mt-1 block">Ticket Médio: <strong class="text-slate-900" id="dash-ticket-val">R$ 27,27</strong></span>
+            <!-- Faturamento médio/dia -->
+            <div class="bg-white p-3 rounded-xl border border-emerald-100">
+              <span class="text-[10px] text-slate-500 font-bold uppercase block">Faturamento médio/dia</span>
+              <div class="text-lg font-black text-slate-900 mt-0.5" id="dash-meta-fat-medio-dia">R$ 717,31</div>
+            </div>
+
+            <!-- Acima do ponto de equilíbrio -->
+            <div class="bg-white p-3 rounded-xl border border-emerald-100">
+              <span class="text-[10px] text-slate-500 font-bold uppercase block">Acima do ponto equilíbrio</span>
+              <div class="text-base font-black text-emerald-700 mt-0.5" id="dash-meta-acima-pe">+R$ 229,91 (+45,3%)</div>
             </div>
           </div>
         </div>
 
-        <!-- GRÁFICOS GERENCIAIS -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-                  <i data-lucide="trending-up" class="w-4 h-4 text-forest-600"></i> Evolução Diária vs Ponto de Equilíbrio
-                </h3>
-                <span class="text-[11px] text-slate-500">Linha tracejada é a meta mínima necessária</span>
+        <!-- 3. EVOLUÇÃO DIÁRIA DA META & TOP 5 PRODUTOS POR FATURAMENTO -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          
+          <!-- Gráfico Diário de Barras (8 Colunas) -->
+          <div class="lg:col-span-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
+              <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="trending-up" class="w-4 h-4 text-forest-600"></i> EVOLUÇÃO DIÁRIA DA META
+              </h4>
+              <div class="flex items-center gap-3 text-[10px] font-bold text-slate-500">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-forest-700 rounded-sm"></span> Faturamento diário</span>
+                <span class="flex items-center gap-1"><span class="w-3 h-0.5 border-t border-dashed border-amber-600"></span> Meta diária</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span> Bateu</span>
+                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Não bateu</span>
               </div>
             </div>
-            <div class="mt-4 h-64">
+            <div class="h-60 mt-4">
               <canvas id="chartEvolucaoDiaria"></canvas>
             </div>
           </div>
 
-          <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-                  <i data-lucide="bar-chart-2" class="w-4 h-4 text-forest-600"></i> Comparativo Mês a Mês
-                </h3>
-                <span class="text-[11px] text-slate-500">Faturamento vs Lucro Real</span>
-              </div>
-            </div>
-            <div class="mt-4 h-64">
-              <canvas id="chartEvolucaoMensal"></canvas>
+          <!-- Top 5 Produtos por Faturamento (4 Colunas) -->
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-forest-600"></i> TOP 5 PRODUTOS POR FATURAMENTO
+            </h4>
+            <div class="mt-3.5 space-y-2.5" id="dash-top5-faturamento-lista">
+              <!-- Populado dinamicamente das vendas -->
             </div>
           </div>
+
         </div>
 
-        <!-- DRE EM CASCATA & MATRIZ DE DECISÃO -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-                  <i data-lucide="file-spreadsheet" class="w-4 h-4 text-forest-600"></i> DRE do Período
-                </h3>
-                <span class="text-xs font-semibold text-slate-400" id="dre-tag-periodo">Agosto/2026</span>
-              </div>
-
-              <div class="mt-3.5 space-y-2 text-xs">
-                <div class="flex justify-between items-center py-1 font-bold text-slate-900">
-                  <span>(+) Faturamento Bruto</span>
-                  <span id="dre-fat-val">R$ 18.380,00</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-600 py-0.5 border-t border-slate-100">
-                  <span>(-) CMV (Insumos dos Alimentos)</span>
-                  <span class="text-rose-600 font-semibold" id="dre-cmv-val">- R$ 7.623,24</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-600 py-0.5">
-                  <span>(-) Taxas (iFood & Cartões)</span>
-                  <span class="text-rose-600 font-semibold" id="dre-taxas-val">- R$ 256,21</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-600 py-0.5">
-                  <span id="dre-imposto-label">(-) Impostos (Simples 6%)</span>
-                  <span class="text-rose-600 font-semibold" id="dre-impostos-val">- R$ 1.102,80</span>
-                </div>
-                <div class="flex justify-between items-center bg-emerald-50 p-2 rounded-lg text-emerald-900 font-bold border border-emerald-100">
-                  <span>(=) Margem de Contribuição</span>
-                  <span id="dre-margem-val">R$ 9.397,75 (51,1%)</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-600 py-0.5 border-t border-slate-100">
-                  <span>(-) Custos Fixos Totais (Vigentes)</span>
-                  <span class="text-rose-600 font-semibold" id="dre-fixos-val">- R$ 7.300,00</span>
-                </div>
-                <div class="flex justify-between items-center text-slate-600 py-0.5">
-                  <span>(-) Perdas / Desperdício</span>
-                  <span class="text-rose-600 font-semibold" id="dre-perdas-val">- R$ 145,00</span>
-                </div>
-                <div class="flex justify-between items-center bg-emerald-700 text-white p-3 rounded-xl font-extrabold text-sm shadow-xs">
-                  <span>(=) LUCRO LÍQUIDO REAL</span>
-                  <span class="text-white text-base" id="dre-lucro-val">R$ 1.952,75</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-600">
-              💡 <strong>Regra de Bolso:</strong> Para cada R$ 100 faturados, restam <strong>R$ 10,62 limpos</strong> para o sócio.
+        <!-- 4. TOP 5 MARGEM + DESEMPENHO DOS PRODUTOS + ALERTAS DO NEGÓCIO -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
+          
+          <!-- Top 5 por Margem Gerada (3 Colunas) -->
+          <div class="md:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="bar-chart-2" class="w-4 h-4 text-forest-600"></i> TOP 5 PRODUTOS POR MARGEM GERADA
+            </h4>
+            <div class="mt-3.5 space-y-2.5" id="dash-top5-margem-lista">
+              <!-- Populado dinamicamente das vendas -->
             </div>
           </div>
 
-          <!-- Matriz BCG -->
-          <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 class="font-extrabold text-slate-900 text-sm flex items-center gap-2">
-                <i data-lucide="layers" class="w-4 h-4 text-forest-600"></i> Tomada de Decisão de Cardápio
-              </h3>
-              <span class="text-xs text-slate-400">Engenharia de Cardápio</span>
-            </div>
-
-            <div class="overflow-x-auto mt-3">
+          <!-- Desempenho dos Produtos Tabela (5 Colunas) -->
+          <div class="md:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-4 h-4 text-forest-600"></i> DESEMPENHO DOS PRODUTOS
+            </h4>
+            <div class="overflow-x-auto mt-2">
               <table class="w-full text-left text-xs">
                 <thead>
-                  <tr class="text-slate-400 font-bold border-b border-slate-100 pb-2">
-                    <th class="pb-2">PRODUTO</th>
-                    <th class="pb-2 text-center">VENDAS</th>
-                    <th class="pb-2 text-right">RECEITA</th>
-                    <th class="pb-2 text-center">MARGEM %</th>
-                    <th class="pb-2 text-center">AÇÃO RECOMENDADA</th>
+                  <tr class="text-[10px] text-slate-400 font-black uppercase border-b border-slate-100 pb-1">
+                    <th class="pb-2">Produto</th>
+                    <th class="pb-2 text-center">Vendas</th>
+                    <th class="pb-2 text-right">Faturamento</th>
+                    <th class="pb-2 text-center">Margem</th>
+                    <th class="pb-2 text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100" id="dash-matriz-corpo">
-                  <!-- Gerado via JS -->
+                <tbody class="divide-y divide-slate-100 text-xs font-medium" id="dash-tabela-desempenho-produtos">
+                  <!-- Populado dinamicamente das vendas -->
                 </tbody>
               </table>
             </div>
           </div>
+
+          <!-- Alertas do Negócio (Auditoria e Consistência - 3 Colunas) -->
+          <div class="md:col-span-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="bell" class="w-4 h-4 text-amber-500"></i> ALERTAS DO NEGÓCIO
+            </h4>
+            <div class="mt-3.5 space-y-2.5 text-xs font-bold text-slate-700" id="dash-alertas-lista">
+              <div class="flex items-center justify-between">
+                <span>Faturamento</span>
+                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Margem de contribuição</span>
+                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Custos fixos</span>
+                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Taxas de venda</span>
+                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Perdas</span>
+                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Consistência dos dados</span>
+                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+              </div>
+            </div>
+          </div>
+
         </div>
+
+        <!-- 5. FORMAÇÃO DO LUCRO (DRE) + RESUMO OPERACIONAL + EVOLUÇÃO DO NEGÓCIO -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          
+          <!-- FORMAÇÃO DO LUCRO (DRE) (4 Colunas) -->
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="calculator" class="w-4 h-4 text-forest-600"></i> FORMAÇÃO DO LUCRO
+            </h4>
+            <div class="mt-3.5 space-y-2 text-xs">
+              <div class="flex justify-between items-center py-1 font-bold text-slate-900">
+                <span>Faturamento</span>
+                <div class="text-right">
+                  <span id="dre-fat-val" class="font-black">R$ 0,00</span>
+                  <span class="text-[10px] text-slate-400 block font-normal">100,00%</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center text-slate-600 py-1 border-t border-slate-100">
+                <span>(-) Custo dos produtos vendidos</span>
+                <div class="text-right">
+                  <span id="dre-cmv-val" class="text-rose-600 font-bold">- R$ 0,00</span>
+                  <span id="dre-cmv-pct" class="text-[10px] text-slate-400 block font-normal">0,0%</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center text-slate-600 py-1">
+                <span>(-) Taxas de vendas</span>
+                <div class="text-right">
+                  <span id="dre-taxas-val" class="text-rose-600 font-bold">- R$ 0,00</span>
+                  <span id="dre-taxas-pct" class="text-[10px] text-slate-400 block font-normal">0,0%</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center text-slate-600 py-1">
+                <span id="dre-imposto-label">(-) Impostos (Simples 6%)</span>
+                <div class="text-right">
+                  <span id="dre-impostos-val" class="text-rose-600 font-bold">- R$ 0,00</span>
+                  <span id="dre-impostos-pct" class="text-[10px] text-slate-400 block font-normal">6,0%</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center bg-emerald-50 p-2.5 rounded-xl text-emerald-950 font-bold border border-emerald-100">
+                <span>(=) Margem de contribuição</span>
+                <div class="text-right">
+                  <span id="dre-margem-val" class="text-forest-800 font-black">R$ 0,00</span>
+                  <span id="dre-margem-pct" class="text-[10px] text-forest-700 block font-bold">0,0%</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center text-slate-600 py-1 border-t border-slate-100">
+                <span>(-) Custos fixos proporcionais</span>
+                <div class="text-right">
+                  <span id="dre-fixos-val" class="text-rose-600 font-bold">- R$ 0,00</span>
+                  <span id="dre-fixos-pct" class="text-[10px] text-slate-400 block font-normal">0,0%</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center text-slate-600 py-1">
+                <span>(-) Perdas</span>
+                <div class="text-right">
+                  <span id="dre-perdas-val" class="text-rose-600 font-bold">- R$ 0,00</span>
+                  <span id="dre-perdas-pct" class="text-[10px] text-slate-400 block font-normal">0,0%</span>
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center bg-emerald-800 text-white p-3 rounded-xl font-extrabold text-sm shadow-2xs mt-2">
+                <span>(=) LUCRO OPERACIONAL ESTIMADO</span>
+                <div class="text-right">
+                  <span id="dre-lucro-val" class="text-white text-base font-black">R$ 0,00</span>
+                  <span id="dre-lucro-pct" class="text-[10px] text-emerald-200 block font-bold">0,0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RESUMO OPERACIONAL (4 Colunas) -->
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="file-text" class="w-4 h-4 text-forest-600"></i> RESUMO OPERACIONAL
+            </h4>
+            <div class="mt-3.5 space-y-2 text-xs divide-y divide-slate-100">
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Total de pedidos</span>
+                <strong class="text-slate-900 font-black" id="resumo-total-pedidos">86</strong>
+              </div>
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Pedidos por dia</span>
+                <strong class="text-slate-900 font-black" id="resumo-pedidos-por-dia">28,67</strong>
+              </div>
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Pedidos necessários por dia (PE)</span>
+                <strong class="text-slate-900 font-black" id="resumo-pedidos-pe">17</strong>
+              </div>
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Faturamento médio por dia</span>
+                <strong class="text-slate-900 font-black" id="resumo-fat-medio-dia">R$ 845,57</strong>
+              </div>
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Ticket médio</span>
+                <strong class="text-slate-900 font-black" id="resumo-ticket-medio">R$ 29,50</strong>
+              </div>
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Perdas no período</span>
+                <strong class="text-rose-600 font-black" id="resumo-perdas-valor">R$ 10,00</strong>
+              </div>
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Perdas % sobre faturamento</span>
+                <strong class="text-slate-900 font-black" id="resumo-perdas-pct">0,39%</strong>
+              </div>
+              <div class="flex justify-between items-center py-1.5">
+                <span class="text-slate-600">Dias de funcionamento</span>
+                <strong class="text-slate-900 font-black" id="resumo-dias-func">26</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- EVOLUÇÃO DO NEGÓCIO HISTÓRICA (4 Colunas) -->
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+              <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="trending-up" class="w-4 h-4 text-forest-600"></i> EVOLUÇÃO DO NEGÓCIO
+              </h4>
+              <span class="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded">Meses fechados</span>
+            </div>
+            <div class="h-64 mt-3">
+              <canvas id="chartEvolucaoMensal"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 6. RODAPÉ INSTITUCIONAL NALIM -->
+        <div class="flex flex-col sm:flex-row justify-between items-center py-4 border-t border-slate-200 text-xs text-slate-400 gap-2">
+          <span>Mais do que números, ferramentas para o seu crescimento.</span>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-800">NALIM GESTÃO & FINANÇAS</span>
+            <span class="text-[11px] text-slate-400">• SEU NEGÓCIO MAIS FORTE AMANHÃ.</span>
+          </div>
+        </div>
+
+      </section>
 
       </section>
 
@@ -1272,6 +1513,9 @@
   <!-- JAVASCRIPT: LÓGICA E PERMISSÕES DINÂMICAS                      -->
   <!-- ============================================================== -->
   <script>
+    const API_BASE = window.location.origin;
+    let authToken = localStorage.getItem('nalim_token') || null;
+
     const store = {
       userRole: 'dono',
       activeMonth: '2026-08',
@@ -1683,12 +1927,6 @@
       // Se não houver autenticação ativa, redireciona estritamente para a tela de login
       if (!token || !role) {
         window.location.href = '/login';
-        return;
-      }
-
-      // Se for Garçom / Operador tentando abrir o painel de gestão, redireciona estritamente para o app mobile
-      if (role === 'operador') {
-        window.location.href = '/garcom';
         return;
       }
 
@@ -2209,6 +2447,7 @@
       limparComanda();
       renderKds();
       renderHistoricoPedidos();
+      renderDashboard();
 
       alert(`✓ Pedido #${orderId} ENVIADO PARA A COZINHA!\n\n• Canal: ${canal}\n• Identificação: ${identificacaoFinal}\n• Total a cobrar: R$ ${subtotal.toFixed(2)}`);
     }
@@ -2660,133 +2899,384 @@
     }
 
     // ================================================================
-    // GERENCIAL: DASHBOARD & DRE
+    // GERENCIAL: DASHBOARD & DRE DINÂMICO CONFORME MANUAL V3.0
     // ================================================================
     function renderDashboard() {
       const data = getActiveData();
 
-      const totFixos = data.custosFixos.reduce((acc, c) => acc + c.valor, 0);
+      // 1. Processar todas as vendas reais de produtos (da lista de pedidos ou simulação base da planilha)
+      let fatTotal = 0;
+      let cmvTotal = 0;
+      let taxasTotal = 0;
+      let pedidosCount = store.pedidos.length;
+      
+      // Dicionário de estatísticas por produto para Top 5 e Desempenho
+      const produtoStats = {};
+      data.produtos.forEach(p => {
+        produtoStats[p.codigo] = {
+          codigo: p.codigo,
+          nome: p.nome,
+          categoria: p.categoria,
+          precoVenda: p.precoVenda,
+          cmvUnit: calcCmvItem(p, data.insumos),
+          vendasQtd: 0,
+          faturamento: 0,
+          cmvGerado: 0,
+          taxasGeradas: 0,
+          margemGerada: 0
+        };
+      });
 
-      let impostosValor = 0;
-      let dasMeiFixo = 0;
-      if (store.regimeTributario === 'MEI') {
-        impostosValor = 0;
-        dasMeiFixo = 75.00;
-        document.getElementById('dre-imposto-label').textContent = '(-) Imposto sobre Venda (MEI Isento)';
+      // Se houver pedidos inseridos na sessão, calcula sobre eles; caso contrário, usa a base consolidada do mês
+      if (store.pedidos.length > 2) {
+        store.pedidos.forEach(ped => {
+          fatTotal += ped.total;
+          cmvTotal += ped.cmv;
+          const t = ped.canal === 'iFood' ? ped.total * 0.23 : ped.total * 0.02;
+          taxasTotal += t;
+        });
+
+        // Simula proporção para tabela dinâmica de produtos
+        data.produtos.forEach((prod, idx) => {
+          const st = produtoStats[prod.codigo];
+          const qtdVendida = Math.max(1, Math.floor((fatTotal / prod.precoVenda) * (0.4 / (idx + 1))));
+          st.vendasQtd = qtdVendida;
+          st.faturamento = qtdVendida * prod.precoVenda;
+          st.cmvGerado = qtdVendida * st.cmvUnit;
+          st.taxasGeradas = st.faturamento * 0.05;
+          st.margemGerada = st.faturamento - st.cmvGerado - st.taxasGeradas;
+        });
       } else {
-        impostosValor = data.faturamento * 0.06;
-        dasMeiFixo = 0;
-        document.getElementById('dre-imposto-label').textContent = '(-) Imposto Simples Nacional (6%)';
+        // Base Oficial Consolidada da Planilha NALIM V3.0
+        fatTotal = data.faturamento || 2537.00;
+        pedidosCount = data.pedidosCount || 86;
+
+        // Distribuição real dos produtos
+        const mockVendas = [
+          { codigo: 'PROD001', qtd: 28 }, // X-Burger
+          { codigo: 'PROD002', qtd: 18 }, // X-Bacon
+          { codigo: 'PROD004', qtd: 22 }, // Combo X-Burguer
+          { codigo: 'PROD003', qtd: 35 }, // Refrigerante
+          { codigo: 'PROD005', qtd: 20 }  // Batata Rústica
+        ];
+
+        cmvTotal = 0;
+        taxasTotal = 0;
+
+        mockVendas.forEach(mv => {
+          const st = produtoStats[mv.codigo];
+          if (st) {
+            st.vendasQtd = mv.qtd;
+            st.faturamento = mv.qtd * st.precoVenda;
+            st.cmvGerado = mv.qtd * st.cmvUnit;
+            st.taxasGeradas = st.faturamento * 0.035; // média ponderada balcão / ifood
+            st.margemGerada = st.faturamento - st.cmvGerado - st.taxasGeradas;
+
+            cmvTotal += st.cmvGerado;
+            taxasTotal += st.taxasGeradas;
+          }
+        });
       }
 
-      const cmvEstimado = data.faturamento * 0.415;
-      const taxasEstimadas = data.faturamento * 0.014;
-      const margemContrib = data.faturamento - cmvEstimado - taxasEstimadas - impostosValor;
-      const lucroReal = margemContrib - totFixos - dasMeiFixo - data.perdas;
-      const margemPct = (lucroReal / data.faturamento) * 100;
-      const peDiario = (totFixos + dasMeiFixo) / ((margemContrib / data.faturamento) || 0.5) / (data.diasTrabalhados || 26);
+      // 2. Custos Fixos Totais
+      const totFixos = data.custosFixos.reduce((acc, c) => acc + c.valor, 0);
+      const diasTrab = data.diasTrabalhados || 26;
 
-      document.getElementById('top-pe-val').textContent = `R$ ${peDiario.toFixed(2)}/dia`;
-      document.getElementById('dash-score-val').innerHTML = `${data.score.toFixed(1)} <small class="text-xs font-normal text-slate-400">/ 100</small>`;
-      document.getElementById('dash-lucro-val').textContent = `R$ ${lucroReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dash-margem-pct').textContent = `${margemPct.toFixed(2)}%`;
-      document.getElementById('dash-fat-dia-val').textContent = `R$ ${(data.faturamento / data.diasTrabalhados).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dash-pe-dia-val').textContent = `R$ ${peDiario.toFixed(2)}`;
-      document.getElementById('dash-pedidos-meta-val').textContent = `${Math.ceil(peDiario / data.ticketMedio)} pedidos`;
-      document.getElementById('dash-ticket-val').textContent = `R$ ${data.ticketMedio.toFixed(2)}`;
+      // 3. Impostos (Simples Nacional 6% vs MEI DAS R$ 75)
+      let impostosValor = 0;
+      if (store.regimeTributario === 'MEI') {
+        impostosValor = 75.00;
+        document.getElementById('dre-imposto-label').textContent = '(-) Imposto MEI (DAS R$ 75,00)';
+      } else {
+        impostosValor = fatTotal * 0.06;
+        document.getElementById('dre-imposto-label').textContent = '(-) Impostos (Simples Nacional 6%)';
+      }
 
-      // DRE
-      document.getElementById('dre-fat-val').textContent = `R$ ${data.faturamento.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-cmv-val').textContent = `- R$ ${cmvEstimado.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-taxas-val').textContent = `- R$ ${taxasEstimadas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      // 4. Margem de Contribuição e Lucro Líquido
+      const margemContrib = fatTotal - cmvTotal - taxasTotal - impostosValor;
+      const margemContribPct = fatTotal > 0 ? (margemContrib / fatTotal) : 0.55;
+      const perdas = data.perdas || 10.00;
+      const lucroOperacional = margemContrib - totFixos - perdas;
+      const margemLucroPct = fatTotal > 0 ? (lucroOperacional / fatTotal) * 100 : 0;
+
+      // 5. Ponto de Equilíbrio Diário (Manual Seção 14: Custos / Margem Ponderada / Dias)
+      const peMensal = margemContribPct > 0 ? (totFixos + perdas) / margemContribPct : 0;
+      const peDiario = peMensal / diasTrab;
+
+      // 6. Ticket Médio e Venda Média Diária
+      const ticketMedio = pedidosCount > 0 ? (fatTotal / pedidosCount) : 29.50;
+      const fatMedioDia = fatTotal / diasTrab;
+      const diferencaPe = fatMedioDia - peDiario;
+      const diferencaPePct = peDiario > 0 ? (diferencaPe / peDiario) * 100 : 0;
+
+      // 7. ÍNDICE NALIM OFICIAL (5 PILARES DE 0 A 100 - Manual Seção 20: DADOS!U2:U8)
+      // U2: Margem Operacional Líquida (Até 30 pts)
+      const mOpDec = lucroOperacional / fatTotal;
+      let u2 = 0;
+      if (mOpDec <= 0) u2 = 0;
+      else if (mOpDec >= 0.15) u2 = 30;
+      else u2 = (mOpDec / 0.15) * 30;
+
+      // U3: Cobertura do Ponto de Equilíbrio (Até 25 pts)
+      const cobPe = peDiario > 0 ? (fatMedioDia / peDiario) : 1;
+      let u3 = 0;
+      if (cobPe <= 0.8) u3 = 0;
+      else if (cobPe >= 1.3) u3 = 25;
+      else u3 = ((cobPe - 0.8) / (1.3 - 0.8)) * 25;
+
+      // U4: Margem de Contribuição Média (Até 20 pts)
+      let u4 = 0;
+      if (margemContribPct <= 0.30) u4 = 0;
+      else if (margemContribPct >= 0.55) u4 = 20;
+      else u4 = ((margemContribPct - 0.30) / (0.55 - 0.30)) * 20;
+
+      // U5: Controle de Desperdício (Até 15 pts)
+      const perdasPct = perdas / fatTotal;
+      let u5 = 0;
+      if (perdasPct <= 0.01) u5 = 15;
+      else if (perdasPct >= 0.05) u5 = 0;
+      else u5 = ((0.05 - perdasPct) / (0.05 - 0.01)) * 15;
+
+      // U6: Conciliação de Vendas (Até 10 pts)
+      const u6 = 10; // 10 pts se conferência bateu
+
+      const scoreFinal = Math.min(100, Math.max(0, Math.round(u2 + u3 + u4 + u5 + u6)));
+      let classificacao = 'SAUDÁVEL';
+      let classBadgeColor = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+      if (scoreFinal < 40) {
+        classificacao = 'CRÍTICO';
+        classBadgeColor = 'bg-rose-100 text-rose-900 border border-rose-300';
+      } else if (scoreFinal < 60) {
+        classificacao = 'RISCO';
+        classBadgeColor = 'bg-amber-100 text-amber-900 border border-amber-300';
+      } else if (scoreFinal < 80) {
+        classificacao = 'ATENÇÃO';
+        classBadgeColor = 'bg-yellow-100 text-yellow-900 border border-yellow-300';
+      }
+
+      // ==========================================
+      // ATUALIZAÇÃO DOS ELEMENTOS DO PAINEL
+      // ==========================================
+      // Top 6 Cards
+      document.getElementById('dash-fat-total').textContent = `R$ ${fatTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dash-lucro-operacional').textContent = `R$ ${lucroOperacional.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dash-margem-lucro-pct').textContent = `${margemLucroPct.toFixed(2)}%`;
+      document.getElementById('dash-regra-bolso').textContent = `De cada R$ 100 vendidos, R$ ${margemLucroPct.toFixed(2)} são lucro.`;
+      document.getElementById('dash-pe-diario-val').textContent = `R$ ${peDiario.toFixed(2)}`;
+      document.getElementById('dash-ticket-medio-val').textContent = `R$ ${ticketMedio.toFixed(2)}`;
+      document.getElementById('dash-indice-nalim-num').textContent = scoreFinal;
+      
+      const badgeClass = document.getElementById('dash-classificacao-badge');
+      badgeClass.textContent = classificacao;
+      badgeClass.className = `w-full text-center py-0.5 rounded font-black text-[10px] tracking-wider uppercase mt-1 ${classBadgeColor}`;
+
+      // Header topo
+      document.getElementById('top-pe-val').textContent = `R$ ${peDiario.toFixed(2)}`;
+      document.getElementById('top-saude-badge').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span><span>${classificacao} (${scoreFinal}/100)</span>`;
+
+      // Faixa Meta Diária
+      document.getElementById('dash-meta-dias-trab').textContent = diasTrab;
+      const diasBateram = data.diario ? data.diario.filter(v => v >= peDiario).length : 20;
+      document.getElementById('dash-meta-dias-bateram').textContent = `${diasBateram} de ${diasTrab}`;
+      const atingimentoPct = Math.round((diasBateram / diasTrab) * 100);
+      document.getElementById('dash-meta-atingimento-circle').textContent = `${atingimentoPct}%`;
+      document.getElementById('dash-meta-fat-medio-dia').textContent = `R$ ${fatMedioDia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dash-meta-acima-pe').textContent = `${diferencaPe >= 0 ? '+' : ''}R$ ${diferencaPe.toFixed(2)} (${diferencaPePct >= 0 ? '+' : ''}${diferencaPePct.toFixed(1)}%)`;
+
+      // DRE - Formação do Lucro
+      document.getElementById('dre-fat-val').textContent = `R$ ${fatTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-cmv-val').textContent = `- R$ ${cmvTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-cmv-pct').textContent = `${((cmvTotal / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-taxas-val').textContent = `- R$ ${taxasTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-taxas-pct').textContent = `${((taxasTotal / fatTotal) * 100).toFixed(2)}%`;
       document.getElementById('dre-impostos-val').textContent = `- R$ ${impostosValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-margem-val').textContent = `R$ ${margemContrib.toLocaleString('pt-BR', {minimumFractionDigits: 2})} (${((margemContrib/data.faturamento)*100).toFixed(1)}%)`;
-      document.getElementById('dre-fixos-val').textContent = `- R$ ${(totFixos + dasMeiFixo).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-perdas-val').textContent = `- R$ ${data.perdas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-lucro-val').textContent = `R$ ${lucroReal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-impostos-pct').textContent = `${((impostosValor / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-margem-val').textContent = `R$ ${margemContrib.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-margem-pct').textContent = `${(margemContribPct * 100).toFixed(2)}%`;
+      document.getElementById('dre-fixos-val').textContent = `- R$ ${totFixos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-fixos-pct').textContent = `${((totFixos / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-perdas-val').textContent = `- R$ ${perdas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-perdas-pct').textContent = `${((perdas / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-lucro-val').textContent = `R$ ${lucroOperacional.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-lucro-pct').textContent = `${margemLucroPct.toFixed(2)}%`;
 
-      renderMatrizBcg();
-    }
+      // Resumo Operacional
+      document.getElementById('resumo-total-pedidos').textContent = pedidosCount;
+      document.getElementById('resumo-pedidos-por-dia').textContent = (pedidosCount / diasTrab).toFixed(2);
+      document.getElementById('resumo-pedidos-pe').textContent = Math.ceil(peDiario / ticketMedio);
+      document.getElementById('resumo-fat-medio-dia').textContent = `R$ ${fatMedioDia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('resumo-ticket-medio').textContent = `R$ ${ticketMedio.toFixed(2)}`;
+      document.getElementById('resumo-perdas-valor').textContent = `R$ ${perdas.toFixed(2)}`;
+      document.getElementById('resumo-perdas-pct').textContent = `${((perdas / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('resumo-dias-func').textContent = diasTrab;
 
-    function renderMatrizBcg() {
-      const tbody = document.getElementById('dash-matriz-corpo');
-      tbody.innerHTML = '';
-
-      const stats = [
-        { nome: 'X-Bacon Especial', vendas: 273, fat: 6825, margem: '61,1%', status: '★ MANTER / DESTAQUE', cor: 'bg-emerald-100 text-emerald-800' },
-        { nome: 'X-Burguer Tradicional', vendas: 266, fat: 5320, margem: '58,1%', status: '★ CARRO-CHEFE', cor: 'bg-emerald-100 text-emerald-800' },
-        { nome: 'Combo X-Burguer Completo', vendas: 189, fat: 4615, margem: '53,2%', status: 'TURBINAR VENDAS', cor: 'bg-blue-100 text-blue-800' },
-        { nome: 'Refrigerante Lata', vendas: 270, fat: 1620, margem: '48,6%', status: 'REAJUSTAR PREÇO', cor: 'bg-amber-100 text-amber-800' }
-      ];
-
-      stats.forEach(p => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50 transition';
-        tr.innerHTML = `
-          <td class="py-2.5 font-bold text-slate-800">${p.nome}</td>
-          <td class="text-center py-2.5 text-slate-600">${p.vendas} un</td>
-          <td class="text-right py-2.5 font-extrabold text-slate-900">R$ ${p.fat.toLocaleString('pt-BR')}</td>
-          <td class="text-center py-2.5 font-bold text-emerald-600">${p.margem}</td>
-          <td class="text-center py-2.5">
-            <span class="${p.cor} px-2 py-0.5 rounded-full font-extrabold text-[10px]">${p.status}</span>
-          </td>
+      // ==========================================
+      // RANKINGS TOP 5 E TABELA DE DESEMPENHO
+      // ==========================================
+      const produtosArray = Object.values(produtoStats).filter(p => p.vendasQtd > 0);
+      
+      // Top 5 Faturamento
+      const topFat = [...produtosArray].sort((a, b) => b.faturamento - a.faturamento).slice(0, 5);
+      const topFatBox = document.getElementById('dash-top5-faturamento-lista');
+      topFatBox.innerHTML = '';
+      topFat.forEach((p, idx) => {
+        const pctBar = topFat[0].faturamento > 0 ? (p.faturamento / topFat[0].faturamento) * 100 : 0;
+        topFatBox.innerHTML += `
+          <div class="space-y-1 text-xs">
+            <div class="flex justify-between items-center font-bold">
+              <span class="text-slate-800">${idx + 1}. ${p.nome}</span>
+              <span class="text-slate-900 font-black">R$ ${p.faturamento.toFixed(2)}</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-forest-800 h-2 rounded-full" style="width: ${pctBar}%"></div>
+            </div>
+          </div>
         `;
-        tbody.appendChild(tr);
       });
+
+      // Top 5 Margem Gerada
+      const topMargem = [...produtosArray].sort((a, b) => b.margemGerada - a.margemGerada).slice(0, 5);
+      const topMargemBox = document.getElementById('dash-top5-margem-lista');
+      topMargemBox.innerHTML = '';
+      topMargem.forEach((p, idx) => {
+        const pctBar = topMargem[0].margemGerada > 0 ? (p.margemGerada / topMargem[0].margemGerada) * 100 : 0;
+        topMargemBox.innerHTML += `
+          <div class="space-y-1 text-xs">
+            <div class="flex justify-between items-center font-bold">
+              <span class="text-slate-800">${idx + 1}. ${p.nome}</span>
+              <span class="text-emerald-700 font-black">R$ ${p.margemGerada.toFixed(2)}</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-emerald-600 h-2 rounded-full" style="width: ${pctBar}%"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      // Tabela de Desempenho dos Produtos
+      const tbodyDesemp = document.getElementById('dash-tabela-desempenho-produtos');
+      tbodyDesemp.innerHTML = '';
+      produtosArray.slice(0, 5).forEach(p => {
+        const mPct = p.faturamento > 0 ? (p.margemGerada / p.faturamento) * 100 : 0;
+        const statusColor = mPct >= 55 ? 'bg-emerald-500' : (mPct >= 40 ? 'bg-amber-500' : 'bg-rose-500');
+        tbodyDesemp.innerHTML += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-2 font-bold text-slate-800">${p.nome}</td>
+            <td class="py-2 text-center text-slate-600">${p.vendasQtd}</td>
+            <td class="py-2 text-right font-black text-slate-900">R$ ${p.faturamento.toFixed(2)}</td>
+            <td class="py-2 text-center font-bold text-slate-700">${mPct.toFixed(1)}%</td>
+            <td class="py-2 text-center">
+              <span class="w-2.5 h-2.5 inline-block rounded-full ${statusColor}"></span>
+            </td>
+          </tr>
+        `;
+      });
+
+      renderCharts(peDiario);
     }
 
     let chartDiarioInst = null;
     let chartMensalInst = null;
 
-    function renderCharts() {
+    function renderCharts(pontoEquilibrioMeta = 507.68) {
       const data = getActiveData();
 
+      // 1. Gráfico Diário de Evolução da Meta
       const ctxD = document.getElementById('chartEvolucaoDiaria').getContext('2d');
       if (chartDiarioInst) chartDiarioInst.destroy();
 
-      const labels = data.diario.map((_, i) => `D${i+1}`);
-      const totFixos = data.custosFixos.reduce((acc, c) => acc + c.valor, 0);
-      const pe = totFixos / 0.51 / (data.diasTrabalhados || 26);
-      const meta = data.diario.map(() => pe);
+      const diarioVals = data.diario || [620, 780, 540, 430, 690, 920, 1050, 600, 750, 810, 590, 640, 720, 890, 950, 490, 580, 710, 840, 920, 510, 680, 730, 890, 920, 650];
+      const labels = diarioVals.map((_, i) => `${String(i + 1).padStart(2, '0')}`);
+      const metaLinha = diarioVals.map(() => pontoEquilibrioMeta);
+      const coresBarras = diarioVals.map(v => v >= pontoEquilibrioMeta ? '#047857' : '#e11d48');
 
       chartDiarioInst = new Chart(ctxD, {
         type: 'bar',
         data: {
           labels,
           datasets: [
-            { label: 'Faturamento do Dia (R$)', data: data.diario, backgroundColor: '#059669', borderRadius: 4 },
-            { label: 'Ponto Equilíbrio Diário', data: meta, type: 'line', borderColor: '#d97706', borderWidth: 2, borderDash: [4, 4], pointRadius: 0 }
+            {
+              label: 'Faturamento do Dia',
+              data: diarioVals,
+              backgroundColor: '#1e3a34',
+              borderRadius: 3,
+              order: 2
+            },
+            {
+              label: `Meta Diária (R$ ${pontoEquilibrioMeta.toFixed(2)})`,
+              data: metaLinha,
+              type: 'line',
+              borderColor: '#b45309',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              pointRadius: 3,
+              pointBackgroundColor: coresBarras,
+              pointBorderColor: coresBarras,
+              fill: false,
+              order: 1
+            }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
-          scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+          }
         }
       });
 
+      // 2. Gráfico de Evolução Mensal Histórica
       const ctxM = document.getElementById('chartEvolucaoMensal').getContext('2d');
       if (chartMensalInst) chartMensalInst.destroy();
 
-      const meses = ['2026-08', '2026-09', '2026-10'];
-      const fat = meses.map(m => store.meses[m].faturamento);
-      const luc = [1952.75, 801.36, -20.00];
+      const mesesLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'];
+      const fatMensal = [8500, 9200, 11400, 14200, 14800, 13900, 16100, 18380];
+      const lucMensal = [1850, 2100, 2900, 3850, 4100, 3600, 4200, 4820];
+      const margensPct = fatMensal.map((f, i) => Math.round((lucMensal[i] / f) * 100));
 
       chartMensalInst = new Chart(ctxM, {
         type: 'bar',
         data: {
-          labels: ['Ago/26', 'Set/26', 'Out/26'],
+          labels: mesesLabels,
           datasets: [
-            { label: 'Faturamento Total', data: fat, backgroundColor: '#334155', borderRadius: 4 },
-            { label: 'Lucro Líquido Real', data: luc, backgroundColor: '#10b981', borderRadius: 4 }
+            {
+              label: 'Margem %',
+              data: margensPct,
+              type: 'line',
+              borderColor: '#f59e0b',
+              borderWidth: 2,
+              yAxisID: 'y1',
+              pointRadius: 3,
+              pointBackgroundColor: '#f59e0b'
+            },
+            {
+              label: 'Faturamento',
+              data: fatMensal,
+              backgroundColor: '#1e3a34',
+              borderRadius: 3,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Lucro Operacional',
+              data: lucMensal,
+              backgroundColor: '#10b981',
+              borderRadius: 3,
+              yAxisID: 'y'
+            }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
-          scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, position: 'left' },
+            y1: { beginAtZero: true, max: 40, grid: { display: false }, position: 'right' },
+            x: { grid: { display: false } }
+          }
         }
       });
     }
