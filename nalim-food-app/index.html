@@ -1099,8 +1099,6 @@
 
       </section>
 
-      </section>
-
       <!-- ========================================================== -->
       <!-- [3. GERENCIAL] SIMULADOR IFOOD                             -->
       <!-- ========================================================== -->
@@ -1807,12 +1805,6 @@
     store.meses['2026-10'].produtos = JSON.parse(JSON.stringify(store.meses['2026-09'].produtos));
     store.meses['2026-10'].custosFixos = JSON.parse(JSON.stringify(store.meses['2026-09'].custosFixos));
 
-    // Configuração de Conexão com o Backend Python (FastAPI)
-    const API_BASE = window.location.origin.includes(':8000') 
-      ? window.location.origin 
-      : 'http://localhost:8000';
-    let authToken = null;
-
     async function loginBackend(role) {
       const credenciais = {
         dono: { email: 'dono@nalim.com.br', senha: 'dono123' },
@@ -2038,8 +2030,16 @@
 
     function alterarMesVigente(mes) {
       store.activeMonth = mes;
-      document.getElementById('dash-mes-label').textContent = store.meses[mes].nome;
-      document.getElementById('dre-tag-periodo').textContent = store.meses[mes].nome;
+      const elDashMes = document.getElementById('dash-mes-label');
+      if (elDashMes) elDashMes.textContent = store.meses[mes].nome;
+      const elDreTag = document.getElementById('dre-tag-periodo');
+      if (elDreTag) elDreTag.textContent = store.meses[mes].nome;
+      const elPeriodoTag = document.getElementById('dash-periodo-tag');
+      if (elPeriodoTag) {
+        if (mes === '2026-08') elPeriodoTag.textContent = '01/08/2026 a 31/08/2026';
+        else if (mes === '2026-09') elPeriodoTag.textContent = '01/09/2026 a 30/09/2026';
+        else if (mes === '2026-10') elPeriodoTag.textContent = '01/10/2026 a 31/10/2026';
+      }
 
       renderDashboard();
       renderCharts();
