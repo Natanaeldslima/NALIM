@@ -44,14 +44,24 @@
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
     th.sortable:hover { background-color: #f1f5f9; cursor: pointer; }
+
+    /* Efeito retrátil suave da barra lateral */
+    #main-sidebar {
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @media (min-width: 768px) {
+      .sidebar-collapsed-desktop {
+        margin-left: -16rem !important; /* -w-64 */
+      }
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col md:flex-row">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden">
 
   <!-- ============================================================== -->
   <!-- SIDEBAR LATERAL ESQUERDA                                      -->
   <!-- ============================================================== -->
-  <aside id="main-sidebar" class="w-full md:w-64 bg-white text-slate-600 flex-shrink-0 flex flex-col justify-between border-r border-slate-200 z-40 select-none shadow-xs">
+  <aside id="main-sidebar" class="fixed inset-y-0 left-0 md:static z-50 md:z-40 w-64 bg-white text-slate-600 flex-shrink-0 flex flex-col justify-between border-r border-slate-200 select-none shadow-2xl md:shadow-xs -translate-x-full md:translate-x-0 h-screen md:h-auto overflow-y-auto custom-scroll">
     <div>
       <!-- Marca NALIM Gestão Financeira -->
       <div class="h-16 px-5 flex items-center justify-between border-b border-slate-100 bg-white">
@@ -65,8 +75,10 @@
           </div>
         </div>
 
-        <button onclick="toggleMobileNav()" class="md:hidden text-slate-400 hover:text-slate-700 p-1">
-          <i data-lucide="menu" class="w-5 h-5"></i>
+        <!-- Botão para fechar/recolher menu lateral -->
+        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-50 transition" title="Recolher Menu Lateral">
+          <i data-lucide="x" class="w-5 h-5 md:hidden"></i>
+          <i data-lucide="panel-left-close" class="w-4 h-4 hidden md:block"></i>
         </button>
       </div>
 
@@ -153,6 +165,12 @@
             <i data-lucide="pie-chart" class="w-4 h-4 text-forest-600"></i>
             <span>Saúde Financeira & DRE</span>
           </button>
+
+          <button onclick="switchView('equipe')" id="btn-equipe" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
+            <i data-lucide="users-cog" class="w-4 h-4 text-purple-600"></i>
+            <span>Equipe & Acessos</span>
+            <span class="ml-auto bg-purple-100 text-purple-800 text-[9px] px-1.5 py-0.2 rounded font-black">Dono</span>
+          </button>
         </div>
 
       </nav>
@@ -189,19 +207,27 @@
     </div>
   </aside>
 
+  <!-- Backdrop do Menu Lateral no Mobile (clique para fechar gaveta) -->
+  <div id="sidebar-backdrop" onclick="closeSidebarMobile()" class="fixed inset-0 bg-slate-950/50 z-40 hidden md:hidden backdrop-blur-xs transition-opacity"></div>
+
   <!-- ============================================================== -->
   <!-- ÁREA DE CONTEÚDO PRINCIPAL (DIREITA)                           -->
   <!-- ============================================================== -->
   <div class="flex-1 flex flex-col min-w-0 max-h-screen overflow-y-auto custom-scroll">
 
     <!-- Top Header com Controles Dinâmicos por Perfil -->
-    <header class="bg-white border-b border-slate-200 px-6 py-2.5 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+    <header class="bg-white border-b border-slate-200 px-4 md:px-6 py-2.5 sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 shadow-xs">
       
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 md:gap-3">
+        <!-- Botão 3 Barras (Hambúrguer) para Recolher/Expandir Menu Lateral -->
+        <button id="btn-toggle-sidebar" onclick="toggleSidebar()" class="p-2 -ml-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition" title="Alternar Menu Lateral (☰)">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+
         <!-- Seletor de Mês (Visível apenas para Administrativo e Gerencial) -->
         <div id="top-month-wrapper" class="flex items-center gap-1.5">
           <span class="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
-            <i data-lucide="calendar" class="w-3.5 h-3.5 text-forest-600"></i> Mês Vigente:
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-forest-600"></i> <span class="hidden sm:inline">Mês Vigente:</span>
           </span>
           <select id="selectMesVigente" onchange="alterarMesVigente(this.value)" class="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-forest-500">
             <option value="2026-10" selected>Outubro / 2026 (Atual)</option>
@@ -215,7 +241,7 @@
         <!-- Seletor de Regime Tributário MEI vs ME (Visível APENAS para o Gerencial / Dono) -->
         <div id="top-tax-wrapper" class="flex items-center gap-1.5">
           <span class="text-xs font-bold text-slate-500 uppercase flex items-center gap-1">
-            <i data-lucide="receipt" class="w-3.5 h-3.5 text-forest-600"></i> Regime Fiscal:
+            <i data-lucide="receipt" class="w-3.5 h-3.5 text-forest-600"></i> <span class="hidden sm:inline">Regime Fiscal:</span>
           </span>
           <select id="selectRegimeTributario" onchange="alterarRegimeTributario(this.value)" class="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-forest-500">
             <option value="ME_6" selected>ME — Simples Nacional (6% Faturamento)</option>
@@ -226,10 +252,6 @@
 
       <!-- Quick Metrics do Topo -->
       <div class="flex items-center gap-3">
-        <div class="text-xs font-medium text-slate-600">
-          Caixa Hoje: <strong class="text-slate-900" id="top-faturamento-dia">R$ 1.150,00</strong>
-        </div>
-
         <!-- Meta diária visível apenas para o Dono -->
         <div id="top-ponto-equilibrio-tag" class="hidden lg:flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-900 px-2.5 py-0.5 rounded-lg text-xs font-semibold">
           <i data-lucide="target" class="w-3 h-3 text-amber-600"></i>
@@ -1214,6 +1236,119 @@
         </div>
       </section>
 
+      <!-- ========================================================== -->
+      <!-- [9. GERENCIAL DONO] EQUIPE & CONTROLE DE ACESSOS           -->
+      <!-- ========================================================== -->
+      <section id="view-equipe" class="space-y-6 hidden">
+        <!-- Topo da View com Ação de Cadastro -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="p-2 rounded-xl bg-purple-50 text-purple-700">
+                <i data-lucide="users-cog" class="w-6 h-6"></i>
+              </span>
+              <div>
+                <h1 class="text-xl font-black text-slate-900">Equipe & Controle de Acessos</h1>
+                <p class="text-xs text-slate-500 font-medium">Cadastre colaboradores, defina e-mails/senhas e configure os perfis de acesso ao sistema.</p>
+              </div>
+            </div>
+          </div>
+          <button onclick="openModalColaborador()" class="bg-purple-600 hover:bg-purple-700 text-white font-extrabold px-4 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center gap-2 text-xs">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Novo Colaborador</span>
+          </button>
+        </div>
+
+        <!-- Cards de Resumo da Equipe -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total de Usuários</span>
+            <div class="flex items-baseline justify-between mt-1">
+              <span id="kpi-equipe-total" class="text-2xl font-black text-slate-900">3</span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Ativos</span>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Garçons / Caixa</span>
+            <div class="flex items-baseline justify-between mt-1">
+              <span id="kpi-equipe-operadores" class="text-2xl font-black text-amber-600">1</span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Operacional</span>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Administrativo</span>
+            <div class="flex items-baseline justify-between mt-1">
+              <span id="kpi-equipe-gerentes" class="text-2xl font-black text-blue-600">1</span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">Gerência</span>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Proprietários</span>
+            <div class="flex items-baseline justify-between mt-1">
+              <span id="kpi-equipe-donos" class="text-2xl font-black text-forest-700">1</span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-forest-50 text-forest-700 border border-forest-200">Acesso Total</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Guia Explicativo dos Níveis de Permissão -->
+        <div class="bg-gradient-to-r from-purple-50 via-slate-50 to-blue-50 border border-purple-200/70 p-4 rounded-2xl text-xs space-y-2">
+          <div class="flex items-center gap-2 font-black text-purple-950">
+            <i data-lucide="shield-check" class="w-4 h-4 text-purple-600"></i>
+            <span>Níveis de Segurança & Isolamento dos Perfis:</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            <div class="bg-white/80 p-3 rounded-xl border border-slate-200/80">
+              <span class="font-bold text-amber-800 flex items-center gap-1.5 mb-1">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Operador / Garçom
+              </span>
+              <p class="text-slate-600 text-[11px] leading-relaxed">Apenas Cardápio/PDV, envio de comandas e Cozinha (KDS). <strong>Bloqueado:</strong> Fichas de custos, relatórios e saúde financeira.</p>
+            </div>
+            <div class="bg-white/80 p-3 rounded-xl border border-slate-200/80">
+              <span class="font-bold text-blue-800 flex items-center gap-1.5 mb-1">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span> Administrativo / Gerente
+              </span>
+              <p class="text-slate-600 text-[11px] leading-relaxed">Fichas técnicas, insumos, histórico de vendas, despesas e <strong>Simulador & Margem iFood</strong>. <strong>Bloqueado:</strong> Saúde Financeira DRE e gestão de senhas.</p>
+            </div>
+            <div class="bg-white/80 p-3 rounded-xl border border-slate-200/80">
+              <span class="font-bold text-forest-800 flex items-center gap-1.5 mb-1">
+                <span class="w-2 h-2 rounded-full bg-forest-600"></span> Dono (Proprietário)
+              </span>
+              <p class="text-slate-600 text-[11px] leading-relaxed">Acesso irrestrito a todos os módulos, DRE consolidado, regime fiscal, metas e cadastro de senhas de colaboradores.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabela de Colaboradores -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+            <h2 class="text-sm font-extrabold text-slate-900">Membros da Equipe</h2>
+            <span class="text-xs text-slate-400 font-medium">As senhas podem ser atualizadas a qualquer momento pelo Dono</span>
+          </div>
+
+          <div class="overflow-x-auto custom-scroll">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
+                  <th class="py-3 px-5">Colaborador</th>
+                  <th class="py-3 px-4">E-mail de Acesso</th>
+                  <th class="py-3 px-4">Perfil de Acesso</th>
+                  <th class="py-3 px-4">Permissões</th>
+                  <th class="py-3 px-4">Senha</th>
+                  <th class="py-3 px-5 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-equipe" class="divide-y divide-slate-100">
+                <!-- Preenchido dinamicamente via renderEquipe() -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
     </main>
 
   </div>
@@ -1531,6 +1666,76 @@
   </div>
 
   <!-- ============================================================== -->
+  <!-- MODAL: CADASTRAR / EDITAR COLABORADOR (EXCLUSIVO DONO)         -->
+  <!-- ============================================================== -->
+  <div id="modal-colaborador" class="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 hidden backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+      
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm text-slate-900" id="modal-colaborador-titulo">Novo Colaborador</h3>
+            <p class="text-[11px] text-slate-400">Defina o perfil de acesso e credenciais de login</p>
+          </div>
+        </div>
+        <button onclick="closeModalColaborador()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); salvarColaboradorForm();" class="space-y-3.5 text-xs">
+        <input type="hidden" id="colaborador-id" value="">
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Nome Completo</label>
+          <input type="text" id="colaborador-nome" required placeholder="Ex: Rafaela Santos" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Função / Cargo</label>
+          <input type="text" id="colaborador-cargo" required placeholder="Ex: Garçom Noturno, Caixa, Gerente de Turno" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">E-mail de Acesso</label>
+            <input type="email" id="colaborador-email" required placeholder="email@restaurante.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Senha de Login</label>
+            <input type="text" id="colaborador-senha" required placeholder="Senha de acesso" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Perfil de Permissão</label>
+          <select id="colaborador-perfil" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600">
+            <option value="operador">Operacional / Garçom (Cardápio/PDV e Cozinha/KDS)</option>
+            <option value="gerente">Administrativo (Fichas Técnicas, Custos, Insumos & Simulador iFood)</option>
+            <option value="dono">Dono (Acesso Completo, DRE, Metas e Gestão de Equipe)</option>
+          </select>
+          <p class="text-[10px] text-slate-400 mt-1">O perfil define automaticamente quais telas e dados este colaborador poderá ver.</p>
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button type="button" onclick="closeModalColaborador()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl transition">
+            Cancelar
+          </button>
+          <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-extrabold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Salvar Colaborador</span>
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
   <!-- JAVASCRIPT: LÓGICA E PERMISSÕES DINÂMICAS                      -->
   <!-- ============================================================== -->
   <script>
@@ -1583,6 +1788,12 @@
       ],
 
       pedidos: [],
+
+      usuarios: JSON.parse(localStorage.getItem('nalim_usuarios') || 'null') || [
+        { id: 1, nome: 'Carlos Nalim', email: 'dono@nalim.com.br', senha: 'dono123', perfil: 'dono', cargo: 'Proprietário & Administrador Geral' },
+        { id: 2, nome: 'Mariana Silva', email: 'gerente@nalim.com.br', senha: 'gerente123', perfil: 'gerente', cargo: 'Gerente Administrativa' },
+        { id: 3, nome: 'Pedro Lucas', email: 'operador@nalim.com.br', senha: 'operador123', perfil: 'operador', cargo: 'Operador de Caixa & Garçom' }
+      ],
 
       meses: {
         '2026-08': {
@@ -1987,8 +2198,8 @@
       const topSaude = document.getElementById('top-saude-badge');
 
       const isOperacional = ['pdv', 'cozinha', 'caixa'].includes(viewId);
-      const isAdministrativo = ['produtos', 'insumos', 'vendas', 'custos'].includes(viewId);
-      const isGerencial = ['dashboard', 'precificacao'].includes(viewId);
+      const isAdministrativo = ['produtos', 'insumos', 'vendas', 'custos', 'precificacao'].includes(viewId);
+      const isGerencial = ['dashboard', 'equipe'].includes(viewId);
 
       // MÊS VIGENTE: Visível APENAS no Administrativo e Gerencial (e NUNCA para operador)
       if (role !== 'operador' && (isAdministrativo || isGerencial)) {
@@ -2013,6 +2224,39 @@
       } else {
         topPeTag.style.display = 'none';
         topSaude.style.display = 'none';
+      }
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('main-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!sidebar) return;
+
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        const isHidden = sidebar.classList.contains('-translate-x-full');
+        if (isHidden) {
+          sidebar.classList.remove('-translate-x-full');
+          sidebar.classList.add('translate-x-0');
+          if (backdrop) backdrop.classList.remove('hidden');
+        } else {
+          closeSidebarMobile();
+        }
+      } else {
+        // Desktop: recolhe/expande puxando para a esquerda
+        sidebar.classList.toggle('sidebar-collapsed-desktop');
+      }
+    }
+
+    function closeSidebarMobile() {
+      const sidebar = document.getElementById('main-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (sidebar && window.innerWidth < 768) {
+        sidebar.classList.add('-translate-x-full');
+        sidebar.classList.remove('translate-x-0');
+      }
+      if (backdrop) {
+        backdrop.classList.add('hidden');
       }
     }
 
@@ -2042,6 +2286,25 @@
       }
       aplicarPermissoesPerfil(role);
       closeModalLogin();
+    }
+
+    function submeterLoginForm() {
+      const email = document.getElementById('login-email-input').value.trim().toLowerCase();
+      const senha = document.getElementById('login-senha-input').value.trim();
+
+      const usuario = store.usuarios.find(u => u.email.toLowerCase() === email && u.senha === senha);
+      if (usuario) {
+        localStorage.setItem('nalim_token', 'token_' + usuario.id);
+        localStorage.setItem('nalim_role', usuario.perfil);
+        localStorage.setItem('nalim_nome', usuario.nome);
+        localStorage.setItem('nalim_email', usuario.email);
+        authToken = 'token_' + usuario.id;
+        aplicarPermissoesPerfil(usuario.perfil);
+        closeModalLogin();
+        alert(`✓ Bem-vindo(a), ${usuario.nome}! Conectado como ${usuario.perfil === 'dono' ? 'Dono' : usuario.perfil === 'gerente' ? 'Administrativo' : 'Operador/Garçom'}.`);
+      } else {
+        alert('❌ Credenciais incorretas. Verifique o e-mail e a senha informados.');
+      }
     }
 
     function fazerLogout() {
@@ -2117,9 +2380,10 @@
     }
 
     function switchView(viewId) {
+      closeSidebarMobile();
       const role = store.userRole || 'dono';
-      const admViews = ['produtos', 'insumos', 'vendas', 'custos'];
-      const gerViews = ['dashboard', 'precificacao'];
+      const admViews = ['produtos', 'insumos', 'vendas', 'custos', 'precificacao'];
+      const gerViews = ['dashboard', 'equipe'];
 
       // Bloqueio rigoroso de segurança de visualização
       if (role === 'operador' && (admViews.includes(viewId) || gerViews.includes(viewId))) {
@@ -2128,22 +2392,192 @@
         viewId = 'produtos';
       }
 
-      const views = ['pdv', 'cozinha', 'caixa', 'produtos', 'insumos', 'vendas', 'custos', 'dashboard', 'precificacao'];
+      const views = ['pdv', 'cozinha', 'caixa', 'produtos', 'insumos', 'vendas', 'custos', 'dashboard', 'precificacao', 'equipe'];
       views.forEach(v => {
         const el = document.getElementById('view-' + v);
         const btn = document.getElementById('btn-' + v);
-        if (v === viewId) {
-          el.classList.remove('hidden');
-          if (btn) btn.classList.add('sidebar-link-active');
-        } else {
-          el.classList.add('hidden');
-          if (btn) btn.classList.remove('sidebar-link-active');
+        if (el) {
+          if (v === viewId) {
+            el.classList.remove('hidden');
+            if (btn) btn.classList.add('sidebar-link-active');
+          } else {
+            el.classList.add('hidden');
+            if (btn) btn.classList.remove('sidebar-link-active');
+          }
         }
       });
 
       // Atualiza o topo: Mês apenas no Adm e Gerencial; Regime apenas no Gerencial
       atualizarHeaderContexto(viewId);
       lucide.createIcons();
+    }
+
+    // ==============================================================
+    // GESTÃO DE EQUIPE & CONTROLE DE ACESSOS (EXCLUSIVO DONO)
+    // ==============================================================
+    function renderEquipe() {
+      const tbody = document.getElementById('tbody-equipe');
+      if (!tbody) return;
+
+      const totalEl = document.getElementById('kpi-equipe-total');
+      const opEl = document.getElementById('kpi-equipe-operadores');
+      const gerEl = document.getElementById('kpi-equipe-gerentes');
+      const donEl = document.getElementById('kpi-equipe-donos');
+
+      let ops = 0, gers = 0, dons = 0;
+      store.usuarios.forEach(u => {
+        if (u.perfil === 'operador') ops++;
+        else if (u.perfil === 'gerente') gers++;
+        else if (u.perfil === 'dono') dons++;
+      });
+
+      if (totalEl) totalEl.textContent = store.usuarios.length;
+      if (opEl) opEl.textContent = ops;
+      if (gerEl) gerEl.textContent = gers;
+      if (donEl) donEl.textContent = dons;
+
+      tbody.innerHTML = store.usuarios.map(u => {
+        const perfilConfig = {
+          dono: { badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', label: 'Dono / Geral', icon: 'crown', perm: 'Acesso total (DRE, Metas, Gestão de Usuários)' },
+          gerente: { badge: 'bg-blue-100 text-blue-800 border-blue-200', label: 'Administrativo', icon: 'sliders', perm: 'Fichas Técnicas, Custos, Insumos & Simulador iFood' },
+          operador: { badge: 'bg-amber-100 text-amber-800 border-amber-200', label: 'Operador / Garçom', icon: 'zap', perm: 'Apenas Cardápio/PDV, Comandas e Cozinha (KDS)' }
+        }[u.perfil] || { badge: 'bg-slate-100 text-slate-800 border-slate-200', label: 'Operador', icon: 'user', perm: 'Acesso restrito' };
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition">
+            <td class="py-3 px-5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 font-extrabold flex items-center justify-center text-xs">
+                  ${u.nome.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <span class="font-extrabold text-slate-900 block">${u.nome}</span>
+                  <span class="text-[11px] text-slate-400 font-medium">${u.cargo || 'Colaborador'}</span>
+                </div>
+              </div>
+            </td>
+            <td class="py-3 px-4 font-medium text-slate-600">
+              ${u.email}
+            </td>
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border ${perfilConfig.badge}">
+                <i data-lucide="${perfilConfig.icon}" class="w-3 h-3"></i>
+                <span>${perfilConfig.label}</span>
+              </span>
+            </td>
+            <td class="py-3 px-4 text-[11px] text-slate-500 font-medium max-w-xs">
+              ${perfilConfig.perm}
+            </td>
+            <td class="py-3 px-4 font-mono text-slate-600 text-xs">
+              <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-700 border border-slate-200 font-bold">${u.senha}</span>
+            </td>
+            <td class="py-3 px-5 text-right">
+              <div class="inline-flex items-center gap-1.5 justify-end">
+                <button onclick="editarColaborador(${u.id})" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition" title="Editar Colaborador">
+                  <i data-lucide="pencil" class="w-4 h-4"></i>
+                </button>
+                ${u.perfil !== 'dono' ? `
+                <button onclick="removerColaborador(${u.id})" class="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition" title="Remover Colaborador">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+                ` : `
+                <span class="w-7 text-center text-slate-300" title="Proprietário fixo">🔒</span>
+                `}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function openModalColaborador() {
+      document.getElementById('colaborador-id').value = '';
+      document.getElementById('colaborador-nome').value = '';
+      document.getElementById('colaborador-cargo').value = '';
+      document.getElementById('colaborador-email').value = '';
+      document.getElementById('colaborador-senha').value = '';
+      document.getElementById('colaborador-perfil').value = 'operador';
+      document.getElementById('modal-colaborador-titulo').textContent = 'Novo Colaborador';
+      document.getElementById('modal-colaborador').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeModalColaborador() {
+      document.getElementById('modal-colaborador').classList.add('hidden');
+    }
+
+    function editarColaborador(id) {
+      const u = store.usuarios.find(user => user.id === id);
+      if (!u) return;
+
+      document.getElementById('colaborador-id').value = u.id;
+      document.getElementById('colaborador-nome').value = u.nome;
+      document.getElementById('colaborador-cargo').value = u.cargo || '';
+      document.getElementById('colaborador-email').value = u.email;
+      document.getElementById('colaborador-senha').value = u.senha;
+      document.getElementById('colaborador-perfil').value = u.perfil;
+      document.getElementById('modal-colaborador-titulo').textContent = 'Editar Colaborador';
+      document.getElementById('modal-colaborador').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function salvarColaboradorForm() {
+      const idVal = document.getElementById('colaborador-id').value;
+      const nome = document.getElementById('colaborador-nome').value.trim();
+      const cargo = document.getElementById('colaborador-cargo').value.trim();
+      const email = document.getElementById('colaborador-email').value.trim().toLowerCase();
+      const senha = document.getElementById('colaborador-senha').value.trim();
+      const perfil = document.getElementById('colaborador-perfil').value;
+
+      if (!nome || !email || !senha) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+      }
+
+      if (idVal) {
+        // Atualização
+        const id = parseInt(idVal);
+        const idx = store.usuarios.findIndex(u => u.id === id);
+        if (idx !== -1) {
+          store.usuarios[idx] = { ...store.usuarios[idx], nome, cargo, email, senha, perfil };
+        }
+      } else {
+        // Novo cadastro
+        if (store.usuarios.some(u => u.email.toLowerCase() === email)) {
+          alert('Já existe um colaborador cadastrado com este e-mail.');
+          return;
+        }
+        const novoId = (store.usuarios.reduce((max, u) => Math.max(max, u.id), 0) || 0) + 1;
+        store.usuarios.push({
+          id: novoId,
+          nome,
+          cargo,
+          email,
+          senha,
+          perfil
+        });
+      }
+
+      localStorage.setItem('nalim_usuarios', JSON.stringify(store.usuarios));
+      renderEquipe();
+      closeModalColaborador();
+      alert(`✓ Colaborador "${nome}" salvo com sucesso com perfil "${perfil === 'gerente' ? 'Administrativo' : perfil === 'operador' ? 'Operador/Garçom' : 'Dono'}"!`);
+    }
+
+    function removerColaborador(id) {
+      const u = store.usuarios.find(user => user.id === id);
+      if (!u) return;
+      if (u.perfil === 'dono') {
+        alert('Não é possível remover a conta principal de Proprietário.');
+        return;
+      }
+      if (confirm(`Tem certeza que deseja remover o colaborador "${u.nome}" (${u.email})?`)) {
+        store.usuarios = store.usuarios.filter(user => user.id !== id);
+        localStorage.setItem('nalim_usuarios', JSON.stringify(store.usuarios));
+        renderEquipe();
+      }
     }
 
     function toggleMobileNav() {
@@ -2564,8 +2998,10 @@
 
       // 3. Faturamento Hoje
       const topHoje = document.getElementById('top-faturamento-dia');
-      const valAtual = parseFloat(topHoje.textContent.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
-      topHoje.textContent = `R$ ${(valAtual + subtotal).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      if (topHoje) {
+        const valAtual = parseFloat(topHoje.textContent.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
+        topHoje.textContent = `R$ ${(valAtual + subtotal).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      }
 
       // Sincronização com o Banco de Dados no Backend Python
       if (authToken) {
@@ -3740,6 +4176,7 @@
       renderProdutosAccordion();
       popularSimulador();
       renderCustos();
+      renderEquipe();
       lucide.createIcons();
     });
   </script>
