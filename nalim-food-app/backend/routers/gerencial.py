@@ -14,17 +14,29 @@ def calcular_dre_gerencial(
     current_user: User = Depends(require_role(["dono"])),
     db: Session = Depends(get_db)
 ):
-    # 1. Totalização dos Pedidos do Tenant
-    pedidos = db.query(Pedido).filter(Pedido.tenant_id == current_user.tenant_id).all()
+    # 1. Totalização dos Pedidos do Tenant filtrados estritamente pelo mês vigente (YYYY-MM)
+    todos_pedidos = db.query(Pedido).filter(Pedido.tenant_id == current_user.tenant_id).all()
+    pedidos = [p for p in todos_pedidos if p.data_hora and p.data_hora.strftime("%Y-%m") == mes]
+
     receita_bruta = sum(p.valor_bruto for p in pedidos)
     cmv_total = sum(p.cmv_total for p in pedidos)
     taxas_canais = sum(p.taxa_canal for p in pedidos)
 
-    # Se ainda houver poucos pedidos reais, usa os dados consolidados do mês da planilha
-    if receita_bruta < 500:
-        receita_bruta = 36800.00
-        cmv_total = 12940.00
-        taxas_canais = 4232.00
+    # Para meses históricos de demonstração se não houver pedidos gravados no banco
+    if len(pedidos) == 0:
+        if mes == "2026-08":
+            receita_bruta = 18380.00
+            cmv_total = 5514.00
+            taxas_canais = 1286.00
+        elif mes == "2026-09":
+            receita_bruta = 4311.00
+            cmv_total = 1293.00
+            taxas_canais = 301.00
+        else:
+            # Mês corrente (ex: Outubro) sem pedidos
+            receita_bruta = 0.0
+            cmv_total = 0.0
+            taxas_canais = 0.0
 
     # 2. Impostos conforme Regime Fiscal
     if regime == "MEI":
