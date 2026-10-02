@@ -148,7 +148,7 @@
 
           <button onclick="switchView('precificacao')" id="btn-precificacao" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
             <i data-lucide="calculator" class="w-4 h-4 text-amber-600"></i>
-            <span>Simulador & Margem iFood</span>
+            <span>Simulador Multicanal (iFood / 99)</span>
           </button>
         </div>
 
@@ -362,7 +362,8 @@
                     <select id="pdv-canal-select" onchange="mudarCanalPdv(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold text-slate-800">
                       <option value="Balcão" selected>🏪 Balcão / Retirada</option>
                       <option value="Salão">🍽️ Salão / Mesa</option>
-                      <option value="iFood">🛵 iFood Delivery</option>
+                      <option value="iFood">🛵 iFood Delivery (23%)</option>
+                      <option value="99Food">🟡 99Food Delivery (18%)</option>
                     </select>
                   </div>
                   <div>
@@ -428,9 +429,14 @@
                 <span id="pdv-total-display" class="text-lg text-forest-700">R$ 0,00</span>
               </div>
 
-              <button type="button" onclick="enviarPedidoCozinha()" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-xs">
-                <i data-lucide="send" class="w-4 h-4"></i> Enviar p/ Cozinha & Salvar Pedido
-              </button>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button type="button" onclick="enviarPedidoCozinha()" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2.5 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-xs">
+                  <i data-lucide="send" class="w-4 h-4"></i> Enviar Cozinha (Salvar)
+                </button>
+                <button type="button" onclick="imprimirComandaAtual()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs">
+                  <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i> Imprimir Cupom Térmico
+                </button>
+              </div>
 
             </div>
 
@@ -634,6 +640,74 @@
             </table>
           </div>
 
+          <!-- PAINEL DE AUDITORIA SEMANAL DE ESTOQUE (CMV TEÓRICO VS. REAL) -->
+          <div class="mt-6 pt-5 border-t border-slate-200 space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-100">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="p-1.5 rounded-lg bg-blue-50 text-blue-700">
+                    <i data-lucide="scale" class="w-4 h-4"></i>
+                  </span>
+                  <h3 class="text-sm font-black text-slate-900 uppercase tracking-tight">AUDITORIA DE ESTOQUE & DETECTOR DE DESPERDÍCIO</h3>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">Confronto do CMV Teórico (Fichas Técnicas) com o CMV Real (Inventário) para identificar sobras, quebras ou desvios.</p>
+              </div>
+              <button type="button" onclick="calcularAuditoriaEstoque()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Recalcular Auditoria
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Estoque Inicial (R$)</label>
+                <input type="number" id="aud-est-inicial" value="1200.00" step="50" oninput="calcularAuditoriaEstoque()" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-black text-slate-800 text-sm">
+                <span class="text-[10px] text-slate-400 mt-1 block">Valor em estoque no início do período</span>
+              </div>
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">(+) Compras do Período (R$)</label>
+                <input type="number" id="aud-compras" value="1800.00" step="50" oninput="calcularAuditoriaEstoque()" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-black text-slate-800 text-sm">
+                <span class="text-[10px] text-slate-400 mt-1 block">Notas fiscais de compras de insumos</span>
+              </div>
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
+                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">(-) Estoque Final Apurado (R$)</label>
+                <input type="number" id="aud-est-final" value="2320.00" step="50" oninput="calcularAuditoriaEstoque()" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-black text-slate-800 text-sm">
+                <span class="text-[10px] text-slate-400 mt-1 block">Contagem física na prateleira/geladeira</span>
+              </div>
+              <div class="p-3.5 rounded-xl border border-blue-200 bg-blue-50/70 flex flex-col justify-between">
+                <div>
+                  <span class="block text-[10px] font-black uppercase text-blue-900">(=) CMV Real Apurado</span>
+                  <span class="text-base font-black text-blue-900 mt-1 block" id="aud-cmv-real-val">R$ 680,00</span>
+                </div>
+                <span class="text-[10px] text-blue-700 block">Total de matéria-prima que saiu</span>
+              </div>
+            </div>
+
+            <!-- Confronto Teórico vs Real -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
+              <div class="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                <span class="text-[10px] font-black text-slate-400 uppercase">CMV Teórico das Vendas</span>
+                <div class="text-lg font-black text-slate-800 mt-0.5" id="aud-cmv-teorico-val">R$ 639,95</div>
+                <p class="text-[10px] text-slate-400 mt-1">Gasto previsto conforme receitas das fichas técnicas.</p>
+              </div>
+              <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/70" id="aud-box-diferenca">
+                <span class="text-[10px] font-black text-amber-900 uppercase">Desperdício / Desvios Apurados</span>
+                <div class="text-lg font-black text-amber-700 mt-0.5" id="aud-diferenca-val">- R$ 40,05 (5,9%)</div>
+                <p class="text-[10px] text-amber-800 mt-1" id="aud-diferenca-desc">Sobras de porção ou desvios na cozinha.</p>
+              </div>
+              <div class="p-4 rounded-xl border border-slate-200 bg-white flex flex-col justify-between">
+                <div>
+                  <span class="text-[10px] font-black text-slate-400 uppercase">Status da Auditoria</span>
+                  <div class="text-xs font-black uppercase mt-1" id="aud-status-badge">
+                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">✅ Controle Excelente</span>
+                  </div>
+                </div>
+                <button type="button" onclick="aplicarPerdaNoDre()" class="w-full mt-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] py-1.5 rounded-lg transition">
+                  Sincronizar Perda c/ DRE do Mês
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -752,9 +826,15 @@
             <p class="text-xs text-slate-500">SEU NEGÓCIO EM NÚMEROS, DECISÕES COM MAIS SEGURANÇA</p>
           </div>
 
-          <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700">
-            <i data-lucide="calendar" class="w-4 h-4 text-forest-600"></i>
-            <span>Período: <strong id="dash-periodo-tag" class="text-slate-900 font-extrabold">01/10/2026 a 31/10/2026</strong></span>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" onclick="compartilharFechamentoWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs transition cursor-pointer">
+              <i data-lucide="message-circle" class="w-4 h-4"></i>
+              <span>Compartilhar no WhatsApp</span>
+            </button>
+            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700">
+              <i data-lucide="calendar" class="w-4 h-4 text-forest-600"></i>
+              <span>Período: <strong id="dash-periodo-tag" class="text-slate-900 font-extrabold">01/10/2026 a 31/10/2026</strong></span>
+            </div>
           </div>
         </div>
 
@@ -999,6 +1079,103 @@
 
         </div>
 
+        <!-- 4.5 ENGENHARIA DE CARDÁPIO (MATRIZ BCG GASTRONÔMICA: ESTRELAS, BURROS DE CARGA, QUEBRA-CABEÇAS, CÃES) -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-amber-50 text-amber-700">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </span>
+                <h3 class="text-sm font-black text-slate-900 uppercase tracking-tight">ENGENHARIA DE CARDÁPIO (MATRIZ BCG GASTRONÔMICA)</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Cruzamento inteligente de Volume de Vendas vs. Margem de Lucro para tomada de decisão imediata.</p>
+            </div>
+            <span class="text-[10px] font-bold bg-forest-50 text-forest-700 border border-forest-200 px-2.5 py-1 rounded-full">
+              Inteligência de Cardápio Ativa
+            </span>
+          </div>
+
+          <!-- Grid dos 4 Quadrantes da Matriz -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" id="matriz-bcg-grid">
+            <!-- 1. Estrelas -->
+            <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-emerald-200">
+                  <span class="font-black text-xs text-emerald-950 flex items-center gap-1.5">
+                    ⭐ ESTRELAS
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full" id="bcg-count-estrelas">0 itens</span>
+                </div>
+                <p class="text-[10px] text-emerald-800 font-semibold mt-2">Alta Saída + Alta Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-estrelas">
+                  <!-- Itens Estrela -->
+                </div>
+              </div>
+              <div class="text-[10px] text-emerald-900 bg-white/80 p-2.5 rounded-lg border border-emerald-200">
+                <strong>💡 Recomendação:</strong> Mantenha a receita rigorosa e dê destaque de ouro na capa do cardápio e nos apps.
+              </div>
+            </div>
+
+            <!-- 2. Burros de Carga -->
+            <div class="p-4 rounded-xl border border-blue-200 bg-blue-50/50 flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-blue-200">
+                  <span class="font-black text-xs text-blue-950 flex items-center gap-1.5">
+                    🐂 BURROS DE CARGA
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full" id="bcg-count-burros">0 itens</span>
+                </div>
+                <p class="text-[10px] text-blue-800 font-semibold mt-2">Alta Saída + Baixa Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-burros">
+                  <!-- Itens Burro de Carga -->
+                </div>
+              </div>
+              <div class="text-[10px] text-blue-900 bg-white/80 p-2.5 rounded-lg border border-blue-200">
+                <strong>💡 Recomendação:</strong> Aumente o preço em R$ 1,50 ou renegocie insumos. O cliente continuará comprando.
+              </div>
+            </div>
+
+            <!-- 3. Quebra-Cabeças -->
+            <div class="p-4 rounded-xl border border-purple-200 bg-purple-50/50 flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-purple-200">
+                  <span class="font-black text-xs text-purple-950 flex items-center gap-1.5">
+                    ❓ QUEBRA-CABEÇAS
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full" id="bcg-count-quebras">0 itens</span>
+                </div>
+                <p class="text-[10px] text-purple-800 font-semibold mt-2">Baixa Saída + Alta Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-quebras">
+                  <!-- Itens Quebra-cabeça -->
+                </div>
+              </div>
+              <div class="text-[10px] text-purple-900 bg-white/80 p-2.5 rounded-lg border border-purple-200">
+                <strong>💡 Recomendação:</strong> Monte combos promocionais com seus Burros de Carga e faça fotos atraentes.
+              </div>
+            </div>
+
+            <!-- 4. Cães / Abacaxis -->
+            <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/50 flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-rose-200">
+                  <span class="font-black text-xs text-rose-950 flex items-center gap-1.5">
+                    🐶 CÃES / ABACAXIS
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full" id="bcg-count-caes">0 itens</span>
+                </div>
+                <p class="text-[10px] text-rose-800 font-semibold mt-2">Baixa Saída + Baixa Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-caes">
+                  <!-- Itens Cães -->
+                </div>
+              </div>
+              <div class="text-[10px] text-rose-900 bg-white/80 p-2.5 rounded-lg border border-rose-200">
+                <strong>💡 Recomendação:</strong> Amarram dinheiro em estoque e dão prejuízo. Considere retirar do cardápio.
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 5. FORMAÇÃO DO LUCRO (DRE) + RESUMO OPERACIONAL + EVOLUÇÃO DO NEGÓCIO -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           
@@ -1105,12 +1282,12 @@
         <div class="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs">
           <div class="pb-4 border-b border-slate-100 mb-5">
             <span class="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-0.5 rounded">Gerencial</span>
-            <h2 class="text-xl font-extrabold text-slate-900 mt-1">Simulador de Precificação Salão vs iFood</h2>
-            <p class="text-xs text-slate-500">Cálculo de margem real após descontar a comissão de 23% do marketplace</p>
+            <h2 class="text-xl font-extrabold text-slate-900 mt-1">Simulador de Precificação Multicanal: Balcão vs 99Food vs iFood</h2>
+            <p class="text-xs text-slate-500">Compare a margem real de cada prato após descontar as taxas de cada canal de venda.</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div class="space-y-3.5 p-5 bg-slate-50 rounded-2xl border border-slate-200">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div class="lg:col-span-5 space-y-3.5 p-5 bg-slate-50 rounded-2xl border border-slate-200">
               <h3 class="text-xs font-bold text-slate-900 uppercase">Selecione o Item</h3>
               <div>
                 <select id="sim-select-item" onchange="carregarProdutoSimulador(this.value)" class="w-full bg-white border border-slate-300 rounded-xl p-2 text-sm font-bold text-slate-800">
@@ -1123,70 +1300,103 @@
                 <input type="number" id="sim-cmv-input" value="7.59" class="w-full bg-slate-200 border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-slate-700" readonly>
               </div>
 
-              <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Preço no Salão / Balcão (R$)</label>
-                <input type="number" id="sim-preco-balcao" value="20.00" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-extrabold text-forest-700">
-              </div>
-
-              <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Preço no iFood (R$)</label>
-                <input type="number" id="sim-preco-ifood" value="25.00" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-extrabold text-rose-700">
-              </div>
-
-              <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="grid grid-cols-3 gap-2">
                 <div>
-                  <span class="text-slate-500 font-semibold block text-[10px]">Taxa Cartão Balcão</span>
-                  <input type="number" id="sim-taxa-card" value="2.0" step="0.1" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 font-bold">
+                  <label class="block text-[10px] font-bold text-forest-700 uppercase mb-1">Preço Balcão (R$)</label>
+                  <input type="number" id="sim-preco-balcao" value="20.00" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-xl p-1.5 font-black text-forest-700 text-xs">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-amber-700 uppercase mb-1">Preço 99Food (R$)</label>
+                  <input type="number" id="sim-preco-99food" value="24.00" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-xl p-1.5 font-black text-amber-700 text-xs">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-rose-700 uppercase mb-1">Preço iFood (R$)</label>
+                  <input type="number" id="sim-preco-ifood" value="25.00" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-xl p-1.5 font-black text-rose-700 text-xs">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 text-xs pt-1">
+                <div>
+                  <span class="text-slate-500 font-semibold block text-[10px]">Taxa Balcão (%)</span>
+                  <input type="number" id="sim-taxa-card" value="2.0" step="0.1" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 font-bold text-xs">
+                </div>
+                <div>
+                  <span class="text-slate-500 font-semibold block text-[10px]">Comissão 99 (%)</span>
+                  <input type="number" id="sim-taxa-99food" value="18.0" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 font-bold text-xs">
                 </div>
                 <div>
                   <span class="text-slate-500 font-semibold block text-[10px]">Comissão iFood (%)</span>
-                  <input type="number" id="sim-taxa-ifood" value="23.0" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 font-bold">
+                  <input type="number" id="sim-taxa-ifood" value="23.0" step="0.5" oninput="executarSimulacao()" class="w-full bg-white border border-slate-300 rounded-lg p-1.5 font-bold text-xs">
                 </div>
               </div>
             </div>
 
-            <!-- Comparativo -->
-            <div class="space-y-4">
-              <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/70 space-y-1.5 text-xs">
-                <div class="flex justify-between items-center font-bold text-emerald-950">
-                  <span>🏪 Salão / Balcão</span>
-                  <span class="bg-emerald-200 text-emerald-900 text-[10px] px-2 py-0.5 rounded">TAXA 2%</span>
+            <!-- Comparativo dos 3 Canais Lado a Lado -->
+            <div class="lg:col-span-7 space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Balcão -->
+                <div class="p-3.5 rounded-xl border border-emerald-200 bg-emerald-50/70 space-y-1.5 text-xs">
+                  <div class="flex justify-between items-center font-bold text-emerald-950 pb-1 border-b border-emerald-200">
+                    <span>🏪 Balcão</span>
+                    <span class="bg-emerald-200 text-emerald-900 text-[9px] px-1.5 py-0.2 rounded font-black">2%</span>
+                  </div>
+                  <div class="flex justify-between text-slate-600 text-[11px]">
+                    <span>(-) CMV:</span>
+                    <span id="sim-res-balcao-cmv">R$ 7,59</span>
+                  </div>
+                  <div class="flex justify-between text-slate-600 text-[11px]">
+                    <span>(-) Taxa:</span>
+                    <span id="sim-res-balcao-taxa">R$ 0,40</span>
+                  </div>
+                  <div class="pt-1.5 border-t border-emerald-200">
+                    <span class="text-slate-500 text-[10px] block">Lucro Líquido:</span>
+                    <span id="sim-res-balcao-lucro" class="text-sm font-black text-forest-700 block">R$ 12,01 (60,1%)</span>
+                  </div>
                 </div>
-                <div class="flex justify-between text-slate-600">
-                  <span>(-) CMV Insumos:</span>
-                  <span id="sim-res-balcao-cmv">R$ 7,59</span>
-                </div>
-                <div class="flex justify-between text-slate-600">
-                  <span>(-) Taxa Maquininha:</span>
-                  <span id="sim-res-balcao-taxa">R$ 0,40</span>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-emerald-200 font-black">
-                  <span class="text-emerald-950">Lucro Líquido:</span>
-                  <span id="sim-res-balcao-lucro" class="text-sm text-forest-700">R$ 12,01 (60,1%)</span>
-                </div>
-              </div>
 
-              <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/70 space-y-1.5 text-xs">
-                <div class="flex justify-between items-center font-bold text-rose-950">
-                  <span>🛵 iFood Delivery</span>
-                  <span class="bg-rose-200 text-rose-900 text-[10px] px-2 py-0.5 rounded">COMISSÃO 23%</span>
+                <!-- 99Food -->
+                <div class="p-3.5 rounded-xl border border-amber-200 bg-amber-50/70 space-y-1.5 text-xs">
+                  <div class="flex justify-between items-center font-bold text-amber-950 pb-1 border-b border-amber-200">
+                    <span>🟡 99Food</span>
+                    <span class="bg-amber-200 text-amber-900 text-[9px] px-1.5 py-0.2 rounded font-black">18%</span>
+                  </div>
+                  <div class="flex justify-between text-slate-600 text-[11px]">
+                    <span>(-) CMV:</span>
+                    <span id="sim-res-99food-cmv">R$ 7,59</span>
+                  </div>
+                  <div class="flex justify-between text-slate-600 text-[11px]">
+                    <span>(-) Taxa 99:</span>
+                    <span id="sim-res-99food-taxa">- R$ 4,32</span>
+                  </div>
+                  <div class="pt-1.5 border-t border-amber-200">
+                    <span class="text-slate-500 text-[10px] block">Lucro Líquido:</span>
+                    <span id="sim-res-99food-lucro" class="text-sm font-black text-amber-800 block">R$ 12,09 (50,4%)</span>
+                  </div>
                 </div>
-                <div class="flex justify-between text-slate-600">
-                  <span>(-) CMV Insumos:</span>
-                  <span id="sim-res-ifood-cmv">R$ 7,59</span>
-                </div>
-                <div class="flex justify-between text-slate-600">
-                  <span>(-) Comissão iFood:</span>
-                  <span id="sim-res-ifood-taxa" class="text-rose-600">- R$ 5,75</span>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-rose-200 font-black">
-                  <span class="text-rose-950">Lucro Líquido:</span>
-                  <span id="sim-res-ifood-lucro" class="text-sm text-rose-700">R$ 11,66 (46,6%)</span>
+
+                <!-- iFood -->
+                <div class="p-3.5 rounded-xl border border-rose-200 bg-rose-50/70 space-y-1.5 text-xs">
+                  <div class="flex justify-between items-center font-bold text-rose-950 pb-1 border-b border-rose-200">
+                    <span>🛵 iFood</span>
+                    <span class="bg-rose-200 text-rose-900 text-[9px] px-1.5 py-0.2 rounded font-black">23%</span>
+                  </div>
+                  <div class="flex justify-between text-slate-600 text-[11px]">
+                    <span>(-) CMV:</span>
+                    <span id="sim-res-ifood-cmv">R$ 7,59</span>
+                  </div>
+                  <div class="flex justify-between text-slate-600 text-[11px]">
+                    <span>(-) Taxa iFood:</span>
+                    <span id="sim-res-ifood-taxa">- R$ 5,75</span>
+                  </div>
+                  <div class="pt-1.5 border-t border-rose-200">
+                    <span class="text-slate-500 text-[10px] block">Lucro Líquido:</span>
+                    <span id="sim-res-ifood-lucro" class="text-sm font-black text-rose-700 block">R$ 11,66 (46,6%)</span>
+                  </div>
                 </div>
               </div>
 
               <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900" id="sim-dica-lucro">
-                <!-- Dica -->
+                <!-- Dica comparativa -->
               </div>
             </div>
           </div>
@@ -2040,7 +2250,7 @@
       ];
 
       let orderIdSeq = 200;
-      const canais = ['Salão', 'Balcão', 'iFood'];
+      const canais = ['Salão', 'Balcão', 'iFood', '99Food'];
       const pagtos = ['PIX', 'Cartão Crédito', 'Cartão Débito', 'Dinheiro'];
 
       outDias.forEach(od => {
@@ -2052,27 +2262,45 @@
           const pagto = pagtos[i % pagtos.length];
           const hora = `${String(12 + (i % 10)).padStart(2, '0')}:${String((i * 13) % 60).padStart(2, '0')}`;
           
-          let totTicket = isLast ? (od.meta - diaTotal) : (canal === 'iFood' ? 44.00 : 38.00);
+          let totTicket = isLast ? (od.meta - diaTotal) : (canal === 'iFood' ? 44.00 : (canal === '99Food' ? 40.00 : 38.00));
           if (totTicket <= 10) totTicket = 38.00;
           diaTotal += totTicket;
 
           const cmvTicket = Math.round(totTicket * 0.27 * 100) / 100;
-          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : totTicket * 0.02;
+          const taxaPct = canal === 'iFood' ? 0.23 : (canal === '99Food' ? 0.18 : 0.02);
+          const taxaTicket = totTicket * taxaPct;
           const lucroTicket = totTicket - cmvTicket - taxaTicket;
+
+          const identFinal = canal === 'iFood'
+            ? `Pedido iFood #${4000 + orderIdSeq}`
+            : (canal === '99Food' ? `Pedido 99Food #${5000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada'));
+
+          let itemDesc = '1x Combo X-Burguer Completo (Reajustado)';
+          let itemCod = 'PROD004';
+          let itemNome = 'Combo X-Burguer Completo';
+          if (canal === 'iFood') {
+            itemDesc = '1x X-Bacon Especial iFood | 1x Refrigerante Lata';
+            itemCod = 'PROD002';
+            itemNome = 'X-Bacon Especial';
+          } else if (canal === '99Food') {
+            itemDesc = '1x X-Burguer Tradicional 99Food | 1x Batata Rústica';
+            itemCod = 'PROD001';
+            itemNome = 'X-Burguer Tradicional';
+          }
 
           peds.push({
             id: orderIdSeq,
             dataHora: `2026-10-${od.dia} ${hora}`,
             dataIso: `2026-10-${od.dia}`,
-            identificacao: canal === 'iFood' ? `Pedido iFood #${4000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada'),
+            identificacao: identFinal,
             canal: canal,
             pagto: pagto,
             total: Math.round(totTicket * 100) / 100,
             cmv: cmvTicket,
             lucro: Math.round(lucroTicket * 100) / 100,
-            itens: canal === 'iFood' ? '1x X-Bacon Especial iFood | 1x Refrigerante Lata' : '1x Combo X-Burguer Completo (Reajustado)',
+            itens: itemDesc,
             itensDetalhados: [
-              { produtoCodigo: canal === 'iFood' ? 'PROD002' : 'PROD004', nome: canal === 'iFood' ? 'X-Bacon Especial' : 'Combo X-Burguer Completo', qtd: 1, precoUnit: totTicket, cmvUnit: cmvTicket }
+              { produtoCodigo: itemCod, nome: itemNome, qtd: 1, precoUnit: totTicket, cmvUnit: cmvTicket }
             ]
           });
         }
@@ -2660,15 +2888,28 @@
     function mudarCanalPdv(canal) {
       const boxIfood = document.getElementById('box-associacao-ifood');
       const identInput = document.getElementById('pdv-ident-input');
+      const labelBox = document.getElementById('label-delivery-box');
+      const tagBox = document.getElementById('tag-delivery-box');
+
       if (canal === 'iFood') {
         boxIfood.classList.remove('hidden');
+        boxIfood.className = 'p-2.5 bg-rose-50/80 border border-rose-200 rounded-xl space-y-2';
         identInput.value = 'Pedido iFood #4092';
+        if (labelBox) labelBox.innerHTML = '<i data-lucide="bike" class="w-3.5 h-3.5 text-rose-600"></i> Pedido iFood Delivery';
+        if (tagBox) { tagBox.textContent = 'iFood (23%)'; tagBox.className = 'bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full font-black text-[9px]'; }
+      } else if (canal === '99Food') {
+        boxIfood.classList.remove('hidden');
+        boxIfood.className = 'p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2';
+        identInput.value = 'Pedido 99Food #9281';
+        if (labelBox) labelBox.innerHTML = '<i data-lucide="bike" class="w-3.5 h-3.5 text-amber-600"></i> Pedido 99Food Delivery';
+        if (tagBox) { tagBox.textContent = '99Food (18%)'; tagBox.className = 'bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-black text-[9px]'; }
       } else {
         boxIfood.classList.add('hidden');
         identInput.value = canal === 'Salão' ? 'Mesa 03' : 'Balcão / Retirada';
       }
       renderPdvProducts();
       renderComanda();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function renderPdvProducts(filtroTexto = '') {
@@ -2687,11 +2928,13 @@
       }
 
       filtrados.forEach(prod => {
-        const preco = canal === 'iFood' ? prod.precoIfood : prod.precoVenda;
+        const preco = (canal === 'iFood' || canal === '99Food') ? (prod.precoIfood || prod.precoVenda * 1.25) : prod.precoVenda;
 
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs hover:border-forest-500 transition cursor-pointer flex flex-col justify-between';
         card.onclick = () => abrirModalPersonalizarItem(prod.codigo);
+
+        const canalRotulo = canal === 'iFood' ? 'Preço iFood (23%)' : (canal === '99Food' ? 'Preço 99Food (18%)' : 'Preço Balcão');
 
         card.innerHTML = `
           <div>
@@ -2708,7 +2951,7 @@
           </div>
 
           <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-            <span class="text-[10px] text-slate-400 font-semibold">${canal === 'iFood' ? 'Preço iFood' : 'Preço Balcão'}</span>
+            <span class="text-[10px] text-slate-400 font-semibold">${canalRotulo}</span>
             <button class="bg-forest-600 hover:bg-forest-700 text-white font-extrabold px-2.5 py-1 rounded-lg text-xs">
               + Pedir
             </button>
@@ -2726,7 +2969,7 @@
       if (!prod) return;
 
       const canal = document.getElementById('pdv-canal-select').value;
-      const precoBase = canal === 'iFood' ? prod.precoIfood : prod.precoVenda;
+      const precoBase = (canal === 'iFood' || canal === '99Food') ? (prod.precoIfood || prod.precoVenda * 1.25) : prod.precoVenda;
 
       store.customizing = {
         produto: prod,
@@ -2951,9 +3194,12 @@
       const ifoodCod = document.getElementById('pdv-ifood-codigo').value || '';
       const ifoodCliente = document.getElementById('pdv-ifood-cliente').value || '';
       
-      const identificacaoFinal = canal === 'iFood' 
-        ? `Pedido iFood ${ifoodCod} (${ifoodCliente})` 
-        : ident;
+      let identificacaoFinal = ident;
+      if (canal === 'iFood') {
+        identificacaoFinal = `Pedido iFood ${ifoodCod || '#4092'} (${ifoodCliente || 'Cliente iFood'})`;
+      } else if (canal === '99Food') {
+        identificacaoFinal = `Pedido 99Food ${ifoodCod || '#9281'} (${ifoodCliente || 'Cliente 99'})`;
+      }
 
       const orderId = store.orderCounter++;
       document.getElementById('pdv-comanda-num').textContent = store.orderCounter;
@@ -2974,7 +3220,8 @@
         });
       });
 
-      const taxa = canal === 'iFood' ? subtotal * 0.23 : subtotal * 0.02;
+      const taxaPct = canal === 'iFood' ? 0.23 : (canal === '99Food' ? 0.18 : 0.02);
+      const taxa = subtotal * taxaPct;
       const lucro = subtotal - cmvTotal - taxa;
 
       const itensDetalhados = store.currentOrder.items.map(it => ({
@@ -3053,6 +3300,139 @@
     }
 
     // ================================================================
+    // IMPRESSÃO TÉRMICA DE COMANDA (58mm / 80mm)
+    // ================================================================
+    function imprimirTicketTermico(dados) {
+      const janela = window.open('', '_blank', 'width=380,height=600');
+      if (!janela) {
+        alert('Por favor, autorize a abertura de popups para imprimir o cupom térmico!');
+        return;
+      }
+      const itensHtml = dados.itens.map(it => `
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px;">
+          <span><strong>${it.qtd}x</strong> ${it.nome}</span>
+          ${it.total ? `<span>${it.total}</span>` : ''}
+        </div>
+        ${it.modificacoes ? `<div style="font-size:10px; color:#333; margin-left:12px; margin-bottom:4px;">>> ${it.modificacoes}</div>` : ''}
+      `).join('');
+
+      janela.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Comanda #${dados.id}</title>
+          <style>
+            @page { margin: 0; size: 80mm auto; }
+            body {
+              font-family: 'Courier New', Courier, monospace;
+              width: 74mm;
+              margin: 0 auto;
+              padding: 10px 4px;
+              color: #000;
+              background: #fff;
+            }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .divider { border-top: 1px dashed #000; margin: 6px 0; }
+            .double-divider { border-top: 2px dashed #000; margin: 8px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="center bold" style="font-size:16px;">NALIM FOOD SERVICE</div>
+          <div class="center" style="font-size:11px;">SISTEMA DE GESTÃO & CONTROLE</div>
+          <div class="double-divider"></div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;" class="bold">
+            <span>PEDIDO: #${dados.id}</span>
+            <span>${dados.dataHora || new Date().toLocaleTimeString()}</span>
+          </div>
+          <div style="font-size:12px; margin-top:2px;">
+            <span>CANAL: <strong>${(dados.canal || 'BALCÃO').toUpperCase()}</strong></span>
+          </div>
+          <div style="font-size:12px; margin-top:2px;">
+            <span>CLIENTE/MESA: <strong>${dados.identificacao || 'Balcão'}</strong></span>
+          </div>
+          <div class="divider"></div>
+          <div class="bold" style="font-size:11px; margin-bottom:4px;">ITENS DA COMANDA:</div>
+          ${itensHtml}
+          <div class="divider"></div>
+          <div style="display:flex; justify-content:space-between; font-size:14px;" class="bold">
+            <span>TOTAL:</span>
+            <span>${dados.total}</span>
+          </div>
+          <div style="font-size:11px; margin-top:3px;">
+            <span>FORMA PAGTO: ${dados.pagto || 'NÃO INFORMADO'}</span>
+          </div>
+          <div class="double-divider"></div>
+          <div class="center" style="font-size:10px;">Comanda de Produção e Expedição</div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          <\/script>
+        </body>
+        </html>
+      `);
+      janela.document.close();
+    }
+
+    function imprimirComandaAtual() {
+      if (store.currentOrder.items.length === 0) {
+        alert('A comanda está vazia! Adicione itens no cardápio antes de imprimir.');
+        return;
+      }
+      const canal = document.getElementById('pdv-canal-select').value;
+      const ident = document.getElementById('pdv-ident-input').value || 'Balcão';
+      const ifoodCod = document.getElementById('pdv-ifood-codigo').value || '';
+      const ifoodCliente = document.getElementById('pdv-ifood-cliente').value || '';
+      let identificacaoFinal = ident;
+      if (canal === 'iFood') identificacaoFinal = `Pedido iFood ${ifoodCod || '#4092'} (${ifoodCliente || 'iFood'})`;
+      else if (canal === '99Food') identificacaoFinal = `Pedido 99Food ${ifoodCod || '#9281'} (${ifoodCliente || '99Food'})`;
+
+      let total = 0;
+      const itensFormatados = store.currentOrder.items.map(it => {
+        const itemTot = it.precoUnit * it.qtd;
+        total += itemTot;
+        return {
+          nome: it.nome,
+          qtd: it.qtd,
+          modificacoes: it.modificacoes,
+          total: formatarMoeda(itemTot)
+        };
+      });
+
+      imprimirTicketTermico({
+        id: store.orderCounter,
+        canal: canal,
+        identificacao: identificacaoFinal,
+        dataHora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        itens: itensFormatados,
+        total: formatarMoeda(total),
+        pagto: store.selectedPaymentMethod
+      });
+    }
+
+    function imprimirComandaKds(id) {
+      const ord = store.kdsOrders.find(o => o.id === id);
+      if (!ord) return;
+      const itensFormatados = ord.items.map(it => ({
+        nome: it.nome,
+        qtd: it.qtd,
+        modificacoes: it.modificacoes,
+        total: ''
+      }));
+      imprimirTicketTermico({
+        id: ord.id,
+        canal: ord.canal || 'Cozinha',
+        identificacao: ord.identificacao,
+        dataHora: ord.dataHora,
+        itens: itensFormatados,
+        total: '---',
+        pagto: 'Confirmado'
+      });
+    }
+
+    // ================================================================
     // KDS / COZINHA
     // ================================================================
     function renderKds() {
@@ -3088,9 +3468,14 @@
                 <span class="text-base font-black text-slate-900">#${ord.id}</span>
                 <span class="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">${ord.identificacao}</span>
               </div>
-              <span class="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
-                ⏱️ ${ord.tempoDecorrido}
-              </span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="imprimirComandaKds(${ord.id})" class="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition" title="Reimprimir Cupom Térmico (80mm)">
+                  <i data-lucide="printer" class="w-4 h-4"></i>
+                </button>
+                <span class="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
+                  ⏱️ ${ord.tempoDecorrido}
+                </span>
+              </div>
             </div>
 
             <div class="mt-3 space-y-1">
@@ -3634,7 +4019,7 @@
       peds.forEach(p => {
         fat += p.total;
         cmv += p.cmv;
-        taxas += (p.canal === 'iFood' ? p.total * 0.23 : p.total * 0.02);
+        taxas += (p.canal === 'iFood' ? p.total * 0.23 : (p.canal === '99Food' ? p.total * 0.18 : p.total * 0.02));
         const dNum = p.dataIso ? parseInt(p.dataIso.split('-')[2], 10) : 1;
         dias[dNum] = (dias[dNum] || 0) + p.total;
       });
@@ -3710,7 +4095,7 @@
         pedidosDoMes.forEach(ped => {
           fatTotal += ped.total;
           cmvTotal += ped.cmv;
-          const t = ped.canal === 'iFood' ? ped.total * 0.23 : ped.total * 0.02;
+          const t = ped.canal === 'iFood' ? ped.total * 0.23 : (ped.canal === '99Food' ? ped.total * 0.18 : ped.total * 0.02);
           taxasTotal += t;
 
           // Extrai o dia do pedido (ex: "03" ou 3)
@@ -3732,7 +4117,8 @@
                 st.vendasQtd += it.qtd;
                 st.faturamento += it.precoUnit * it.qtd;
                 st.cmvGerado += it.cmvUnit * it.qtd;
-                const txItem = (ped.canal === 'iFood' ? 0.23 : 0.02) * (it.precoUnit * it.qtd);
+                const txRate = ped.canal === 'iFood' ? 0.23 : (ped.canal === '99Food' ? 0.18 : 0.02);
+                const txItem = txRate * (it.precoUnit * it.qtd);
                 st.taxasGeradas += txItem;
                 st.margemGerada = st.faturamento - st.cmvGerado - st.taxasGeradas;
               }
@@ -4033,6 +4419,9 @@
         });
       }
 
+      // Renderiza Engenharia de Cardápio (Matriz BCG Gastronômica)
+      renderEngenhariaCardapio(produtosArray);
+
       // Renderiza gráficos com os dias reais de venda do mês
       renderCharts(peDiario, diasComVenda, mesAtivo);
     }
@@ -4212,6 +4601,210 @@
     }
 
     // ================================================================
+    // 1. ENGENHARIA DE CARDÁPIO (MATRIZ BCG GASTRONÔMICA)
+    // ================================================================
+    function renderEngenhariaCardapio(produtosArray) {
+      if (!produtosArray || produtosArray.length === 0) {
+        ['estrelas', 'burros', 'quebras', 'caes'].forEach(tipo => {
+          const el = document.getElementById(`bcg-list-${tipo}`);
+          const cnt = document.getElementById(`bcg-count-${tipo}`);
+          if (cnt) cnt.textContent = '0 itens';
+          if (el) el.innerHTML = '<span class="text-[10px] text-slate-400 italic block">Sem vendas no período.</span>';
+        });
+        return;
+      }
+
+      // Calcula volume médio e margem percentual média de todos os produtos vendidos
+      let somaQtd = 0;
+      let somaMargemPct = 0;
+      produtosArray.forEach(p => {
+        somaQtd += p.vendasQtd;
+        const mPct = p.faturamento > 0 ? (p.margemGerada / p.faturamento) * 100 : 0;
+        somaMargemPct += mPct;
+      });
+      const mediaQtd = somaQtd / produtosArray.length;
+      const mediaMargemPct = somaMargemPct / produtosArray.length;
+
+      const estrelas = [];
+      const burros = [];
+      const quebras = [];
+      const caes = [];
+
+      produtosArray.forEach(p => {
+        const mPct = p.faturamento > 0 ? (p.margemGerada / p.faturamento) * 100 : 0;
+        const itemInfo = {
+          nome: p.nome,
+          qtd: p.vendasQtd,
+          margemPct: mPct,
+          lucro: p.margemGerada
+        };
+
+        if (p.vendasQtd >= mediaQtd && mPct >= mediaMargemPct) {
+          estrelas.push(itemInfo);
+        } else if (p.vendasQtd >= mediaQtd && mPct < mediaMargemPct) {
+          burros.push(itemInfo);
+        } else if (p.vendasQtd < mediaQtd && mPct >= mediaMargemPct) {
+          quebras.push(itemInfo);
+        } else {
+          caes.push(itemInfo);
+        }
+      });
+
+      function renderBcgList(list, elId, countId, badgeColor) {
+        const el = document.getElementById(elId);
+        const cnt = document.getElementById(countId);
+        if (cnt) cnt.textContent = `${list.length} item${list.length === 1 ? '' : 's'}`;
+        if (!el) return;
+        if (list.length === 0) {
+          el.innerHTML = '<span class="text-[10px] text-slate-400 italic block">Nenhum item neste quadrante.</span>';
+          return;
+        }
+        el.innerHTML = list.map(item => `
+          <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100 shadow-2xs text-[11px]">
+            <span class="font-bold text-slate-800 truncate mr-2">${item.nome}</span>
+            <div class="text-right flex-shrink-0">
+              <span class="font-black ${badgeColor}">${formatarPct(item.margemPct, 1)}</span>
+              <span class="text-[9px] text-slate-400 block">${item.qtd} un. vendidas</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      renderBcgList(estrelas, 'bcg-list-estrelas', 'bcg-count-estrelas', 'text-emerald-700');
+      renderBcgList(burros, 'bcg-list-burros', 'bcg-count-burros', 'text-blue-700');
+      renderBcgList(quebras, 'bcg-list-quebras', 'bcg-count-quebras', 'text-purple-700');
+      renderBcgList(caes, 'bcg-list-caes', 'bcg-count-caes', 'text-rose-700');
+    }
+
+    // ================================================================
+    // 2. AUDITORIA DE ESTOQUE (CMV TEÓRICO VS. REAL)
+    // ================================================================
+    function calcularAuditoriaEstoque() {
+      const data = getActiveData();
+      const estIni = parseFloat(document.getElementById('aud-est-inicial')?.value) || 0;
+      const compras = parseFloat(document.getElementById('aud-compras')?.value) || 0;
+      const estFin = parseFloat(document.getElementById('aud-est-final')?.value) || 0;
+
+      // CMV Real apurado = Estoque Inicial + Compras - Estoque Final
+      const cmvReal = Math.max(0, estIni + compras - estFin);
+
+      // CMV Teórico calculado a partir dos pedidos reais do mês ativo
+      const mesAtivo = store.activeMonth;
+      const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mesAtivo));
+      let cmvTeorico = 0;
+      peds.forEach(p => cmvTeorico += p.cmv);
+      if (cmvTeorico === 0) cmvTeorico = 639.95; // fallback demonstrativo
+
+      const diferenca = cmvReal - cmvTeorico;
+      const pctDiferenca = cmvTeorico > 0 ? (diferenca / cmvTeorico) * 100 : 0;
+
+      const elReal = document.getElementById('aud-cmv-real-val');
+      const elTeorico = document.getElementById('aud-cmv-teorico-val');
+      const elDif = document.getElementById('aud-diferenca-val');
+      const elBox = document.getElementById('aud-box-diferenca');
+      const elDesc = document.getElementById('aud-diferenca-desc');
+      const elStatus = document.getElementById('aud-status-badge');
+
+      if (elReal) elReal.textContent = formatarMoeda(cmvReal);
+      if (elTeorico) elTeorico.textContent = formatarMoeda(cmvTeorico);
+
+      if (elDif && elBox && elDesc && elStatus) {
+        if (diferenca > 0) {
+          elDif.textContent = `- ${formatarMoeda(diferenca)} (${formatarPct(pctDiferenca, 1)})`;
+          if (pctDiferenca > 5) {
+            elBox.className = 'p-4 rounded-xl border border-rose-200 bg-rose-50/70';
+            elDif.className = 'text-lg font-black text-rose-700 mt-0.5';
+            elDesc.textContent = 'Alerta Crítico: Desvio elevado ou sobrepeso na montagem de porções!';
+            elStatus.innerHTML = '<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800">⚠️ Desvio Elevado (> 5%)</span>';
+          } else {
+            elBox.className = 'p-4 rounded-xl border border-amber-200 bg-amber-50/70';
+            elDif.className = 'text-lg font-black text-amber-700 mt-0.5';
+            elDesc.textContent = 'Sobras moderadas de chapa ou pequenas quebras aceitáveis.';
+            elStatus.innerHTML = '<span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">⚠️ Atenção Moderada (2-5%)</span>';
+          }
+        } else {
+          elBox.className = 'p-4 rounded-xl border border-emerald-200 bg-emerald-50/70';
+          elDif.textContent = `+ ${formatarMoeda(Math.abs(diferenca))} (Econômico)`;
+          elDif.className = 'text-lg font-black text-emerald-700 mt-0.5';
+          elDesc.textContent = 'Consumo de estoque dentro ou abaixo do previsto nas fichas técnicas.';
+          elStatus.innerHTML = '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">✅ Controle Impecável</span>';
+        }
+      }
+    }
+
+    function aplicarPerdaNoDre() {
+      const data = getActiveData();
+      const estIni = parseFloat(document.getElementById('aud-est-inicial')?.value) || 0;
+      const compras = parseFloat(document.getElementById('aud-compras')?.value) || 0;
+      const estFin = parseFloat(document.getElementById('aud-est-final')?.value) || 0;
+      const cmvReal = Math.max(0, estIni + compras - estFin);
+
+      const mesAtivo = store.activeMonth;
+      const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mesAtivo));
+      let cmvTeorico = 0;
+      peds.forEach(p => cmvTeorico += p.cmv);
+      if (cmvTeorico === 0) cmvTeorico = 639.95;
+
+      const perda = Math.max(0, cmvReal - cmvTeorico);
+      data.perdas = Math.round(perda * 100) / 100;
+      renderDashboard();
+      alert(`✓ Perda apurada de ${formatarMoeda(data.perdas)} sincronizada com sucesso no DRE do mês ${store.meses[mesAtivo].nome}!`);
+    }
+
+    // ================================================================
+    // 3. COMPARTILHAMENTO EXECUTIVO NO WHATSAPP (1 CLIQUE)
+    // ================================================================
+    function compartilharFechamentoWhatsApp() {
+      const data = getActiveData();
+      const mesAtivo = store.activeMonth;
+      const resumo = getResumoMes(mesAtivo);
+      
+      const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mesAtivo));
+      let fatBalcao = 0;
+      let fatIfood = 0;
+      let fat99 = 0;
+      peds.forEach(p => {
+        if (p.canal === 'iFood') fatIfood += p.total;
+        else if (p.canal === '99Food') fat99 += p.total;
+        else fatBalcao += p.total;
+      });
+
+      const fatTotal = resumo.fat;
+      const lucroOp = resumo.lucro;
+      const margem = resumo.margemPct;
+      const totFix = data.custosFixos.reduce((a, c) => a + c.valor, 0);
+      const margemContrPct = fatTotal > 0 ? (resumo.fat - resumo.cmv - resumo.taxas) / fatTotal : 0.5;
+      const peDiario = margemContrPct > 0 ? (totFix / 26) / margemContrPct : 0;
+      const ticket = peds.length > 0 ? (fatTotal / peds.length) : 0;
+      const fatDia = resumo.diasTrabalhados > 0 ? (fatTotal / resumo.diasTrabalhados) : 0;
+
+      const hoje = new Date().toLocaleDateString('pt-BR');
+      const score = document.getElementById('dash-indice-nalim-num')?.textContent || '100';
+      const classificacao = document.getElementById('dash-classificacao-badge')?.textContent || 'SAUDÁVEL';
+
+      const msg = `📊 *NALIM GESTÃO & FINANÇAS — FECHAMENTO EXECUTIVO*
+📅 *Data:* ${hoje} | *Mês:* ${store.meses[mesAtivo].nome}
+----------------------------------------
+💰 *Faturamento Total:* ${formatarMoeda(fatTotal)}
+💵 *Lucro Operacional:* ${formatarMoeda(lucroOp)} (${formatarPct(margem, 1)})
+🎯 *Ponto de Equilíbrio/Dia:* ${formatarMoeda(peDiario)}
+📈 *Média Faturada/Dia:* ${formatarMoeda(fatDia)}
+🛒 *Total de Pedidos:* ${peds.length} | *Ticket Médio:* ${formatarMoeda(ticket)}
+
+🛵 *Vendas por Canal de Atendimento:*
+• 🏪 Balcão / Salão: ${formatarMoeda(fatBalcao)}
+• 🛵 iFood Delivery: ${formatarMoeda(fatIfood)}
+• 🟡 99Food Delivery: ${formatarMoeda(fat99)}
+
+🏆 *Índice NALIM de Saúde:* ${score}/100 (${classificacao})
+----------------------------------------
+_Painel Estratégico NALIM Food Service_`;
+
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
+    }
+
+    // ================================================================
     // SIMULADOR DE PREÇO IFOOD
     // ================================================================
     function popularSimulador() {
@@ -4231,6 +4824,10 @@
         document.getElementById('sim-cmv-input').value = cmv.toFixed(2);
         document.getElementById('sim-preco-balcao').value = prod.precoVenda.toFixed(2);
         document.getElementById('sim-preco-ifood').value = prod.precoIfood.toFixed(2);
+        const preco99El = document.getElementById('sim-preco-99food');
+        if (preco99El) {
+          preco99El.value = (prod.preco99 || Math.round(prod.precoVenda * 1.20)).toFixed(2);
+        }
         executarSimulacao();
       }
     }
@@ -4239,23 +4836,42 @@
       const cmv = parseFloat(document.getElementById('sim-cmv-input').value) || 0;
       const pb = parseFloat(document.getElementById('sim-preco-balcao').value) || 0;
       const pi = parseFloat(document.getElementById('sim-preco-ifood').value) || 0;
+      const p99El = document.getElementById('sim-preco-99food');
+      const p99 = p99El ? (parseFloat(p99El.value) || 0) : (pb * 1.20);
+
       const tCard = (parseFloat(document.getElementById('sim-taxa-card').value) || 0) / 100;
       const tIfood = (parseFloat(document.getElementById('sim-taxa-ifood').value) || 0) / 100;
+      const t99El = document.getElementById('sim-taxa-99food');
+      const t99 = t99El ? (parseFloat(t99El.value) || 0) / 100 : 0.18;
 
+      // 1. Balcão
       const vCard = pb * tCard;
       const lBalcao = pb - cmv - vCard;
       document.getElementById('sim-res-balcao-cmv').textContent = formatarMoeda(cmv);
       document.getElementById('sim-res-balcao-taxa').textContent = formatarMoeda(vCard);
       document.getElementById('sim-res-balcao-lucro').textContent = `${formatarMoeda(lBalcao)} (${formatarPct(pb > 0 ? ((lBalcao/pb)*100) : 0, 1)})`;
 
+      // 2. 99Food
+      const v99 = p99 * t99;
+      const l99 = p99 - cmv - v99;
+      const res99Cmv = document.getElementById('sim-res-99food-cmv');
+      if (res99Cmv) res99Cmv.textContent = formatarMoeda(cmv);
+      const res99Taxa = document.getElementById('sim-res-99food-taxa');
+      if (res99Taxa) res99Taxa.textContent = `- ${formatarMoeda(v99)}`;
+      const res99Lucro = document.getElementById('sim-res-99food-lucro');
+      if (res99Lucro) res99Lucro.textContent = `${formatarMoeda(l99)} (${formatarPct(p99 > 0 ? ((l99/p99)*100) : 0, 1)})`;
+
+      // 3. iFood
       const vIfood = pi * tIfood;
       const lIfood = pi - cmv - vIfood;
       document.getElementById('sim-res-ifood-cmv').textContent = formatarMoeda(cmv);
       document.getElementById('sim-res-ifood-taxa').textContent = `- ${formatarMoeda(vIfood)}`;
       document.getElementById('sim-res-ifood-lucro').textContent = `${formatarMoeda(lIfood)} (${formatarPct(pi > 0 ? ((lIfood/pi)*100) : 0, 1)})`;
 
-      const precoMin = (cmv + lBalcao) / (1 - tIfood);
-      document.getElementById('sim-dica-lucro').innerHTML = `💡 Para ter a mesma sobra do balcão (<strong>${formatarMoeda(lBalcao)}</strong>), seu preço no iFood deve ser de no mínimo <strong>${formatarMoeda(precoMin)}</strong>.`;
+      // Preços mínimos sugeridos para igualar lucro do balcão
+      const precoMinIfood = (cmv + lBalcao) / (1 - tIfood);
+      const precoMin99 = (cmv + lBalcao) / (1 - t99);
+      document.getElementById('sim-dica-lucro').innerHTML = `💡 <strong>Preço Recomendado NALIM</strong> para ter a mesma sobra do balcão (<strong>${formatarMoeda(lBalcao)}</strong>):<br>• No <strong>99Food (18%)</strong>: cobre no mínimo <strong>${formatarMoeda(precoMin99)}</strong><br>• No <strong>iFood (23%)</strong>: cobre no mínimo <strong>${formatarMoeda(precoMinIfood)}</strong>`;
     }
 
     // ================================================================
