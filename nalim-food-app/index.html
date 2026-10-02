@@ -1559,10 +1559,7 @@
         }
       ],
 
-      pedidos: [
-        { id: 101, dataHora: '2026-08-31 18:30', identificacao: 'Mesa 01', canal: 'Salão', pagto: 'PIX', total: 56.00, cmv: 21.05, lucro: 34.95, itens: '2x X-Bacon, 1x Refri' },
-        { id: 102, dataHora: '2026-08-31 19:10', identificacao: 'Pedido iFood #1089 (Mariana)', canal: 'iFood', pagto: 'Cartão', total: 69.00, cmv: 25.27, lucro: 27.86, itens: '1x Combo, 1x X-Bacon' }
-      ],
+      pedidos: [],
 
       meses: {
         '2026-08': {
@@ -1787,13 +1784,13 @@
 
         '2026-10': {
           nome: 'Outubro / 2026 (Atual)',
-          faturamento: 479.00,
-          perdas: 30.00,
-          pedidosCount: 6,
-          ticketMedio: 79.83,
+          faturamento: 0.0,
+          perdas: 0.0,
+          pedidosCount: 0,
+          ticketMedio: 0.0,
           diasTrabalhados: 1,
-          score: 65.0,
-          diario: [479],
+          score: 0.0,
+          diario: [],
           insumos: [],
           produtos: [],
           custosFixos: []
@@ -2042,7 +2039,6 @@
       }
 
       renderDashboard();
-      renderCharts();
       renderProdutosAccordion();
       renderInsumos();
       renderCustos();
@@ -2391,6 +2387,14 @@
       const taxa = canal === 'iFood' ? subtotal * 0.23 : subtotal * 0.02;
       const lucro = subtotal - cmvTotal - taxa;
 
+      const itensDetalhados = store.currentOrder.items.map(it => ({
+        produtoCodigo: it.produtoCodigo,
+        nome: it.nome,
+        qtd: it.qtd,
+        precoUnit: it.precoUnit,
+        cmvUnit: it.cmvUnit
+      }));
+
       // 1. KDS
       store.kdsOrders.unshift({
         id: orderId,
@@ -2403,16 +2407,20 @@
       });
 
       // 2. Histórico Pedidos
+      const hojeIso = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const agoraHora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       store.pedidos.unshift({
         id: orderId,
-        dataHora: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        dataHora: `${hojeIso} ${agoraHora}`,
+        dataIso: hojeIso,
         identificacao: identificacaoFinal,
         canal: canal,
         pagto: store.selectedPaymentMethod,
         total: subtotal,
         cmv: cmvTotal,
         lucro: lucro,
-        itens: nomes.join(' | ')
+        itens: nomes.join(' | '),
+        itensDetalhados: itensDetalhados
       });
 
       // 3. Faturamento Hoje
@@ -2903,14 +2911,29 @@
     // ================================================================
     function renderDashboard() {
       const data = getActiveData();
+      const mesAtivo = store.activeMonth; // ex: '2026-10' ou '2026-08'
 
-      // 1. Processar todas as vendas reais de produtos (da lista de pedidos ou simulação base da planilha)
-      let fatTotal = 0;
-      let cmvTotal = 0;
-      let taxasTotal = 0;
-      let pedidosCount = store.pedidos.length;
-      
-      // Dicionário de estatísticas por produto para Top 5 e Desempenho
+      // 1. Filtrar pedidos que pertencem estritamente ao mês ativo
+      const pedidosDoMes = store.pedidos.filter(p => {
+        // Se tem dataIso (YYYY-MM-DD), checa se começa com mesAtivo
+        if (p.dataIso) return p.dataIso.startsWith(mesAtivo);
+        // Se tem dataHora, tenta converter ou verificar
+        if (p.dataHora) {
+          // pode estar no formato YYYY-MM-DD HH:mm ou DD/MM/YYYY HH:mm
+          if (p.dataHora.includes('/')) {
+            const partes = p.dataHora.split(' ')[0].split('/');
+            if (partes.length === 3) {
+              const anoMes = `${partes[2]}-${partes[1]}`;
+              return anoMes === mesAtivo;
+            }
+          } else {
+            return p.dataHora.startsWith(mesAtivo);
+          }
+        }
+        return false;
+      });
+
+      // 2. Estatísticas por Produto (Calculado a partir dos itens vendidos nos pedidos)
       const produtoStats = {};
       data.produtos.forEach(p => {
         produtoStats[p.codigo] = {
@@ -2927,62 +2950,87 @@
         };
       });
 
-      // Se houver pedidos inseridos na sessão, calcula sobre eles; caso contrário, usa a base consolidada do mês
-      if (store.pedidos.length > 2) {
-        store.pedidos.forEach(ped => {
+      let fatTotal = 0;
+      let cmvTotal = 0;
+      let taxasTotal = 0;
+      const pedidosCount = pedidosDoMes.length;
+
+      // Agrupamento por dia do mês (ex: dia 02, dia 03...)
+      const diasComVenda = {};
+
+      if (pedidosDoMes.length > 0) {
+        // CÁLCULO 100% REAL COM BASE NOS PEDIDOS VENDIDOS
+        pedidosDoMes.forEach(ped => {
           fatTotal += ped.total;
           cmvTotal += ped.cmv;
           const t = ped.canal === 'iFood' ? ped.total * 0.23 : ped.total * 0.02;
           taxasTotal += t;
+
+          // Extrai o dia do pedido (ex: "03" ou 3)
+          let diaNum = 1;
+          if (ped.dataIso) {
+            diaNum = parseInt(ped.dataIso.split('-')[2], 10);
+          } else if (ped.dataHora) {
+            const pData = ped.dataHora.split(' ')[0];
+            if (pData.includes('/')) diaNum = parseInt(pData.split('/')[0], 10);
+            else if (pData.includes('-')) diaNum = parseInt(pData.split('-')[2], 10);
+          }
+          diasComVenda[diaNum] = (diasComVenda[diaNum] || 0) + ped.total;
+
+          // Se tiver os itens detalhados gravados no pedido:
+          if (ped.itensDetalhados && Array.isArray(ped.itensDetalhados)) {
+            ped.itensDetalhados.forEach(it => {
+              const st = produtoStats[it.produtoCodigo];
+              if (st) {
+                st.vendasQtd += it.qtd;
+                st.faturamento += it.precoUnit * it.qtd;
+                st.cmvGerado += it.cmvUnit * it.qtd;
+                const txItem = (ped.canal === 'iFood' ? 0.23 : 0.02) * (it.precoUnit * it.qtd);
+                st.taxasGeradas += txItem;
+                st.margemGerada = st.faturamento - st.cmvGerado - st.taxasGeradas;
+              }
+            });
+          }
         });
 
-        // Simula proporção para tabela dinâmica de produtos
-        data.produtos.forEach((prod, idx) => {
-          const st = produtoStats[prod.codigo];
-          const qtdVendida = Math.max(1, Math.floor((fatTotal / prod.precoVenda) * (0.4 / (idx + 1))));
-          st.vendasQtd = qtdVendida;
-          st.faturamento = qtdVendida * prod.precoVenda;
-          st.cmvGerado = qtdVendida * st.cmvUnit;
-          st.taxasGeradas = st.faturamento * 0.05;
-          st.margemGerada = st.faturamento - st.cmvGerado - st.taxasGeradas;
-        });
-      } else {
-        // Base Oficial Consolidada da Planilha NALIM V3.0
+      } else if (mesAtivo === '2026-08') {
+        // Se for o mês histórico de demonstração (Agosto/2026) e não houver pedidos novos inseridos:
         fatTotal = data.faturamento || 2537.00;
-        pedidosCount = data.pedidosCount || 86;
-
-        // Distribuição real dos produtos
         const mockVendas = [
-          { codigo: 'PROD001', qtd: 28 }, // X-Burger
-          { codigo: 'PROD002', qtd: 18 }, // X-Bacon
-          { codigo: 'PROD004', qtd: 22 }, // Combo X-Burguer
-          { codigo: 'PROD003', qtd: 35 }, // Refrigerante
-          { codigo: 'PROD005', qtd: 20 }  // Batata Rústica
+          { codigo: 'PROD001', qtd: 28 },
+          { codigo: 'PROD002', qtd: 18 },
+          { codigo: 'PROD004', qtd: 22 },
+          { codigo: 'PROD003', qtd: 35 },
+          { codigo: 'PROD005', qtd: 20 }
         ];
-
         cmvTotal = 0;
         taxasTotal = 0;
-
         mockVendas.forEach(mv => {
           const st = produtoStats[mv.codigo];
           if (st) {
             st.vendasQtd = mv.qtd;
             st.faturamento = mv.qtd * st.precoVenda;
             st.cmvGerado = mv.qtd * st.cmvUnit;
-            st.taxasGeradas = st.faturamento * 0.035; // média ponderada balcão / ifood
+            st.taxasGeradas = st.faturamento * 0.035;
             st.margemGerada = st.faturamento - st.cmvGerado - st.taxasGeradas;
-
             cmvTotal += st.cmvGerado;
             taxasTotal += st.taxasGeradas;
           }
         });
       }
 
-      // 2. Custos Fixos Totais
+      // 3. Custos Fixos Totais e Proporcionalidade
       const totFixos = data.custosFixos.reduce((acc, c) => acc + c.valor, 0);
-      const diasTrab = data.diasTrabalhados || 26;
+      
+      // Dias trabalhados: no mês corrente, calcula os dias que realmente tiveram vendas (mínimo 1)
+      const diasTrabalhadosReais = Object.keys(diasComVenda).length > 0 
+        ? Object.keys(diasComVenda).length 
+        : (data.diasTrabalhados || 26);
 
-      // 3. Impostos (Simples Nacional 6% vs MEI DAS R$ 75)
+      // Custo fixo proporcional aos dias decorridos/trabalhados no mês (base 26 dias úteis do padrão)
+      const custosFixosProporcionais = (totFixos / 26) * diasTrabalhadosReais;
+
+      // 4. Impostos (Simples Nacional 6% vs MEI DAS R$ 75)
       let impostosValor = 0;
       if (store.regimeTributario === 'MEI') {
         impostosValor = 75.00;
@@ -2992,55 +3040,50 @@
         document.getElementById('dre-imposto-label').textContent = '(-) Impostos (Simples Nacional 6%)';
       }
 
-      // 4. Margem de Contribuição e Lucro Líquido
+      // 5. Margem de Contribuição e Lucro
       const margemContrib = fatTotal - cmvTotal - taxasTotal - impostosValor;
-      const margemContribPct = fatTotal > 0 ? (margemContrib / fatTotal) : 0.55;
-      const perdas = data.perdas || 10.00;
-      const lucroOperacional = margemContrib - totFixos - perdas;
+      const margemContribPct = fatTotal > 0 ? (margemContrib / fatTotal) : 0.50;
+      const perdas = data.perdas || 0.00;
+      const lucroOperacional = margemContrib - custosFixosProporcionais - perdas;
       const margemLucroPct = fatTotal > 0 ? (lucroOperacional / fatTotal) * 100 : 0;
 
-      // 5. Ponto de Equilíbrio Diário (Manual Seção 14: Custos / Margem Ponderada / Dias)
-      const peMensal = margemContribPct > 0 ? (totFixos + perdas) / margemContribPct : 0;
-      const peDiario = peMensal / diasTrab;
+      // 6. Ponto de Equilíbrio Diário (Manual Seção 14: Custos Diários / Margem de Contribuição %)
+      const custoFixoDiario = totFixos / 26;
+      const peDiario = margemContribPct > 0 ? (custoFixoDiario / margemContribPct) : 0;
 
-      // 6. Ticket Médio e Venda Média Diária
-      const ticketMedio = pedidosCount > 0 ? (fatTotal / pedidosCount) : 29.50;
-      const fatMedioDia = fatTotal / diasTrab;
+      // 7. Ticket Médio e Venda Média Diária
+      const ticketMedio = pedidosCount > 0 ? (fatTotal / pedidosCount) : 0;
+      const fatMedioDia = diasTrabalhadosReais > 0 ? (fatTotal / diasTrabalhadosReais) : 0;
       const diferencaPe = fatMedioDia - peDiario;
       const diferencaPePct = peDiario > 0 ? (diferencaPe / peDiario) * 100 : 0;
 
-      // 7. ÍNDICE NALIM OFICIAL (5 PILARES DE 0 A 100 - Manual Seção 20: DADOS!U2:U8)
-      // U2: Margem Operacional Líquida (Até 30 pts)
-      const mOpDec = lucroOperacional / fatTotal;
+      // 8. ÍNDICE NALIM OFICIAL (Manual Seção 20: DADOS!U2:U8 - 0 a 100 pts)
+      const mOpDec = fatTotal > 0 ? (lucroOperacional / fatTotal) : 0;
       let u2 = 0;
       if (mOpDec <= 0) u2 = 0;
       else if (mOpDec >= 0.15) u2 = 30;
       else u2 = (mOpDec / 0.15) * 30;
 
-      // U3: Cobertura do Ponto de Equilíbrio (Até 25 pts)
-      const cobPe = peDiario > 0 ? (fatMedioDia / peDiario) : 1;
+      const cobPe = peDiario > 0 ? (fatMedioDia / peDiario) : 0;
       let u3 = 0;
       if (cobPe <= 0.8) u3 = 0;
       else if (cobPe >= 1.3) u3 = 25;
       else u3 = ((cobPe - 0.8) / (1.3 - 0.8)) * 25;
 
-      // U4: Margem de Contribuição Média (Até 20 pts)
       let u4 = 0;
       if (margemContribPct <= 0.30) u4 = 0;
       else if (margemContribPct >= 0.55) u4 = 20;
       else u4 = ((margemContribPct - 0.30) / (0.55 - 0.30)) * 20;
 
-      // U5: Controle de Desperdício (Até 15 pts)
-      const perdasPct = perdas / fatTotal;
+      const perdasPct = fatTotal > 0 ? (perdas / fatTotal) : 0;
       let u5 = 0;
       if (perdasPct <= 0.01) u5 = 15;
       else if (perdasPct >= 0.05) u5 = 0;
       else u5 = ((0.05 - perdasPct) / (0.05 - 0.01)) * 15;
 
-      // U6: Conciliação de Vendas (Até 10 pts)
-      const u6 = 10; // 10 pts se conferência bateu
+      const u6 = 10; // conciliação OK
 
-      const scoreFinal = Math.min(100, Math.max(0, Math.round(u2 + u3 + u4 + u5 + u6)));
+      const scoreFinal = fatTotal > 0 ? Math.min(100, Math.max(0, Math.round(u2 + u3 + u4 + u5 + u6))) : 0;
       let classificacao = 'SAUDÁVEL';
       let classBadgeColor = 'bg-emerald-100 text-emerald-900 border border-emerald-300';
       if (scoreFinal < 40) {
@@ -3055,9 +3098,8 @@
       }
 
       // ==========================================
-      // ATUALIZAÇÃO DOS ELEMENTOS DO PAINEL
+      // ATUALIZAÇÃO DOS CARDS DO PAINEL
       // ==========================================
-      // Top 6 Cards
       document.getElementById('dash-fat-total').textContent = `R$ ${fatTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('dash-lucro-operacional').textContent = `R$ ${lucroOperacional.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('dash-margem-lucro-pct').textContent = `${margemLucroPct.toFixed(2)}%`;
@@ -3075,10 +3117,15 @@
       document.getElementById('top-saude-badge').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span><span>${classificacao} (${scoreFinal}/100)</span>`;
 
       // Faixa Meta Diária
-      document.getElementById('dash-meta-dias-trab').textContent = diasTrab;
-      const diasBateram = data.diario ? data.diario.filter(v => v >= peDiario).length : 20;
-      document.getElementById('dash-meta-dias-bateram').textContent = `${diasBateram} de ${diasTrab}`;
-      const atingimentoPct = Math.round((diasBateram / diasTrab) * 100);
+      document.getElementById('dash-meta-dias-trab').textContent = diasTrabalhadosReais;
+      
+      // Contagem de dias que bateram a meta diária
+      let diasBateram = 0;
+      Object.keys(diasComVenda).forEach(d => {
+        if (diasComVenda[d] >= peDiario) diasBateram++;
+      });
+      document.getElementById('dash-meta-dias-bateram').textContent = `${diasBateram} de ${diasTrabalhadosReais}`;
+      const atingimentoPct = diasTrabalhadosReais > 0 ? Math.round((diasBateram / diasTrabalhadosReais) * 100) : 0;
       document.getElementById('dash-meta-atingimento-circle').textContent = `${atingimentoPct}%`;
       document.getElementById('dash-meta-fat-medio-dia').textContent = `R$ ${fatMedioDia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('dash-meta-acima-pe').textContent = `${diferencaPe >= 0 ? '+' : ''}R$ ${diferencaPe.toFixed(2)} (${diferencaPePct >= 0 ? '+' : ''}${diferencaPePct.toFixed(1)}%)`;
@@ -3086,29 +3133,29 @@
       // DRE - Formação do Lucro
       document.getElementById('dre-fat-val').textContent = `R$ ${fatTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('dre-cmv-val').textContent = `- R$ ${cmvTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-cmv-pct').textContent = `${((cmvTotal / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-cmv-pct').textContent = fatTotal > 0 ? `${((cmvTotal / fatTotal) * 100).toFixed(2)}%` : '0,00%';
       document.getElementById('dre-taxas-val').textContent = `- R$ ${taxasTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-taxas-pct').textContent = `${((taxasTotal / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-taxas-pct').textContent = fatTotal > 0 ? `${((taxasTotal / fatTotal) * 100).toFixed(2)}%` : '0,00%';
       document.getElementById('dre-impostos-val').textContent = `- R$ ${impostosValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-impostos-pct').textContent = `${((impostosValor / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-impostos-pct').textContent = fatTotal > 0 ? `${((impostosValor / fatTotal) * 100).toFixed(2)}%` : '0,00%';
       document.getElementById('dre-margem-val').textContent = `R$ ${margemContrib.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('dre-margem-pct').textContent = `${(margemContribPct * 100).toFixed(2)}%`;
-      document.getElementById('dre-fixos-val').textContent = `- R$ ${totFixos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-fixos-pct').textContent = `${((totFixos / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-fixos-val').textContent = `- R$ ${custosFixosProporcionais.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      document.getElementById('dre-fixos-pct').textContent = fatTotal > 0 ? `${((custosFixosProporcionais / fatTotal) * 100).toFixed(2)}%` : '0,00%';
       document.getElementById('dre-perdas-val').textContent = `- R$ ${perdas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      document.getElementById('dre-perdas-pct').textContent = `${((perdas / fatTotal) * 100).toFixed(2)}%`;
+      document.getElementById('dre-perdas-pct').textContent = fatTotal > 0 ? `${((perdas / fatTotal) * 100).toFixed(2)}%` : '0,00%';
       document.getElementById('dre-lucro-val').textContent = `R$ ${lucroOperacional.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('dre-lucro-pct').textContent = `${margemLucroPct.toFixed(2)}%`;
 
       // Resumo Operacional
       document.getElementById('resumo-total-pedidos').textContent = pedidosCount;
-      document.getElementById('resumo-pedidos-por-dia').textContent = (pedidosCount / diasTrab).toFixed(2);
-      document.getElementById('resumo-pedidos-pe').textContent = Math.ceil(peDiario / ticketMedio);
+      document.getElementById('resumo-pedidos-por-dia').textContent = diasTrabalhadosReais > 0 ? (pedidosCount / diasTrabalhadosReais).toFixed(2) : 0;
+      document.getElementById('resumo-pedidos-pe').textContent = ticketMedio > 0 ? Math.ceil(peDiario / ticketMedio) : 0;
       document.getElementById('resumo-fat-medio-dia').textContent = `R$ ${fatMedioDia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       document.getElementById('resumo-ticket-medio').textContent = `R$ ${ticketMedio.toFixed(2)}`;
       document.getElementById('resumo-perdas-valor').textContent = `R$ ${perdas.toFixed(2)}`;
-      document.getElementById('resumo-perdas-pct').textContent = `${((perdas / fatTotal) * 100).toFixed(2)}%`;
-      document.getElementById('resumo-dias-func').textContent = diasTrab;
+      document.getElementById('resumo-perdas-pct').textContent = fatTotal > 0 ? `${((perdas / fatTotal) * 100).toFixed(2)}%` : '0,00%';
+      document.getElementById('resumo-dias-func').textContent = diasTrabalhadosReais;
 
       // ==========================================
       // RANKINGS TOP 5 E TABELA DE DESEMPENHO
@@ -3119,74 +3166,103 @@
       const topFat = [...produtosArray].sort((a, b) => b.faturamento - a.faturamento).slice(0, 5);
       const topFatBox = document.getElementById('dash-top5-faturamento-lista');
       topFatBox.innerHTML = '';
-      topFat.forEach((p, idx) => {
-        const pctBar = topFat[0].faturamento > 0 ? (p.faturamento / topFat[0].faturamento) * 100 : 0;
-        topFatBox.innerHTML += `
-          <div class="space-y-1 text-xs">
-            <div class="flex justify-between items-center font-bold">
-              <span class="text-slate-800">${idx + 1}. ${p.nome}</span>
-              <span class="text-slate-900 font-black">R$ ${p.faturamento.toFixed(2)}</span>
+      if (topFat.length === 0) {
+        topFatBox.innerHTML = '<span class="text-xs text-slate-400">Nenhum produto vendido no período.</span>';
+      } else {
+        topFat.forEach((p, idx) => {
+          const pctBar = topFat[0].faturamento > 0 ? (p.faturamento / topFat[0].faturamento) * 100 : 0;
+          topFatBox.innerHTML += `
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between items-center font-bold">
+                <span class="text-slate-800">${idx + 1}. ${p.nome}</span>
+                <span class="text-slate-900 font-black">R$ ${p.faturamento.toFixed(2)}</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-forest-800 h-2 rounded-full" style="width: ${pctBar}%"></div>
+              </div>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-              <div class="bg-forest-800 h-2 rounded-full" style="width: ${pctBar}%"></div>
-            </div>
-          </div>
-        `;
-      });
+          `;
+        });
+      }
 
       // Top 5 Margem Gerada
       const topMargem = [...produtosArray].sort((a, b) => b.margemGerada - a.margemGerada).slice(0, 5);
       const topMargemBox = document.getElementById('dash-top5-margem-lista');
       topMargemBox.innerHTML = '';
-      topMargem.forEach((p, idx) => {
-        const pctBar = topMargem[0].margemGerada > 0 ? (p.margemGerada / topMargem[0].margemGerada) * 100 : 0;
-        topMargemBox.innerHTML += `
-          <div class="space-y-1 text-xs">
-            <div class="flex justify-between items-center font-bold">
-              <span class="text-slate-800">${idx + 1}. ${p.nome}</span>
-              <span class="text-emerald-700 font-black">R$ ${p.margemGerada.toFixed(2)}</span>
+      if (topMargem.length === 0) {
+        topMargemBox.innerHTML = '<span class="text-xs text-slate-400">Nenhum produto vendido no período.</span>';
+      } else {
+        topMargem.forEach((p, idx) => {
+          const pctBar = topMargem[0].margemGerada > 0 ? (p.margemGerada / topMargem[0].margemGerada) * 100 : 0;
+          topMargemBox.innerHTML += `
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between items-center font-bold">
+                <span class="text-slate-800">${idx + 1}. ${p.nome}</span>
+                <span class="text-emerald-700 font-black">R$ ${p.margemGerada.toFixed(2)}</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div class="bg-emerald-600 h-2 rounded-full" style="width: ${pctBar}%"></div>
+              </div>
             </div>
-            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-              <div class="bg-emerald-600 h-2 rounded-full" style="width: ${pctBar}%"></div>
-            </div>
-          </div>
-        `;
-      });
+          `;
+        });
+      }
 
       // Tabela de Desempenho dos Produtos
       const tbodyDesemp = document.getElementById('dash-tabela-desempenho-produtos');
       tbodyDesemp.innerHTML = '';
-      produtosArray.slice(0, 5).forEach(p => {
-        const mPct = p.faturamento > 0 ? (p.margemGerada / p.faturamento) * 100 : 0;
-        const statusColor = mPct >= 55 ? 'bg-emerald-500' : (mPct >= 40 ? 'bg-amber-500' : 'bg-rose-500');
-        tbodyDesemp.innerHTML += `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="py-2 font-bold text-slate-800">${p.nome}</td>
-            <td class="py-2 text-center text-slate-600">${p.vendasQtd}</td>
-            <td class="py-2 text-right font-black text-slate-900">R$ ${p.faturamento.toFixed(2)}</td>
-            <td class="py-2 text-center font-bold text-slate-700">${mPct.toFixed(1)}%</td>
-            <td class="py-2 text-center">
-              <span class="w-2.5 h-2.5 inline-block rounded-full ${statusColor}"></span>
-            </td>
-          </tr>
-        `;
-      });
+      if (produtosArray.length === 0) {
+        tbodyDesemp.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-xs text-slate-400">Nenhum produto vendido ainda neste mês.</td></tr>';
+      } else {
+        produtosArray.slice(0, 5).forEach(p => {
+          const mPct = p.faturamento > 0 ? (p.margemGerada / p.faturamento) * 100 : 0;
+          const statusColor = mPct >= 55 ? 'bg-emerald-500' : (mPct >= 40 ? 'bg-amber-500' : 'bg-rose-500');
+          tbodyDesemp.innerHTML += `
+            <tr class="hover:bg-slate-50 transition">
+              <td class="py-2 font-bold text-slate-800">${p.nome}</td>
+              <td class="py-2 text-center text-slate-600">${p.vendasQtd}</td>
+              <td class="py-2 text-right font-black text-slate-900">R$ ${p.faturamento.toFixed(2)}</td>
+              <td class="py-2 text-center font-bold text-slate-700">${mPct.toFixed(1)}%</td>
+              <td class="py-2 text-center">
+                <span class="w-2.5 h-2.5 inline-block rounded-full ${statusColor}"></span>
+              </td>
+            </tr>
+          `;
+        });
+      }
 
-      renderCharts(peDiario);
+      // Renderiza gráficos com os dias reais de venda do mês
+      renderCharts(peDiario, diasComVenda, mesAtivo);
     }
 
     let chartDiarioInst = null;
     let chartMensalInst = null;
 
-    function renderCharts(pontoEquilibrioMeta = 507.68) {
+    function renderCharts(pontoEquilibrioMeta = 507.68, diasComVenda = {}, mesAtivo = '2026-10') {
       const data = getActiveData();
 
-      // 1. Gráfico Diário de Evolução da Meta
+      // 1. Gráfico Diário de Evolução da Meta (Exibe dias do mês com vendas reais ou dias vigentes)
       const ctxD = document.getElementById('chartEvolucaoDiaria').getContext('2d');
       if (chartDiarioInst) chartDiarioInst.destroy();
 
-      const diarioVals = data.diario || [620, 780, 540, 430, 690, 920, 1050, 600, 750, 810, 590, 640, 720, 890, 950, 490, 580, 710, 840, 920, 510, 680, 730, 890, 920, 650];
-      const labels = diarioVals.map((_, i) => `${String(i + 1).padStart(2, '0')}`);
+      let labels = [];
+      let diarioVals = [];
+
+      const diasChaves = Object.keys(diasComVenda).map(Number).sort((a, b) => a - b);
+      if (diasChaves.length > 0) {
+        // Usa as datas reais dos pedidos vendidos no mês (ex: dia 02/10, 03/10...)
+        labels = diasChaves.map(d => `Dia ${String(d).padStart(2, '0')}`);
+        diarioVals = diasChaves.map(d => diasComVenda[d]);
+      } else if (data.diario && data.diario.length > 0) {
+        // Fallback para mês histórico com simulação diária completa
+        labels = data.diario.map((_, i) => `${String(i + 1).padStart(2, '0')}`);
+        diarioVals = data.diario;
+      } else {
+        // Mês sem vendas ainda
+        labels = ['Sem Vendas'];
+        diarioVals = [0];
+      }
+
       const metaLinha = diarioVals.map(() => pontoEquilibrioMeta);
       const coresBarras = diarioVals.map(v => v >= pontoEquilibrioMeta ? '#047857' : '#e11d48');
 
@@ -3209,7 +3285,7 @@
               borderColor: '#b45309',
               borderWidth: 2,
               borderDash: [5, 5],
-              pointRadius: 3,
+              pointRadius: 4,
               pointBackgroundColor: coresBarras,
               pointBorderColor: coresBarras,
               fill: false,
@@ -3389,7 +3465,6 @@
       renderPdvProducts();
       renderKds();
       renderDashboard();
-      renderCharts();
       renderHistoricoPedidos();
       renderInsumos();
       renderProdutosAccordion();
