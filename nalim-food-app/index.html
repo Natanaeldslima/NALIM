@@ -770,8 +770,8 @@
               <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">FATURAMENTO</span>
               <div class="text-xl font-black text-slate-900 mt-0.5" id="dash-fat-total">R$ 0,00</div>
             </div>
-            <div class="mt-2 text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-              <span>↗ +12,5%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>
+            <div class="mt-2 text-[10px] flex items-center gap-1" id="dash-fat-comparativo">
+              <span class="text-emerald-600 font-bold">↗ +12,5%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>
             </div>
           </div>
 
@@ -784,8 +784,8 @@
               <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider">LUCRO OPERACIONAL</span>
               <div class="text-xl font-black text-emerald-700 mt-0.5" id="dash-lucro-operacional">R$ 0,00</div>
             </div>
-            <div class="mt-2 text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-              <span>↗ +18,4%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>
+            <div class="mt-2 text-[10px] flex items-center gap-1" id="dash-lucro-comparativo">
+              <span class="text-emerald-600 font-bold">↗ +18,4%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>
             </div>
           </div>
 
@@ -3772,6 +3772,33 @@
         classBadgeColor = 'bg-yellow-100 text-yellow-900 border border-yellow-300';
       }
 
+      // Função auxiliar para consolidar qualquer mês a partir dos pedidos
+      function getResumoMes(mKey) {
+        const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mKey));
+        let fat = 0;
+        let cmv = 0;
+        let taxas = 0;
+        const dias = {};
+        peds.forEach(p => {
+          fat += p.total;
+          cmv += p.cmv;
+          taxas += (p.canal === 'iFood' ? p.total * 0.23 : p.total * 0.02);
+          const dNum = p.dataIso ? parseInt(p.dataIso.split('-')[2], 10) : 1;
+          dias[dNum] = (dias[dNum] || 0) + p.total;
+        });
+
+        const mData = store.meses[mKey] || store.meses['2026-08'];
+        const totFix = mData.custosFixos.reduce((a, c) => a + c.valor, 0);
+        const diasTr = Object.keys(dias).length > 0 ? Object.keys(dias).length : 1;
+        const fixosProp = fat > 0 ? (totFix / 26) * diasTr : 0;
+        const imp = store.regimeTributario === 'MEI' ? 75.00 : (fat * 0.06);
+        const margemContr = fat - cmv - taxas - imp;
+        const perdasMes = mData.perdas || 0;
+        const lucroOp = fat > 0 ? (margemContr - fixosProp - perdasMes) : 0;
+        const margemPct = fat > 0 ? Math.round((lucroOp / fat) * 100) : 0;
+        return { fat, lucro: lucroOp, margemPct };
+      }
+
       // ==========================================
       // ATUALIZAÇÃO DOS CARDS DO PAINEL
       // ==========================================
@@ -3782,6 +3809,53 @@
       document.getElementById('dash-pe-diario-val').textContent = `R$ ${peDiario.toFixed(2)}`;
       document.getElementById('dash-ticket-medio-val').textContent = `R$ ${ticketMedio.toFixed(2)}`;
       document.getElementById('dash-indice-nalim-num').textContent = scoreFinal;
+
+      // ==========================================
+      // COMPARATIVO DINÂMICO VS. MÊS ANTERIOR (CARDS)
+      // ==========================================
+      let mesAnteriorKey = null;
+      if (mesAtivo === '2026-10') mesAnteriorKey = '2026-09';
+      else if (mesAtivo === '2026-09') mesAnteriorKey = '2026-08';
+      else mesAnteriorKey = null;
+
+      let fatCompHtml = `<span class="text-slate-400 font-normal">Mês base inicial</span>`;
+      let lucroCompHtml = `<span class="text-slate-400 font-normal">Mês base inicial</span>`;
+
+      if (mesAnteriorKey) {
+        const resumoAnterior = getResumoMes(mesAnteriorKey);
+
+        // Variação % Faturamento
+        if (resumoAnterior.fat > 0) {
+          const varFat = ((fatTotal - resumoAnterior.fat) / resumoAnterior.fat) * 100;
+          const sinalFat = varFat > 0 ? '+' : '';
+          const iconeFat = varFat > 0 ? '↗' : varFat < 0 ? '↘' : '→';
+          const corFat = varFat > 0 ? 'text-emerald-600' : varFat < 0 ? 'text-rose-600' : 'text-slate-500';
+          fatCompHtml = `<span class="${corFat} font-bold">${iconeFat} ${sinalFat}${varFat.toFixed(1).replace('.', ',')}%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+        } else if (fatTotal > 0) {
+          fatCompHtml = `<span class="text-emerald-600 font-bold">↗ +100%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+        } else {
+          fatCompHtml = `<span class="text-slate-500 font-bold">→ 0,0%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+        }
+
+        // Variação % Lucro Operacional
+        if (Math.abs(resumoAnterior.lucro) > 0) {
+          const varLucro = ((lucroOperacional - resumoAnterior.lucro) / Math.abs(resumoAnterior.lucro)) * 100;
+          const sinalLucro = varLucro > 0 ? '+' : '';
+          const iconeLucro = varLucro > 0 ? '↗' : varLucro < 0 ? '↘' : '→';
+          const corLucro = varLucro > 0 ? 'text-emerald-600' : varLucro < 0 ? 'text-rose-600' : 'text-slate-500';
+          lucroCompHtml = `<span class="${corLucro} font-bold">${iconeLucro} ${sinalLucro}${varLucro.toFixed(1).replace('.', ',')}%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+        } else if (lucroOperacional > 0) {
+          lucroCompHtml = `<span class="text-emerald-600 font-bold">↗ +100%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+        } else {
+          lucroCompHtml = `<span class="text-slate-500 font-bold">→ 0,0%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+        }
+      }
+
+      const elFatComp = document.getElementById('dash-fat-comparativo');
+      if (elFatComp) elFatComp.innerHTML = fatCompHtml;
+
+      const elLucroComp = document.getElementById('dash-lucro-comparativo');
+      if (elLucroComp) elLucroComp.innerHTML = lucroCompHtml;
       
       const badgeClass = document.getElementById('dash-classificacao-badge');
       badgeClass.textContent = classificacao;
@@ -3982,31 +4056,6 @@
       // 2. Gráfico de Evolução Mensal Comparativo (Exclusivamente Agosto, Setembro e Outubro conforme solicitação)
       const ctxM = document.getElementById('chartEvolucaoMensal').getContext('2d');
       if (chartMensalInst) chartMensalInst.destroy();
-
-      function getResumoMes(mKey) {
-        const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mKey));
-        let fat = 0;
-        let cmv = 0;
-        let taxas = 0;
-        const dias = {};
-        peds.forEach(p => {
-          fat += p.total;
-          cmv += p.cmv;
-          taxas += (p.canal === 'iFood' ? p.total * 0.23 : p.total * 0.02);
-          const dNum = p.dataIso ? parseInt(p.dataIso.split('-')[2], 10) : 1;
-          dias[dNum] = (dias[dNum] || 0) + p.total;
-        });
-
-        const mData = store.meses[mKey] || store.meses['2026-08'];
-        const totFix = mData.custosFixos.reduce((a, c) => a + c.valor, 0);
-        const diasTr = Object.keys(dias).length > 0 ? Object.keys(dias).length : 1;
-        const fixosProp = fat > 0 ? (totFix / 26) * diasTr : 0;
-        const imp = store.regimeTributario === 'MEI' ? 75.00 : (fat * 0.06);
-        const margemContr = fat - cmv - taxas - imp;
-        const lucroOp = fat > 0 ? (margemContr - fixosProp) : 0;
-        const margemPct = fat > 0 ? Math.round((lucroOp / fat) * 100) : 0;
-        return { fat: Math.round(fat), lucro: Math.round(lucroOp), margemPct };
-      }
 
       const resAgo = getResumoMes('2026-08');
       const resSet = getResumoMes('2026-09');
