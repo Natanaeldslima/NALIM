@@ -160,8 +160,8 @@
 
     <!-- Card do Usuário Conectado com Sessão Individual -->
     <div class="p-3 border-t border-slate-100 bg-slate-50 space-y-2">
-      <!-- Info do Usuário Logado -->
-      <div class="flex items-center gap-2.5 bg-white p-2 rounded-xl border border-slate-200">
+      <!-- Info do Usuário Logado (Clique para alternar perfil) -->
+      <div onclick="openModalLogin()" class="flex items-center gap-2.5 bg-white hover:bg-slate-100/80 p-2 rounded-xl border border-slate-200 cursor-pointer transition group" title="Clique para alternar perfil">
         <div id="user-avatar-badge" class="w-8 h-8 rounded-lg bg-forest-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
           C
         </div>
@@ -172,13 +172,20 @@
           </div>
           <span id="user-email-display" class="text-[10px] text-slate-400 truncate block leading-none mt-0.5">dono@nalim.com.br</span>
         </div>
+        <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-forest-600"></i>
       </div>
 
-      <!-- Botão Oficial de Desconectar / Trocar de Conta -->
-      <button type="button" onclick="fazerLogout()" class="w-full bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-600 border border-slate-200 hover:border-rose-300 text-[11px] font-extrabold py-2 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-2xs">
-        <i data-lucide="log-out" class="w-3.5 h-3.5 text-rose-500"></i>
-        <span>Sair da Conta / Desconectar</span>
-      </button>
+      <!-- Botões de Ação da Sessão -->
+      <div class="grid grid-cols-2 gap-1.5">
+        <button type="button" onclick="openModalLogin()" class="w-full bg-slate-100 hover:bg-forest-50 hover:text-forest-700 text-slate-700 border border-slate-200 hover:border-forest-300 text-[10px] font-extrabold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 shadow-2xs">
+          <i data-lucide="user-check" class="w-3 h-3 text-forest-600"></i>
+          <span>Trocar Perfil</span>
+        </button>
+        <button type="button" onclick="fazerLogout()" class="w-full bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-700 border border-slate-200 hover:border-rose-300 text-[10px] font-extrabold py-1.5 px-2 rounded-xl transition flex items-center justify-center gap-1 shadow-2xs">
+          <i data-lucide="log-out" class="w-3 h-3 text-rose-500"></i>
+          <span>Sair</span>
+        </button>
+      </div>
     </div>
   </aside>
 
@@ -2088,47 +2095,25 @@
       const groupOp = document.getElementById('group-operacional');
       const groupAdm = document.getElementById('group-administrativo');
       const groupGer = document.getElementById('group-gerencial');
-      const legendText = document.getElementById('role-legend-text');
 
       if (role === 'operador') {
-        legendText.textContent = 'Acesso restrito: apenas Cardápio/PDV, Cozinha e Fechamento.';
-
-        // Exibe estritamente o bloco Operacional
-        groupOp.style.display = 'block';
-
-        // Oculta TOTALMENTE os blocos e todas as abas de Administrativo e Gerencial
-        groupAdm.style.display = 'none';
-        groupGer.style.display = 'none';
-
+        if (groupOp) groupOp.style.display = 'block';
+        if (groupAdm) groupAdm.style.display = 'none';
+        if (groupGer) groupGer.style.display = 'none';
         switchView('pdv');
       } else if (role === 'gerente') {
-        legendText.textContent = 'Acesso à operação e administrativo (fichas técnicas, insumos e custos).';
-
-        groupOp.style.display = 'block';
-        groupAdm.style.display = 'block';
-        groupGer.style.display = 'none';
-
-        // Se estiver em aba gerencial, direciona para produtos
-        const currentActiveEl = document.querySelector('section:not(.hidden)');
-        const currentView = currentActiveEl ? currentActiveEl.id.replace('view-', '') : 'produtos';
-        if (['dashboard', 'precificacao'].includes(currentView)) {
-          switchView('produtos');
-        } else {
-          switchView(currentView);
-        }
+        if (groupOp) groupOp.style.display = 'block';
+        if (groupAdm) groupAdm.style.display = 'block';
+        if (groupGer) groupGer.style.display = 'none';
+        switchView('produtos');
       } else {
         // DONO (ACESSO COMPLETO)
-        legendText.textContent = 'Acesso total: saúde do negócio, DRE e lucros.';
-
-        groupOp.style.display = 'block';
-        groupAdm.style.display = 'block';
-        groupGer.style.display = 'block';
-
-        const currentActiveEl = document.querySelector('section:not(.hidden)');
-        const currentView = currentActiveEl ? currentActiveEl.id.replace('view-', '') : 'dashboard';
-        switchView(currentView);
+        if (groupOp) groupOp.style.display = 'block';
+        if (groupAdm) groupAdm.style.display = 'block';
+        if (groupGer) groupGer.style.display = 'block';
+        switchView('dashboard');
       }
-      lucide.createIcons();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function switchView(viewId) {
