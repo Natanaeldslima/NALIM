@@ -754,7 +754,7 @@
 
           <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700">
             <i data-lucide="calendar" class="w-4 h-4 text-forest-600"></i>
-            <span>Período: <strong id="dash-periodo-tag" class="text-slate-900 font-extrabold">01/08/2026 a 31/08/2026</strong></span>
+            <span>Período: <strong id="dash-periodo-tag" class="text-slate-900 font-extrabold">01/10/2026 a 31/10/2026</strong></span>
           </div>
         </div>
 
@@ -2014,7 +2014,8 @@
     function gerarPedidosSimulados() {
       const peds = [];
 
-      // 1. OUTUBRO / 2026 — 100% REAL (O pedido real do usuário de R$ 60,00 realizado no dia 03/10)
+      // 1. OUTUBRO / 2026 — OPERAÇÃO ATIVA DO MÊS CORRENTE (Dias 01 a 03)
+      // Mantém o pedido real #105 de R$ 60,00 e adiciona as vendas ativas dos 3 dias para demonstrar o painel
       peds.push({
         id: 105,
         dataHora: '2026-10-03 12:45',
@@ -2032,6 +2033,51 @@
         ]
       });
 
+      const outDias = [
+        { dia: '01', meta: 780, n: 18 },
+        { dia: '02', meta: 850, n: 20 },
+        { dia: '03', meta: 680, n: 15 } // + pedido 105 de R$ 60 = R$ 740 no dia 03
+      ];
+
+      let orderIdSeq = 200;
+      const canais = ['Salão', 'Balcão', 'iFood'];
+      const pagtos = ['PIX', 'Cartão Crédito', 'Cartão Débito', 'Dinheiro'];
+
+      outDias.forEach(od => {
+        let diaTotal = 0;
+        for (let i = 0; i < od.n; i++) {
+          orderIdSeq++;
+          const isLast = (i === od.n - 1);
+          const canal = canais[i % canais.length];
+          const pagto = pagtos[i % pagtos.length];
+          const hora = `${String(12 + (i % 10)).padStart(2, '0')}:${String((i * 13) % 60).padStart(2, '0')}`;
+          
+          let totTicket = isLast ? (od.meta - diaTotal) : (canal === 'iFood' ? 44.00 : 38.00);
+          if (totTicket <= 10) totTicket = 38.00;
+          diaTotal += totTicket;
+
+          const cmvTicket = Math.round(totTicket * 0.27 * 100) / 100;
+          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : totTicket * 0.02;
+          const lucroTicket = totTicket - cmvTicket - taxaTicket;
+
+          peds.push({
+            id: orderIdSeq,
+            dataHora: `2026-10-${od.dia} ${hora}`,
+            dataIso: `2026-10-${od.dia}`,
+            identificacao: canal === 'iFood' ? `Pedido iFood #${4000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada'),
+            canal: canal,
+            pagto: pagto,
+            total: Math.round(totTicket * 100) / 100,
+            cmv: cmvTicket,
+            lucro: Math.round(lucroTicket * 100) / 100,
+            itens: canal === 'iFood' ? '1x X-Bacon Especial iFood | 1x Refrigerante Lata' : '1x Combo X-Burguer Completo (Reajustado)',
+            itensDetalhados: [
+              { produtoCodigo: canal === 'iFood' ? 'PROD002' : 'PROD004', nome: canal === 'iFood' ? 'X-Bacon Especial' : 'Combo X-Burguer Completo', qtd: 1, precoUnit: totTicket, cmvUnit: cmvTicket }
+            ]
+          });
+        }
+      });
+
       // 2. SETEMBRO / 2026 — SIMULAÇÃO DE DEMONSTRAÇÃO (Total R$ 4.311,00 em 6 dias)
       const setDias = [
         { dia: '01', meta: 600, n: 16 },
@@ -2041,10 +2087,6 @@
         { dia: '05', meta: 720, n: 19 },
         { dia: '06', meta: 741, n: 20 }
       ];
-
-      let orderIdSeq = 200;
-      const canais = ['Salão', 'Balcão', 'iFood'];
-      const pagtos = ['PIX', 'Cartão Crédito', 'Cartão Débito', 'Dinheiro'];
 
       setDias.forEach(sd => {
         let diaTotal = 0;
@@ -3581,6 +3623,37 @@
     }
 
     // ================================================================
+    // FUNÇÃO AUXILIAR GLOBAL PARA CONSOLIDAR RESUMO DO MÊS
+    // ================================================================
+    function getResumoMes(mKey) {
+      const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mKey));
+      let fat = 0;
+      let cmv = 0;
+      let taxas = 0;
+      const dias = {};
+      peds.forEach(p => {
+        fat += p.total;
+        cmv += p.cmv;
+        taxas += (p.canal === 'iFood' ? p.total * 0.23 : p.total * 0.02);
+        const dNum = p.dataIso ? parseInt(p.dataIso.split('-')[2], 10) : 1;
+        dias[dNum] = (dias[dNum] || 0) + p.total;
+      });
+
+      const mData = store.meses[mKey] || store.meses['2026-08'];
+      const totFix = mData.custosFixos.reduce((a, c) => a + c.valor, 0);
+      const diasTr = Object.keys(dias).length > 0 ? Object.keys(dias).length : 1;
+      const fixosProp = fat > 0 ? (totFix / 26) * diasTr : 0;
+      const imp = store.regimeTributario === 'MEI' ? 75.00 : (fat * 0.06);
+      const margemContr = fat - cmv - taxas - imp;
+      const perdasMes = mData.perdas || 0;
+      const lucroOp = fat > 0 ? (margemContr - fixosProp - perdasMes) : 0;
+      const margemPct = fat > 0 ? Math.round((lucroOp / fat) * 100) : 0;
+      const fatMedioDia = diasTr > 0 ? (fat / diasTr) : 0;
+      const lucroMedioDia = diasTr > 0 ? (lucroOp / diasTr) : 0;
+      return { fat, lucro: lucroOp, margemPct, diasTrabalhados: diasTr, fatMedioDia, lucroMedioDia };
+    }
+
+    // ================================================================
     // GERENCIAL: DASHBOARD & DRE DINÂMICO CONFORME MANUAL V3.0
     // ================================================================
     function renderDashboard() {
@@ -3684,10 +3757,16 @@
       let impostosValor = 0;
       if (store.regimeTributario === 'MEI') {
         impostosValor = 75.00;
-        document.getElementById('dre-imposto-label').textContent = '(-) Imposto MEI (DAS R$ 75,00)';
       } else {
         impostosValor = fatTotal * 0.06;
-        document.getElementById('dre-imposto-label').textContent = '(-) Impostos (Simples Nacional 6%)';
+      }
+
+      // Sincroniza a tag de período do cabeçalho
+      const elPeriodoTag = document.getElementById('dash-periodo-tag');
+      if (elPeriodoTag) {
+        if (mesAtivo === '2026-08') elPeriodoTag.textContent = '01/08/2026 a 31/08/2026';
+        else if (mesAtivo === '2026-09') elPeriodoTag.textContent = '01/09/2026 a 30/09/2026';
+        else if (mesAtivo === '2026-10') elPeriodoTag.textContent = '01/10/2026 a 31/10/2026';
       }
 
       // 5. Margem de Contribuição e Lucro
@@ -3747,33 +3826,6 @@
         classBadgeColor = 'bg-yellow-100 text-yellow-900 border border-yellow-300';
       }
 
-      // Função auxiliar para consolidar qualquer mês a partir dos pedidos
-      function getResumoMes(mKey) {
-        const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mKey));
-        let fat = 0;
-        let cmv = 0;
-        let taxas = 0;
-        const dias = {};
-        peds.forEach(p => {
-          fat += p.total;
-          cmv += p.cmv;
-          taxas += (p.canal === 'iFood' ? p.total * 0.23 : p.total * 0.02);
-          const dNum = p.dataIso ? parseInt(p.dataIso.split('-')[2], 10) : 1;
-          dias[dNum] = (dias[dNum] || 0) + p.total;
-        });
-
-        const mData = store.meses[mKey] || store.meses['2026-08'];
-        const totFix = mData.custosFixos.reduce((a, c) => a + c.valor, 0);
-        const diasTr = Object.keys(dias).length > 0 ? Object.keys(dias).length : 1;
-        const fixosProp = fat > 0 ? (totFix / 26) * diasTr : 0;
-        const imp = store.regimeTributario === 'MEI' ? 75.00 : (fat * 0.06);
-        const margemContr = fat - cmv - taxas - imp;
-        const perdasMes = mData.perdas || 0;
-        const lucroOp = fat > 0 ? (margemContr - fixosProp - perdasMes) : 0;
-        const margemPct = fat > 0 ? Math.round((lucroOp / fat) * 100) : 0;
-        return { fat, lucro: lucroOp, margemPct };
-      }
-
       // ==========================================
       // ATUALIZAÇÃO DOS CARDS DO PAINEL
       // ==========================================
@@ -3799,30 +3851,40 @@
       if (mesAnteriorKey) {
         const resumoAnterior = getResumoMes(mesAnteriorKey);
 
+        // Se o mês estiver em andamento (menos de 20 dias trabalhados), compara a média diária para refletir o ritmo real de crescimento
+        const emAndamento = diasTrabalhadosReais < 20;
+        const baseFatAtual = emAndamento ? fatMedioDia : fatTotal;
+        const baseFatAnterior = emAndamento ? resumoAnterior.fatMedioDia : resumoAnterior.fat;
+
+        const baseLucroAtual = emAndamento ? (lucroOperacional / diasTrabalhadosReais) : lucroOperacional;
+        const baseLucroAnterior = emAndamento ? resumoAnterior.lucroMedioDia : resumoAnterior.lucro;
+
+        const subRotulo = emAndamento ? 'vs. média anterior' : 'vs. mês anterior';
+
         // Variação % Faturamento
-        if (resumoAnterior.fat > 0) {
-          const varFat = ((fatTotal - resumoAnterior.fat) / resumoAnterior.fat) * 100;
+        if (baseFatAnterior > 0) {
+          const varFat = ((baseFatAtual - baseFatAnterior) / baseFatAnterior) * 100;
           const sinalFat = varFat > 0 ? '+' : '';
           const iconeFat = varFat > 0 ? '↗' : varFat < 0 ? '↘' : '→';
           const corFat = varFat > 0 ? 'text-emerald-600' : varFat < 0 ? 'text-rose-600' : 'text-slate-500';
-          fatCompHtml = `<span class="${corFat} font-bold">${iconeFat} ${sinalFat}${formatarPct(varFat, 1)}</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
-        } else if (fatTotal > 0) {
-          fatCompHtml = `<span class="text-emerald-600 font-bold">↗ +100%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+          fatCompHtml = `<span class="${corFat} font-bold">${iconeFat} ${sinalFat}${formatarPct(varFat, 1)}</span> <span class="text-slate-400 font-normal">${subRotulo}</span>`;
+        } else if (baseFatAtual > 0) {
+          fatCompHtml = `<span class="text-emerald-600 font-bold">↗ +100%</span> <span class="text-slate-400 font-normal">${subRotulo}</span>`;
         } else {
-          fatCompHtml = `<span class="text-slate-500 font-bold">→ 0,0%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+          fatCompHtml = `<span class="text-slate-500 font-bold">→ 0,0%</span> <span class="text-slate-400 font-normal">${subRotulo}</span>`;
         }
 
         // Variação % Lucro Operacional
-        if (Math.abs(resumoAnterior.lucro) > 0) {
-          const varLucro = ((lucroOperacional - resumoAnterior.lucro) / Math.abs(resumoAnterior.lucro)) * 100;
+        if (Math.abs(baseLucroAnterior) > 0) {
+          const varLucro = ((baseLucroAtual - baseLucroAnterior) / Math.abs(baseLucroAnterior)) * 100;
           const sinalLucro = varLucro > 0 ? '+' : '';
           const iconeLucro = varLucro > 0 ? '↗' : varLucro < 0 ? '↘' : '→';
           const corLucro = varLucro > 0 ? 'text-emerald-600' : varLucro < 0 ? 'text-rose-600' : 'text-slate-500';
-          lucroCompHtml = `<span class="${corLucro} font-bold">${iconeLucro} ${sinalLucro}${formatarPct(varLucro, 1)}</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
-        } else if (lucroOperacional > 0) {
-          lucroCompHtml = `<span class="text-emerald-600 font-bold">↗ +100%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+          lucroCompHtml = `<span class="${corLucro} font-bold">${iconeLucro} ${sinalLucro}${formatarPct(varLucro, 1)}</span> <span class="text-slate-400 font-normal">${subRotulo}</span>`;
+        } else if (baseLucroAtual > 0) {
+          lucroCompHtml = `<span class="text-emerald-600 font-bold">↗ +100%</span> <span class="text-slate-400 font-normal">${subRotulo}</span>`;
         } else {
-          lucroCompHtml = `<span class="text-slate-500 font-bold">→ 0,0%</span> <span class="text-slate-400 font-normal">vs. mês anterior</span>`;
+          lucroCompHtml = `<span class="text-slate-500 font-bold">→ 0,0%</span> <span class="text-slate-400 font-normal">${subRotulo}</span>`;
         }
       }
 
