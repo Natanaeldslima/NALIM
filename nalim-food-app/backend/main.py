@@ -28,6 +28,7 @@ app.add_middleware(
 FRONTEND_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "index.html"))
 GARCOM_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "garcom.html"))
 LOGIN_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "login.html"))
+CARDAPIO_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cardapio.html"))
 
 # Auto-seed no startup
 @app.on_event("startup")
@@ -70,6 +71,14 @@ def serve_garcom():
     if os.path.exists(GARCOM_FILE):
         return FileResponse(GARCOM_FILE)
     return {"mensagem": "Arquivo garcom.html não encontrado."}
+
+# Rota do Cardápio Digital & Delivery Próprio (WhatsApp)
+@app.get("/cardapio")
+@app.get("/delivery")
+def serve_cardapio():
+    if os.path.exists(CARDAPIO_FILE):
+        return FileResponse(CARDAPIO_FILE)
+    return {"mensagem": "Arquivo cardapio.html não encontrado."}
 
 @app.get("/api")
 def api_info():
