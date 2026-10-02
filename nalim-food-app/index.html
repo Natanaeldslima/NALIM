@@ -98,12 +98,17 @@
             <i data-lucide="wallet" class="w-4 h-4 text-slate-500"></i>
             <span>Fechamento de Caixa</span>
           </button>
+          <a href="/garcom" target="_blank" id="btn-garcom-app" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
+            <i data-lucide="smartphone" class="w-4 h-4 text-emerald-600"></i>
+            <span>App Garçom (Celular)</span>
+            <span class="ml-auto bg-emerald-50 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded font-bold">Mobile</span>
+          </a>
         </div>
 
         <!-- ========================================== -->
         <!-- 2. BLOCO ADMINISTRATIVO (GERENTE & DONO)   -->
         <!-- ========================================== -->
-        <div id="group-administrativo" class="space-y-1 pt-2 border-t border-slate-100">
+        <div id="group-administrativo" style="display: none;" class="space-y-1 pt-2 border-t border-slate-100">
           <div class="px-5 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
             <i data-lucide="sliders" class="w-3 h-3 text-blue-600"></i>
             <span>Administrativo</span>
@@ -138,7 +143,7 @@
         <!-- ========================================== -->
         <!-- 3. BLOCO GERENCIAL (EXCLUSIVO DONO - SAÚDE)-->
         <!-- ========================================== -->
-        <div id="group-gerencial" class="space-y-1 pt-2 border-t border-slate-100">
+        <div id="group-gerencial" style="display: none;" class="space-y-1 pt-2 border-t border-slate-100">
           <div class="px-5 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
             <i data-lucide="crown" class="w-3 h-3 text-amber-500"></i>
             <span>Gerencial (Dono)</span>
@@ -192,9 +197,9 @@
             <i data-lucide="calendar" class="w-3.5 h-3.5 text-forest-600"></i> Mês Vigente:
           </span>
           <select id="selectMesVigente" onchange="alterarMesVigente(this.value)" class="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-forest-500">
-            <option value="2026-08" selected>Agosto / 2026 (Preços Iniciais)</option>
+            <option value="2026-10" selected>Outubro / 2026 (Atual)</option>
             <option value="2026-09">Setembro / 2026 (Reajuste +15%)</option>
-            <option value="2026-10">Outubro / 2026 (Atual)</option>
+            <option value="2026-08">Agosto / 2026 (Preços Iniciais)</option>
           </select>
         </div>
 
@@ -615,8 +620,16 @@
               <h2 class="text-xl font-extrabold text-slate-900 mt-0.5">Histórico Geral de Pedidos Realizados</h2>
               <p class="text-xs text-slate-500">Conferência das comandas e pedidos iFood</p>
             </div>
-            <div class="w-full sm:w-64">
-              <input type="text" id="filtro-pedidos-input" oninput="filtrarListaPedidos(this.value)" placeholder="Buscar cliente, mesa ou id..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none">
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <select id="filtro-pedidos-mes" onchange="filtrarPedidosPorMes(this.value)" class="bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="todos">Todos os Meses</option>
+                <option value="2026-10" selected>Outubro / 2026 (Real)</option>
+                <option value="2026-09">Setembro / 2026 (Simulação)</option>
+                <option value="2026-08">Agosto / 2026 (Simulação)</option>
+              </select>
+              <div class="w-full sm:w-56">
+                <input type="text" id="filtro-pedidos-input" oninput="filtrarListaPedidos(this.value)" placeholder="Buscar cliente, mesa ou itens..." class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none">
+              </div>
             </div>
           </div>
 
@@ -1319,6 +1332,7 @@
       </div>
 
       <form onsubmit="event.preventDefault(); salvarInsumoForm();" class="space-y-3 text-xs">
+        <input type="hidden" id="modal-ins-codigo-edit" value="">
         <div>
           <label class="block font-bold text-slate-700 uppercase mb-1">Nome do Insumo</label>
           <input type="text" id="ins-nome" placeholder="Ex: Queijo Prato Especial" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold">
@@ -1358,16 +1372,18 @@
   </div>
 
   <!-- ============================================================== -->
-  <!-- MODAL: NOVO PRODUTO COM FICHA                                  -->
+  <!-- MODAL: PRODUTO & FICHA TÉCNICA (CRIAR E EDITAR PREÇOS/RECEITA) -->
   <!-- ============================================================== -->
   <div id="modal-produto" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-xl w-full p-5 shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto custom-scroll">
       <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-        <h3 class="font-extrabold text-slate-900 text-sm">Cadastrar Novo Produto com Ficha Técnica</h3>
+        <h3 class="font-extrabold text-slate-900 text-sm" id="modal-produto-titulo">Ficha Técnica & Preços de Venda</h3>
         <button onclick="closeModalProduto()" class="text-slate-400 hover:text-slate-700">✕</button>
       </div>
 
       <form onsubmit="event.preventDefault(); salvarProdutoComFicha();" class="space-y-3 text-xs">
+        <input type="hidden" id="modal-prod-codigo-edit" value="">
+
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-700 uppercase mb-1">Nome do Produto</label>
@@ -1386,11 +1402,11 @@
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="block font-bold text-slate-700 uppercase mb-1">Preço Venda Salão (R$)</label>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Preço Venda Salão / Balcão (R$)</label>
             <input type="number" step="0.5" id="modal-prod-preco" placeholder="28.00" required oninput="recalcularFichaModal()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-black text-forest-700">
           </div>
           <div>
-            <label class="block font-bold text-slate-700 uppercase mb-1">Preço Sugerido iFood (R$)</label>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Preço no iFood (R$)</label>
             <input type="number" step="0.5" id="modal-prod-ifood" placeholder="34.00" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-black text-rose-700">
           </div>
         </div>
@@ -1415,7 +1431,7 @@
 
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" onclick="closeModalProduto()" class="px-3 py-1.5 bg-slate-100 rounded-lg font-bold">Cancelar</button>
-          <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">Salvar Produto</button>
+          <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">Salvar Ficha & Preços</button>
         </div>
       </form>
     </div>
@@ -1516,10 +1532,10 @@
 
     const store = {
       userRole: 'dono',
-      activeMonth: '2026-08',
+      activeMonth: '2026-10',
       regimeTributario: 'ME_6',
       selectedPaymentMethod: 'PIX',
-      orderCounter: 105,
+      orderCounter: 106,
 
       customizing: {
         produto: null,
@@ -1802,6 +1818,121 @@
     store.meses['2026-10'].produtos = JSON.parse(JSON.stringify(store.meses['2026-09'].produtos));
     store.meses['2026-10'].custosFixos = JSON.parse(JSON.stringify(store.meses['2026-09'].custosFixos));
 
+    function gerarPedidosSimulados() {
+      const peds = [];
+
+      // 1. OUTUBRO / 2026 — 100% REAL (O pedido real do usuário de R$ 60,00 realizado no dia 03/10)
+      peds.push({
+        id: 105,
+        dataHora: '2026-10-03 12:45',
+        dataIso: '2026-10-03',
+        identificacao: 'Balcão / Retirada',
+        canal: 'Balcão',
+        pagto: 'PIX',
+        total: 60.00,
+        cmv: 16.25,
+        lucro: 42.55,
+        itens: '2x X-Burguer Tradicional | 1x Batata Rústica Individual',
+        itensDetalhados: [
+          { produtoCodigo: 'PROD001', nome: 'X-Burguer Tradicional', qtd: 2, precoUnit: 24.00, cmvUnit: 6.55 },
+          { produtoCodigo: 'PROD005', nome: 'Batata Rústica Individual', qtd: 1, precoUnit: 12.00, cmvUnit: 3.15 }
+        ]
+      });
+
+      // 2. SETEMBRO / 2026 — SIMULAÇÃO DE DEMONSTRAÇÃO (Total R$ 4.311,00 em 6 dias)
+      const setDias = [
+        { dia: '01', meta: 600, n: 16 },
+        { dia: '02', meta: 750, n: 20 },
+        { dia: '03', meta: 810, n: 22 },
+        { dia: '04', meta: 690, n: 18 },
+        { dia: '05', meta: 720, n: 19 },
+        { dia: '06', meta: 741, n: 20 }
+      ];
+
+      let orderIdSeq = 200;
+      const canais = ['Salão', 'Balcão', 'iFood'];
+      const pagtos = ['PIX', 'Cartão Crédito', 'Cartão Débito', 'Dinheiro'];
+
+      setDias.forEach(sd => {
+        let diaTotal = 0;
+        for (let i = 0; i < sd.n; i++) {
+          orderIdSeq++;
+          const isLast = (i === sd.n - 1);
+          const canal = canais[i % canais.length];
+          const pagto = pagtos[i % pagtos.length];
+          const hora = `${String(12 + (i % 10)).padStart(2, '0')}:${String((i * 13) % 60).padStart(2, '0')}`;
+          
+          let totTicket = isLast ? (sd.meta - diaTotal) : (canal === 'iFood' ? 42.00 : 35.00);
+          if (totTicket <= 10) totTicket = 35.00;
+          diaTotal += totTicket;
+
+          const cmvTicket = Math.round(totTicket * 0.28 * 100) / 100;
+          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : totTicket * 0.02;
+          const lucroTicket = totTicket - cmvTicket - taxaTicket;
+
+          peds.push({
+            id: orderIdSeq,
+            dataHora: `2026-09-${sd.dia} ${hora}`,
+            dataIso: `2026-09-${sd.dia}`,
+            identificacao: canal === 'iFood' ? `Pedido iFood #${3000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada'),
+            canal: canal,
+            pagto: pagto,
+            total: Math.round(totTicket * 100) / 100,
+            cmv: cmvTicket,
+            lucro: Math.round(lucroTicket * 100) / 100,
+            itens: canal === 'iFood' ? '1x X-Bacon Especial iFood | 1x Refrigerante Lata' : '1x Combo X-Burguer Completo (Reajustado)',
+            itensDetalhados: [
+              { produtoCodigo: canal === 'iFood' ? 'PROD002' : 'PROD004', nome: canal === 'iFood' ? 'X-Bacon Especial' : 'Combo X-Burguer Completo', qtd: 1, precoUnit: totTicket, cmvUnit: cmvTicket }
+            ]
+          });
+        }
+      });
+
+      // 3. AGOSTO / 2026 — SIMULAÇÃO DE DEMONSTRAÇÃO (Total R$ 18.380,00 nos 26 dias úteis)
+      const agoDiario = [620, 780, 540, 430, 690, 920, 1050, 600, 750, 810, 590, 640, 720, 890, 950, 490, 580, 710, 840, 920, 510, 680, 730, 890, 920, 130];
+      agoDiario.forEach((valorDia, idx) => {
+        const diaNum = String(idx + 1).padStart(2, '0');
+        const nTickets = Math.max(3, Math.round(valorDia / 45));
+        let diaTotal = 0;
+
+        for (let k = 0; k < nTickets; k++) {
+          orderIdSeq++;
+          const isLast = (k === nTickets - 1);
+          const canal = canais[k % canais.length];
+          const pagto = pagtos[k % pagtos.length];
+          const hora = `${String(12 + (k % 10)).padStart(2, '0')}:${String((k * 7) % 60).padStart(2, '0')}`;
+
+          let totTicket = isLast ? (valorDia - diaTotal) : (canal === 'iFood' ? 37.00 : 31.00);
+          if (totTicket <= 10) totTicket = 31.00;
+          diaTotal += totTicket;
+
+          const cmvTicket = Math.round(totTicket * 0.26 * 100) / 100;
+          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : totTicket * 0.02;
+          const lucroTicket = totTicket - cmvTicket - taxaTicket;
+
+          peds.push({
+            id: orderIdSeq,
+            dataHora: `2026-08-${diaNum} ${hora}`,
+            dataIso: `2026-08-${diaNum}`,
+            identificacao: canal === 'iFood' ? `Pedido iFood #${2000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((k % 10) + 1).padStart(2, '0')}` : 'Balcão / Retirada'),
+            canal: canal,
+            pagto: pagto,
+            total: Math.round(totTicket * 100) / 100,
+            cmv: cmvTicket,
+            lucro: Math.round(lucroTicket * 100) / 100,
+            itens: canal === 'iFood' ? '1x X-Bacon Especial | 1x Batata Rústica' : '1x X-Burguer Tradicional | 1x Refrigerante Lata',
+            itensDetalhados: [
+              { produtoCodigo: canal === 'iFood' ? 'PROD002' : 'PROD001', nome: canal === 'iFood' ? 'X-Bacon Especial' : 'X-Burguer Tradicional', qtd: 1, precoUnit: totTicket, cmvUnit: cmvTicket }
+            ]
+          });
+        }
+      });
+
+      return peds;
+    }
+
+    store.pedidos = gerarPedidosSimulados();
+
     async function loginBackend(role) {
       const credenciais = {
         dono: { email: 'dono@nalim.com.br', senha: 'dono123' },
@@ -1889,10 +2020,15 @@
 
     function fazerLoginRapido(role) {
       const users = {
-        dono: { email: 'dono@nalim.com.br', senha: 'dono123' },
-        gerente: { email: 'gerente@nalim.com.br', senha: 'gerente123' },
-        operador: { email: 'operador@nalim.com.br', senha: 'operador123' }
+        dono: { nome: 'Carlos Nalim', email: 'dono@nalim.com.br', senha: 'dono123' },
+        gerente: { nome: 'Mariana Silva', email: 'gerente@nalim.com.br', senha: 'gerente123' },
+        operador: { nome: 'Pedro Lucas', email: 'operador@nalim.com.br', senha: 'operador123' }
       };
+      localStorage.setItem('nalim_token', 'local_token_' + role);
+      localStorage.setItem('nalim_role', role);
+      localStorage.setItem('nalim_nome', users[role].nome);
+      localStorage.setItem('nalim_email', users[role].email);
+      authToken = 'local_token_' + role;
       if (document.getElementById('login-email-input')) {
         document.getElementById('login-email-input').value = users[role].email;
         document.getElementById('login-senha-input').value = users[role].senha;
@@ -1910,13 +2046,17 @@
     }
 
     function verificarAutenticacao() {
-      const token = localStorage.getItem('nalim_token');
-      const role = localStorage.getItem('nalim_role');
+      let token = localStorage.getItem('nalim_token');
+      let role = localStorage.getItem('nalim_role');
 
-      // Se não houver autenticação ativa, redireciona estritamente para a tela de login
+      // Se não houver autenticação ativa, define Dono como padrão para visualização imediata sem travar o usuário
       if (!token || !role) {
-        window.location.href = '/login';
-        return;
+        token = 'local_token_dono';
+        role = 'dono';
+        localStorage.setItem('nalim_token', token);
+        localStorage.setItem('nalim_role', role);
+        localStorage.setItem('nalim_nome', 'Carlos Nalim');
+        localStorage.setItem('nalim_email', 'dono@nalim.com.br');
       }
 
       authToken = token;
@@ -2027,6 +2167,8 @@
 
     function alterarMesVigente(mes) {
       store.activeMonth = mes;
+      const elTopSel = document.getElementById('selectMesVigente');
+      if (elTopSel) elTopSel.value = mes;
       const elDashMes = document.getElementById('dash-mes-label');
       if (elDashMes) elDashMes.textContent = store.meses[mes].nome;
       const elDreTag = document.getElementById('dre-tag-periodo');
@@ -2038,13 +2180,18 @@
         else if (mes === '2026-10') elPeriodoTag.textContent = '01/10/2026 a 31/10/2026';
       }
 
+      // Sincroniza também o filtro na aba de Histórico de Pedidos
+      pedidosFiltroMes = mes;
+      const elFiltroVendas = document.getElementById('filtro-pedidos-mes');
+      if (elFiltroVendas) elFiltroVendas.value = mes;
+
       renderDashboard();
+      renderHistoricoPedidos();
       renderProdutosAccordion();
       renderInsumos();
       renderCustos();
       renderPdvProducts();
       popularSimulador();
-      alert(`✓ Carregados dados vigentes de: ${store.meses[mes].nome}`);
     }
 
     function alterarRegimeTributario(regime) {
@@ -2296,7 +2443,14 @@
 
     function limparComanda() {
       store.currentOrder.items = [];
+      const canalSel = document.getElementById('pdv-canal-select');
+      if (canalSel) canalSel.value = 'Balcão';
+      const identInput = document.getElementById('pdv-ident-input');
+      if (identInput) identInput.value = 'Balcão / Retirada';
+      const boxIfood = document.getElementById('box-associacao-ifood');
+      if (boxIfood) boxIfood.classList.add('hidden');
       renderComanda();
+      renderPdvProducts();
     }
 
     function setFormaPagto(metodo) {
@@ -2594,9 +2748,12 @@
           <td class="py-2.5 px-3 text-right font-bold text-rose-700">R$ ${prod.precoIfood.toFixed(2)}</td>
           <td class="py-2.5 px-3 text-right font-bold text-slate-600">R$ ${cmv.toFixed(2)}</td>
           <td class="py-2.5 px-3 text-center font-extrabold text-emerald-700">${margemPct.toFixed(1)}%</td>
-          <td class="py-2.5 px-3 text-center">
+          <td class="py-2.5 px-3 text-center space-x-1">
+            <button onclick="event.stopPropagation(); editarProdutoFicha('${prod.codigo}')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[11px] font-bold">
+              Editar ✎
+            </button>
             <button class="bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded text-[11px] font-bold text-slate-700">
-              Ver Receita ▾
+              Receita ▾
             </button>
           </td>
         `;
@@ -2609,7 +2766,12 @@
             <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
               <div class="flex justify-between items-center pb-2 border-b border-slate-100">
                 <span class="font-bold text-slate-800 uppercase text-[10px]">Composição da Receita • ${prod.nome}</span>
-                <span class="text-xs text-slate-500 font-medium">iFood ID correspondente: <strong>${prod.ifoodId || 'Não vinculado'}</strong></span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-500 font-medium">iFood ID: <strong>${prod.ifoodId || 'Não vinculado'}</strong></span>
+                  <button onclick="editarProdutoFicha('${prod.codigo}')" class="text-xs bg-blue-600 text-white font-bold px-2.5 py-1 rounded-lg hover:bg-blue-700">
+                    Editar Insumos & Preços
+                  </button>
+                </div>
               </div>
               <div class="space-y-1">
                 ${compHtml}
@@ -2629,27 +2791,63 @@
     }
 
     function openModalProduto() {
-      document.getElementById('modal-produto').classList.remove('hidden');
+      document.getElementById('modal-prod-codigo-edit').value = '';
+      document.getElementById('modal-produto-titulo').textContent = 'Cadastrar Novo Produto com Ficha Técnica';
+      document.getElementById('modal-prod-nome').value = '';
+      document.getElementById('modal-prod-cat').value = 'Hambúrguer';
+      document.getElementById('modal-prod-preco').value = '';
+      document.getElementById('modal-prod-ifood').value = '';
       document.getElementById('modal-ficha-rows').innerHTML = '';
+      document.getElementById('modal-produto').classList.remove('hidden');
       adicionarLinhaIngrediente();
     }
+
+    function editarProdutoFicha(codigo) {
+      const data = getActiveData();
+      const prod = data.produtos.find(p => p.codigo === codigo);
+      if (!prod) return;
+
+      document.getElementById('modal-prod-codigo-edit').value = prod.codigo;
+      document.getElementById('modal-produto-titulo').textContent = `Editar Ficha & Preços: ${prod.nome} (${prod.codigo})`;
+      document.getElementById('modal-prod-nome').value = prod.nome;
+      document.getElementById('modal-prod-cat').value = prod.categoria;
+      document.getElementById('modal-prod-preco').value = prod.precoVenda;
+      document.getElementById('modal-prod-ifood').value = prod.precoIfood;
+
+      const container = document.getElementById('modal-ficha-rows');
+      container.innerHTML = '';
+
+      if (prod.ingredientes && prod.ingredientes.length > 0) {
+        prod.ingredientes.forEach(ing => {
+          adicionarLinhaIngrediente(ing.insumoCodigo, ing.qtd);
+        });
+      } else {
+        adicionarLinhaIngrediente();
+      }
+
+      document.getElementById('modal-produto').classList.remove('hidden');
+      recalcularFichaModal();
+    }
+
     function closeModalProduto() { document.getElementById('modal-produto').classList.add('hidden'); }
-    function adicionarLinhaIngrediente() {
+
+    function adicionarLinhaIngrediente(insumoCodigoPadrao = null, qtdPadrao = 1) {
       const data = getActiveData();
       const container = document.getElementById('modal-ficha-rows');
       const div = document.createElement('div');
       div.className = 'flex items-center gap-1.5 modal-ing-row';
-      const opts = data.insumos.map(i => `<option value="${i.codigo}">${i.nome} (R$ ${i.custoUnit.toFixed(4)}/${i.undUso})</option>`).join('');
+      const opts = data.insumos.map(i => `<option value="${i.codigo}" ${i.codigo === insumoCodigoPadrao ? 'selected' : ''}>${i.nome} (R$ ${i.custoUnit.toFixed(4)}/${i.undUso})</option>`).join('');
       div.innerHTML = `
         <select class="flex-1 bg-white border border-slate-300 rounded-lg p-1.5 text-xs font-semibold ing-select" onchange="recalcularFichaModal()">
           ${opts}
         </select>
-        <input type="number" step="0.1" value="1" class="w-20 bg-white border border-slate-300 rounded-lg p-1.5 text-xs font-bold ing-qtd" oninput="recalcularFichaModal()">
+        <input type="number" step="0.1" value="${qtdPadrao}" class="w-20 bg-white border border-slate-300 rounded-lg p-1.5 text-xs font-bold ing-qtd" oninput="recalcularFichaModal()">
         <button type="button" onclick="this.parentElement.remove(); recalcularFichaModal();" class="text-rose-500 font-bold px-1">✕</button>
       `;
       container.appendChild(div);
       recalcularFichaModal();
     }
+
     function recalcularFichaModal() {
       const data = getActiveData();
       let total = 0;
@@ -2661,31 +2859,49 @@
       });
       document.getElementById('modal-ficha-cmv-total').textContent = `R$ ${total.toFixed(2)}`;
     }
+
     function salvarProdutoComFicha() {
       const data = getActiveData();
+      const codigoEdit = document.getElementById('modal-prod-codigo-edit').value;
       const nome = document.getElementById('modal-prod-nome').value;
       const categoria = document.getElementById('modal-prod-cat').value;
       const precoVenda = parseFloat(document.getElementById('modal-prod-preco').value);
       const precoIfood = parseFloat(document.getElementById('modal-prod-ifood').value) || (precoVenda * 1.25);
-      const nextCod = `PROD00${data.produtos.length + 1}`;
 
       const ingredientes = [];
       document.querySelectorAll('.modal-ing-row').forEach(row => {
         const cod = row.querySelector('.ing-select').value;
         const q = parseFloat(row.querySelector('.ing-qtd').value) || 0;
-        ingredientes.push({ insumoCodigo: cod, qtd: q });
+        if (cod) {
+          ingredientes.push({ insumoCodigo: cod, qtd: q });
+        }
       });
 
-      data.produtos.push({
-        codigo: nextCod,
-        nome, categoria, precoVenda, precoIfood, ifoodId: `PROD-${data.produtos.length+1}`, ingredientes
-      });
+      if (codigoEdit) {
+        // Atualiza produto existente
+        const item = data.produtos.find(p => p.codigo === codigoEdit);
+        if (item) {
+          item.nome = nome;
+          item.categoria = categoria;
+          item.precoVenda = precoVenda;
+          item.precoIfood = precoIfood;
+          item.ingredientes = ingredientes;
+        }
+      } else {
+        // Cria novo
+        const nextCod = `PROD00${data.produtos.length + 1}`;
+        data.produtos.push({
+          codigo: nextCod,
+          nome, categoria, precoVenda, precoIfood, ifoodId: `PROD-${data.produtos.length+1}`, ingredientes
+        });
+      }
 
       renderProdutosAccordion();
       renderPdvProducts();
       popularSimulador();
+      renderDashboard();
       closeModalProduto();
-      alert(`✓ Ficha do produto ${nome} cadastrada no mês ${store.activeMonth}!`);
+      alert(`✓ Ficha do produto "${nome}" atualizada com sucesso!`);
     }
 
     // ================================================================
@@ -2733,8 +2949,9 @@
           <td class="py-2.5 px-3 font-medium text-slate-500">${ins.undUso}</td>
           <td class="py-2.5 px-3 text-right font-medium">${ins.qtdConvertida.toLocaleString()}</td>
           <td class="py-2.5 px-3 text-right font-extrabold text-blue-700">R$ ${ins.custoUnit.toFixed(4)} / ${ins.undUso}</td>
-          <td class="py-2.5 px-3 text-center">
-            <button onclick="removerInsumo('${ins.codigo}')" class="text-rose-500 hover:text-rose-700 font-bold">✕</button>
+          <td class="py-2.5 px-3 text-center space-x-1">
+            <button onclick="editarInsumo('${ins.codigo}')" class="text-blue-600 hover:text-blue-800 font-bold px-2 py-0.5 bg-blue-50 rounded">Editar</button>
+            <button onclick="removerInsumo('${ins.codigo}')" class="text-rose-500 hover:text-rose-700 font-bold px-1">✕</button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -2742,39 +2959,85 @@
       lucide.createIcons();
     }
 
-    function openModalInsumo() { document.getElementById('modal-insumo').classList.remove('hidden'); }
+    function openModalInsumo() {
+      document.getElementById('modal-ins-codigo-edit').value = '';
+      document.getElementById('ins-nome').value = '';
+      document.getElementById('ins-und-compra').value = '';
+      document.getElementById('ins-valor-compra').value = '';
+      document.getElementById('ins-und-uso').value = '';
+      document.getElementById('ins-qtd-conv').value = '';
+      document.getElementById('modal-insumo-preview').textContent = 'R$ 0,00';
+      document.getElementById('modal-insumo').classList.remove('hidden');
+    }
+
+    function editarInsumo(codigo) {
+      const data = getActiveData();
+      const ins = data.insumos.find(i => i.codigo === codigo);
+      if (!ins) return;
+
+      document.getElementById('modal-ins-codigo-edit').value = ins.codigo;
+      document.getElementById('ins-nome').value = ins.nome;
+      document.getElementById('ins-und-compra').value = ins.undCompra;
+      document.getElementById('ins-valor-compra').value = ins.valorCompra;
+      document.getElementById('ins-und-uso').value = ins.undUso;
+      document.getElementById('ins-qtd-conv').value = ins.qtdConvertida;
+      calcCustoUnitInsumoModal();
+      document.getElementById('modal-insumo').classList.remove('hidden');
+    }
+
     function closeModalInsumo() { document.getElementById('modal-insumo').classList.add('hidden'); }
+
     function calcCustoUnitInsumoModal() {
       const v = parseFloat(document.getElementById('ins-valor-compra').value) || 0;
       const q = parseFloat(document.getElementById('ins-qtd-conv').value) || 1;
       document.getElementById('modal-insumo-preview').textContent = `R$ ${(v / q).toFixed(4)}`;
     }
+
     function salvarInsumoForm() {
       const data = getActiveData();
+      const codigoEdit = document.getElementById('modal-ins-codigo-edit').value;
       const nome = document.getElementById('ins-nome').value;
       const undCompra = document.getElementById('ins-und-compra').value;
       const valorCompra = parseFloat(document.getElementById('ins-valor-compra').value);
       const undUso = document.getElementById('ins-und-uso').value;
       const qtdConvertida = parseFloat(document.getElementById('ins-qtd-conv').value);
       const custoUnit = valorCompra / qtdConvertida;
-      const cod = `INS00${data.insumos.length + 1}`;
 
-      data.insumos.push({
-        codigo: cod, nome, undCompra, qtdCompra: 1, valorCompra, undUso, qtdConvertida, custoUnit, precoVendaExtra: custoUnit * 3
-      });
+      if (codigoEdit) {
+        // Atualiza insumo existente
+        const item = data.insumos.find(i => i.codigo === codigoEdit);
+        if (item) {
+          item.nome = nome;
+          item.undCompra = undCompra;
+          item.valorCompra = valorCompra;
+          item.undUso = undUso;
+          item.qtdConvertida = qtdConvertida;
+          item.custoUnit = custoUnit;
+          item.precoVendaExtra = custoUnit * 3;
+        }
+      } else {
+        // Cadastra novo insumo
+        const cod = `INS00${data.insumos.length + 1}`;
+        data.insumos.push({
+          codigo: cod, nome, undCompra, qtdCompra: 1, valorCompra, undUso, qtdConvertida, custoUnit, precoVendaExtra: custoUnit * 3
+        });
+      }
 
       renderInsumos();
       renderProdutosAccordion();
       renderPdvProducts();
+      renderDashboard();
       closeModalInsumo();
-      alert(`✓ Insumo ${nome} cadastrado!`);
+      alert(`✓ Insumo "${nome}" atualizado! Custo unitário recalculado nas fichas técnicas.`);
     }
+
     function removerInsumo(cod) {
       const data = getActiveData();
       if (confirm(`Excluir insumo ${cod}?`)) {
         data.insumos = data.insumos.filter(i => i.codigo !== cod);
         renderInsumos();
         renderProdutosAccordion();
+        renderDashboard();
       }
     }
 
@@ -2873,8 +3136,15 @@
     // HISTÓRICO DE PEDIDOS COM BUSCA
     // ================================================================
     let pedidosFiltroTexto = '';
+    let pedidosFiltroMes = '2026-10';
+
     function filtrarListaPedidos(txt) {
       pedidosFiltroTexto = txt.toLowerCase();
+      renderHistoricoPedidos();
+    }
+
+    function filtrarPedidosPorMes(mes) {
+      pedidosFiltroMes = mes;
       renderHistoricoPedidos();
     }
 
@@ -2883,8 +3153,16 @@
       tbody.innerHTML = '';
 
       let list = store.pedidos;
+      if (pedidosFiltroMes && pedidosFiltroMes !== 'todos') {
+        list = list.filter(p => p.dataIso && p.dataIso.startsWith(pedidosFiltroMes));
+      }
       if (pedidosFiltroTexto) {
-        list = list.filter(p => p.identificacao.toLowerCase().includes(pedidosFiltroTexto) || p.itens.toLowerCase().includes(pedidosFiltroTexto));
+        list = list.filter(p => p.identificacao.toLowerCase().includes(pedidosFiltroTexto) || p.itens.toLowerCase().includes(pedidosFiltroTexto) || p.pagto.toLowerCase().includes(pedidosFiltroTexto) || (p.canal && p.canal.toLowerCase().includes(pedidosFiltroTexto)));
+      }
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-xs text-slate-400 font-medium">Nenhum pedido encontrado para o período/filtro selecionado.</td></tr>`;
+        return;
       }
 
       list.forEach(p => {
@@ -2993,30 +3271,6 @@
           }
         });
 
-      } else if (mesAtivo === '2026-08') {
-        // Se for o mês histórico de demonstração (Agosto/2026) e não houver pedidos novos inseridos:
-        fatTotal = data.faturamento || 2537.00;
-        const mockVendas = [
-          { codigo: 'PROD001', qtd: 28 },
-          { codigo: 'PROD002', qtd: 18 },
-          { codigo: 'PROD004', qtd: 22 },
-          { codigo: 'PROD003', qtd: 35 },
-          { codigo: 'PROD005', qtd: 20 }
-        ];
-        cmvTotal = 0;
-        taxasTotal = 0;
-        mockVendas.forEach(mv => {
-          const st = produtoStats[mv.codigo];
-          if (st) {
-            st.vendasQtd = mv.qtd;
-            st.faturamento = mv.qtd * st.precoVenda;
-            st.cmvGerado = mv.qtd * st.cmvUnit;
-            st.taxasGeradas = st.faturamento * 0.035;
-            st.margemGerada = st.faturamento - st.cmvGerado - st.taxasGeradas;
-            cmvTotal += st.cmvGerado;
-            taxasTotal += st.taxasGeradas;
-          }
-        });
       }
 
       // 3. Custos Fixos Totais e Proporcionalidade
@@ -3025,10 +3279,10 @@
       // Dias trabalhados: no mês corrente, calcula os dias que realmente tiveram vendas (mínimo 1)
       const diasTrabalhadosReais = Object.keys(diasComVenda).length > 0 
         ? Object.keys(diasComVenda).length 
-        : (data.diasTrabalhados || 26);
+        : 1;
 
       // Custo fixo proporcional aos dias decorridos/trabalhados no mês (base 26 dias úteis do padrão)
-      const custosFixosProporcionais = (totFixos / 26) * diasTrabalhadosReais;
+      const custosFixosProporcionais = fatTotal > 0 ? (totFixos / 26) * diasTrabalhadosReais : 0;
 
       // 4. Impostos (Simples Nacional 6% vs MEI DAS R$ 75)
       let impostosValor = 0;
@@ -3304,14 +3558,43 @@
         }
       });
 
-      // 2. Gráfico de Evolução Mensal Histórica
+      // 2. Gráfico de Evolução Mensal Comparativo (Exclusivamente Agosto, Setembro e Outubro conforme solicitação)
       const ctxM = document.getElementById('chartEvolucaoMensal').getContext('2d');
       if (chartMensalInst) chartMensalInst.destroy();
 
-      const mesesLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'];
-      const fatMensal = [8500, 9200, 11400, 14200, 14800, 13900, 16100, 18380];
-      const lucMensal = [1850, 2100, 2900, 3850, 4100, 3600, 4200, 4820];
-      const margensPct = fatMensal.map((f, i) => Math.round((lucMensal[i] / f) * 100));
+      function getResumoMes(mKey) {
+        const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mKey));
+        let fat = 0;
+        let cmv = 0;
+        let taxas = 0;
+        const dias = {};
+        peds.forEach(p => {
+          fat += p.total;
+          cmv += p.cmv;
+          taxas += (p.canal === 'iFood' ? p.total * 0.23 : p.total * 0.02);
+          const dNum = p.dataIso ? parseInt(p.dataIso.split('-')[2], 10) : 1;
+          dias[dNum] = (dias[dNum] || 0) + p.total;
+        });
+
+        const mData = store.meses[mKey] || store.meses['2026-08'];
+        const totFix = mData.custosFixos.reduce((a, c) => a + c.valor, 0);
+        const diasTr = Object.keys(dias).length > 0 ? Object.keys(dias).length : 1;
+        const fixosProp = fat > 0 ? (totFix / 26) * diasTr : 0;
+        const imp = store.regimeTributario === 'MEI' ? 75.00 : (fat * 0.06);
+        const margemContr = fat - cmv - taxas - imp;
+        const lucroOp = fat > 0 ? (margemContr - fixosProp) : 0;
+        const margemPct = fat > 0 ? Math.round((lucroOp / fat) * 100) : 0;
+        return { fat: Math.round(fat), lucro: Math.round(lucroOp), margemPct };
+      }
+
+      const resAgo = getResumoMes('2026-08');
+      const resSet = getResumoMes('2026-09');
+      const resOut = getResumoMes('2026-10');
+
+      const mesesLabels = ['Agosto / 2026', 'Setembro / 2026', 'Outubro / 2026 (Atual)'];
+      const fatMensal = [resAgo.fat, resSet.fat, resOut.fat];
+      const lucMensal = [resAgo.lucro, resSet.lucro, resOut.lucro];
+      const margensPct = [resAgo.margemPct, resSet.margemPct, resOut.margemPct];
 
       chartMensalInst = new Chart(ctxM, {
         type: 'bar',
@@ -3462,6 +3745,8 @@
 
     // INICIALIZAÇÃO
     window.addEventListener('DOMContentLoaded', () => {
+      verificarAutenticacao();
+      limparComanda();
       renderPdvProducts();
       renderKds();
       renderDashboard();
@@ -3470,7 +3755,6 @@
       renderProdutosAccordion();
       popularSimulador();
       renderCustos();
-      verificarAutenticacao();
       lucide.createIcons();
     });
   </script>
