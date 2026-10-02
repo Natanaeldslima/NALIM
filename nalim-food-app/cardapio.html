@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Cardápio Digital & Delivery — NALIM Food Service</title>
+  <meta name="description" content="Faça seu pedido online sem taxas abusivas de aplicativo. Peça direto da cozinha pelo WhatsApp!">
+  <meta name="theme-color" content="#059669">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar { display: none; }
+    .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .animate-slide-up {
+      animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-in {
+      animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between max-w-lg mx-auto shadow-2xl relative border-x border-slate-200">
+
+  <!-- ============================================================== -->
+  <!-- TOPO: BANNER DA HAMBURGUERIA & STATUS                          -->
+  <!-- ============================================================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    
+    <!-- Banner de Capa Visual com Imagem de Fundo de Alta Resolução -->
+    <div class="relative h-36 sm:h-44 w-full bg-slate-900 overflow-hidden">
+      <img src="https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1000&q=80" 
+           alt="Capa Hamburgueria" 
+           class="w-full h-full object-cover opacity-75">
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/40 to-transparent"></div>
+      
+      <!-- Badges no Banner -->
+      <div class="absolute top-3 left-3 right-3 flex items-center justify-between">
+        <span class="inline-flex items-center gap-1.5 bg-emerald-500/90 text-white font-extrabold text-[11px] px-2.5 py-1 rounded-full backdrop-blur-xs shadow-md">
+          <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+          Aberto para Pedidos
+        </span>
+        <button onclick="abrirModalConfig()" title="Configurar Cardápio" class="bg-black/50 hover:bg-black/70 text-white/90 p-1.5 rounded-full backdrop-blur-xs transition">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Informações do Restaurante Flutuando sobre o Banner -->
+      <div class="absolute bottom-2.5 left-3.5 right-3.5 flex items-end gap-3">
+        <div class="w-14 h-14 rounded-2xl bg-white p-1 shadow-xl flex items-center justify-center border-2 border-white shrink-0 overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=150&q=80" 
+               alt="Logo Nalim" 
+               class="w-full h-full object-cover rounded-xl">
+        </div>
+        <div class="min-w-0 flex-1 text-white pb-0.5">
+          <h1 id="loja-nome" class="text-base sm:text-lg font-black tracking-tight leading-tight truncate drop-shadow-sm">
+            NALIM Burger & Cozinha
+          </h1>
+          <p class="text-[11px] text-slate-200 font-medium flex items-center gap-2 mt-0.5">
+            <span class="flex items-center gap-1 text-amber-400 font-bold">
+              <i data-lucide="star" class="w-3 h-3 fill-amber-400"></i> 4.9 (480+)
+            </span>
+            <span>•</span>
+            <span class="text-emerald-400 font-bold">Sem taxas extras</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Informações de Entrega & Retirada -->
+    <div class="px-3.5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-600">
+      <div class="flex items-center gap-1.5">
+        <i data-lucide="clock" class="w-3.5 h-3.5 text-brand-600"></i>
+        <span>30 - 50 min</span>
+      </div>
+      <div class="h-3 w-px bg-slate-200"></div>
+      <div class="flex items-center gap-1.5">
+        <i data-lucide="bike" class="w-3.5 h-3.5 text-brand-600"></i>
+        <span id="banner-taxa-entrega">Taxa: R$ 5,00</span>
+      </div>
+      <div class="h-3 w-px bg-slate-200"></div>
+      <div class="flex items-center gap-1 text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full font-extrabold text-[10px]">
+        <i data-lucide="gift" class="w-3 h-3 text-emerald-700"></i>
+        <span>Grátis acima de R$ 60</span>
+      </div>
+    </div>
+
+    <!-- Barra de Pesquisa Rápida -->
+    <div class="p-3 pb-2 bg-white">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+        <input type="text" id="input-busca" oninput="buscarProdutos(this.value)" placeholder="Buscar hambúrguer, bebida ou sobremesa..." 
+               class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+        <button onclick="limparBusca()" id="btn-limpar-busca" class="hidden absolute right-2.5 top-2.5 text-slate-400 text-xs hover:text-slate-700">✕</button>
+      </div>
+
+      <!-- Categorias Deslizantes (Carrossel Horizontal) -->
+      <div class="flex items-center gap-2 overflow-x-auto custom-scroll pt-2.5 pb-0.5 text-xs font-extrabold" id="category-pills">
+        <button onclick="filtrarCategoria('todos')" class="cat-pill px-3 py-1.5 rounded-full bg-brand-700 text-white shrink-0 shadow-2xs transition" data-cat="todos">
+          🔥 Mais Pedidos
+        </button>
+        <button onclick="filtrarCategoria('Hambúrguer')" class="cat-pill px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-200 transition" data-cat="Hambúrguer">
+          🍔 Burgers
+        </button>
+        <button onclick="filtrarCategoria('Combo')" class="cat-pill px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-200 transition" data-cat="Combo">
+          🍟 Combos
+        </button>
+        <button onclick="filtrarCategoria('Porção')" class="cat-pill px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-200 transition" data-cat="Porção">
+          🍗 Porções
+        </button>
+        <button onclick="filtrarCategoria('Bebida')" class="cat-pill px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-200 transition" data-cat="Bebida">
+          🥤 Bebidas
+        </button>
+        <button onclick="filtrarCategoria('Sobremesa')" class="cat-pill px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-200 transition" data-cat="Sobremesa">
+          🍰 Sobremesas
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- LISTA DE PRODUTOS DO CARDÁPIO (TOUCH-FRIENDLY & APETITOSO)     -->
+  <!-- ============================================================== -->
+  <main class="flex-1 p-3.5 space-y-3 overflow-y-auto custom-scroll pb-28" id="produtos-container">
+    <!-- Renderizado dinamicamente pelo JavaScript -->
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- BARRA FLUTUANTE DA SACOLA DE COMPRAS (FIXA EMBAIXO)            -->
+  <!-- ============================================================== -->
+  <div id="barra-sacola-flutuante" class="fixed bottom-0 left-0 right-0 max-w-lg mx-auto p-3.5 z-40 hidden">
+    <button onclick="abrirDrawerSacola()" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white p-3.5 rounded-2xl shadow-xl flex items-center justify-between transition border border-brand-500">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-brand-800 text-white font-black flex items-center justify-center text-xs shadow-inner" id="sacola-badge-qtd">
+          1
+        </div>
+        <div class="text-left">
+          <span class="text-xs font-black block leading-none">Ver Minha Sacola</span>
+          <span class="text-[11px] text-brand-100 font-medium" id="sacola-resumo-itens">1 produto selecionado</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-black text-white" id="sacola-total-flutuante">R$ 25,00</span>
+        <i data-lucide="chevron-up" class="w-4 h-4 text-brand-200"></i>
+      </div>
+    </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: PERSONALIZAR ITEM (RETIRAR INGREDIENTES & EXTRAS)       -->
+  <!-- ============================================================== -->
+  <div id="modal-personalizar" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex flex-col justify-end">
+    <div class="bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto custom-scroll animate-slide-up shadow-2xl border-t border-slate-100 flex flex-col">
+      
+      <!-- Imagem do Produto no Topo do Modal -->
+      <div class="relative h-44 w-full bg-slate-900 shrink-0">
+        <img id="cust-item-img" src="" alt="" class="w-full h-full object-cover">
+        <button onclick="fecharModalPersonalizar()" class="absolute top-3 right-3 text-white bg-slate-900/60 hover:bg-slate-900/80 p-1.5 rounded-full backdrop-blur-xs transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 flex-1">
+        <div>
+          <span id="cust-item-cat" class="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-brand-100 text-brand-800">
+            Hambúrguer
+          </span>
+          <h3 id="cust-item-nome" class="font-black text-lg text-slate-900 mt-1">
+            X-Burguer Especial
+          </h3>
+          <p id="cust-item-desc" class="text-xs text-slate-500 mt-1 leading-relaxed">
+            Descrição completa dos ingredientes do produto selecionado.
+          </p>
+          <div class="mt-2 text-base font-black text-brand-700" id="cust-item-preco-base">
+            R$ 25,00
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- 1. Retirar Ingredientes -->
+        <div id="cust-secao-ingredientes" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+              <i data-lucide="scissors" class="w-3.5 h-3.5 text-rose-500"></i>
+              Deseja retirar algo?
+            </h4>
+            <span class="text-[10px] text-slate-400 font-semibold">Opcional</span>
+          </div>
+          <p class="text-[11px] text-slate-500">Marque os ingredientes que você NÃO quer no seu pedido:</p>
+          <div id="cust-lista-ingredientes" class="space-y-1.5 pt-1">
+            <!-- Checkboxes dinâmicos -->
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- 2. Ponto da Carne (apenas para hambúrgueres) -->
+        <div id="cust-secao-ponto" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+              <i data-lucide="flame" class="w-3.5 h-3.5 text-amber-500"></i>
+              Ponto da Carne
+            </h4>
+            <span class="text-[10px] text-slate-400 font-semibold">Escolha 1</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs font-bold pt-1" id="cust-opcoes-ponto">
+            <label class="border border-slate-200 rounded-xl p-2.5 text-center cursor-pointer hover:border-brand-500 transition flex flex-col items-center">
+              <input type="radio" name="ponto_carne" value="Ao Ponto" class="text-brand-600 focus:ring-brand-500 mb-1" checked>
+              <span>Ao Ponto</span>
+              <span class="text-[9px] text-slate-400 font-normal">Rosadinho</span>
+            </label>
+            <label class="border border-slate-200 rounded-xl p-2.5 text-center cursor-pointer hover:border-brand-500 transition flex flex-col items-center">
+              <input type="radio" name="ponto_carne" value="Bem Passado" class="text-brand-600 focus:ring-brand-500 mb-1">
+              <span>Bem Passado</span>
+              <span class="text-[9px] text-slate-400 font-normal">Mais firme</span>
+            </label>
+            <label class="border border-slate-200 rounded-xl p-2.5 text-center cursor-pointer hover:border-brand-500 transition flex flex-col items-center">
+              <input type="radio" name="ponto_carne" value="Ao Ponto p/ Bem" class="text-brand-600 focus:ring-brand-500 mb-1">
+              <span>Ponto p/ Bem</span>
+              <span class="text-[9px] text-slate-400 font-normal">No capricho</span>
+            </label>
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- 3. Adicionais Extras -->
+        <div id="cust-secao-extras" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-emerald-500"></i>
+              Turbine seu Pedido (Adicionais)
+            </h4>
+            <span class="text-[10px] text-slate-400 font-semibold">Opcional</span>
+          </div>
+          <div id="cust-lista-extras" class="space-y-1.5 pt-1">
+            <!-- Extras dinâmicos -->
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- 4. Observações para a Cozinha -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+            <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-500"></i>
+            Alguma observação especial?
+          </label>
+          <textarea id="cust-obs" rows="2" placeholder="Ex: Molho à parte, cortar ao meio, caprichar no guardanapo..." 
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+        </div>
+      </div>
+
+      <!-- Barra Inferior de Ação: Quantidade & Adicionar -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 sticky bottom-0">
+        <!-- Contador de Quantidade -->
+        <div class="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+          <button onclick="alterarQtdPersonalizar(-1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-black flex items-center justify-center text-sm transition">
+            -
+          </button>
+          <span id="cust-qtd-val" class="w-8 text-center font-black text-sm text-slate-900">1</span>
+          <button onclick="alterarQtdPersonalizar(1)" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-black flex items-center justify-center text-sm transition">
+            +
+          </button>
+        </div>
+
+        <!-- Botão Adicionar ao Carrinho -->
+        <button onclick="adicionarAoCarrinhoConfirmado()" class="flex-1 bg-brand-600 hover:bg-brand-700 active:scale-[0.98] text-white py-3 px-4 rounded-xl font-black text-xs sm:text-sm flex items-center justify-between shadow-md transition">
+          <span>Adicionar</span>
+          <span id="cust-total-btn">R$ 25,00</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- DRAWER / MODAL: SACOLA & CHECKOUT DE ENTREGA                   -->
+  <!-- ============================================================== -->
+  <div id="drawer-sacola" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex flex-col justify-end">
+    <div class="bg-white rounded-t-3xl max-h-[92vh] overflow-y-auto custom-scroll animate-slide-up shadow-2xl border-t border-slate-100 flex flex-col">
+      
+      <!-- Cabeçalho da Sacola -->
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-brand-100 text-brand-800 flex items-center justify-center">
+            <i data-lucide="shopping-bag" class="w-4 h-4 text-brand-700"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-base text-slate-900 leading-none">Sua Sacola</h3>
+            <span class="text-[10px] text-slate-500 font-medium" id="sacola-count-label">0 itens adicionados</span>
+          </div>
+        </div>
+        <button onclick="fecharDrawerSacola()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl bg-slate-100 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-4 flex-1">
+
+        <!-- 1. Lista de Itens na Sacola -->
+        <div class="space-y-2.5">
+          <h4 class="text-xs font-black uppercase text-slate-400 tracking-wider">Itens do Pedido</h4>
+          <div id="sacola-itens-lista" class="space-y-2">
+            <!-- Preenchido dinamicamente -->
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- 2. Tipo de Entrega: Delivery vs Retirada -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-600"></i>
+            Como deseja receber seu pedido?
+          </h4>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" onclick="setTipoEntrega('delivery')" id="btn-tipo-delivery" 
+                    class="border-2 border-brand-600 bg-brand-50 text-brand-800 p-3 rounded-2xl font-black text-xs flex flex-col items-center justify-center gap-1 transition">
+              <i data-lucide="bike" class="w-5 h-5 text-brand-600"></i>
+              <span>🛵 Entrega em Casa</span>
+              <span class="text-[10px] text-brand-600 font-bold" id="badge-taxa-checkout">Taxa R$ 5,00</span>
+            </button>
+            <button type="button" onclick="setTipoEntrega('retirada')" id="btn-tipo-retirada" 
+                    class="border-2 border-slate-200 bg-white text-slate-600 p-3 rounded-2xl font-black text-xs flex flex-col items-center justify-center gap-1 transition hover:bg-slate-50">
+              <i data-lucide="store" class="w-5 h-5 text-slate-400"></i>
+              <span>🏬 Retirar no Balcão</span>
+              <span class="text-[10px] text-emerald-600 font-bold">Grátis (R$ 0,00)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Formulário de Endereço (Aparece se for Delivery) -->
+        <div id="form-endereco" class="space-y-2.5 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+          <h5 class="text-xs font-black text-slate-800 flex items-center gap-1">
+            <i data-lucide="home" class="w-3.5 h-3.5 text-brand-600"></i>
+            Endereço de Entrega
+          </h5>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Rua / Logradouro *</label>
+              <input type="text" id="end-rua" placeholder="Ex: Av. Paulista" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Número *</label>
+              <input type="text" id="end-numero" placeholder="Ex: 1500" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Bairro *</label>
+              <input type="text" id="end-bairro" placeholder="Ex: Centro" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Complemento</label>
+              <input type="text" id="end-complemento" placeholder="Apto 42, Bloco B" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-500 uppercase">Ponto de Referência</label>
+            <input type="text" id="end-referencia" placeholder="Ex: Próximo à padaria São Jorge" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <!-- 4. Seus Dados de Contato -->
+        <div class="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+          <h5 class="text-xs font-black text-slate-800 flex items-center gap-1">
+            <i data-lucide="user" class="w-3.5 h-3.5 text-brand-600"></i>
+            Seus Dados
+          </h5>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Seu Nome Completo *</label>
+              <input type="text" id="cli-nome" placeholder="Ex: João da Silva" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 uppercase">Seu WhatsApp (com DDD) *</label>
+              <input type="tel" id="cli-whatsapp" placeholder="(11) 99999-9999" class="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Forma de Pagamento -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center gap-1.5">
+            <i data-lucide="wallet" class="w-3.5 h-3.5 text-brand-600"></i>
+            Forma de Pagamento
+          </h4>
+          <div class="grid grid-cols-3 gap-2 text-xs font-bold" id="seletor-pagamento">
+            <label class="border-2 border-brand-600 bg-brand-50 text-brand-800 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center">
+              <input type="radio" name="forma_pagto" value="PIX" class="sr-only" checked onchange="atualizarEstiloPagamento()">
+              <i data-lucide="qr-code" class="w-4 h-4 mb-1 text-emerald-600"></i>
+              <span>PIX</span>
+              <span class="text-[9px] text-emerald-700 font-normal">Mais rápido</span>
+            </label>
+            <label class="border-2 border-slate-200 bg-white text-slate-600 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center hover:bg-slate-50">
+              <input type="radio" name="forma_pagto" value="Cartão (Entrega)" class="sr-only" onchange="atualizarEstiloPagamento()">
+              <i data-lucide="credit-card" class="w-4 h-4 mb-1 text-slate-500"></i>
+              <span>Cartão</span>
+              <span class="text-[9px] text-slate-400 font-normal">Na entrega</span>
+            </label>
+            <label class="border-2 border-slate-200 bg-white text-slate-600 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center hover:bg-slate-50">
+              <input type="radio" name="forma_pagto" value="Dinheiro" class="sr-only" onchange="atualizarEstiloPagamento()">
+              <i data-lucide="banknote" class="w-4 h-4 mb-1 text-slate-500"></i>
+              <span>Dinheiro</span>
+              <span class="text-[9px] text-slate-400 font-normal">Com troco</span>
+            </label>
+          </div>
+
+          <!-- Campo de Troco (Aparece se for Dinheiro) -->
+          <div id="campo-troco" class="hidden pt-1">
+            <label class="text-[10px] font-bold text-slate-500 uppercase">Precisa de troco para quanto?</label>
+            <input type="text" id="troco-para" placeholder="Ex: R$ 50,00 ou Não preciso" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-brand-500">
+          </div>
+        </div>
+
+        <hr class="border-slate-100">
+
+        <!-- 6. Resumo Financeiro da Compra -->
+        <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-1.5 text-xs font-semibold">
+          <div class="flex items-center justify-between text-slate-600">
+            <span>Subtotal dos itens:</span>
+            <span id="resumo-subtotal">R$ 0,00</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-600">
+            <span>Taxa de Entrega:</span>
+            <span id="resumo-taxa">R$ 5,00</span>
+          </div>
+          <div class="flex items-center justify-between text-sm font-black text-slate-900 pt-1.5 border-t border-slate-200">
+            <span>TOTAL A PAGAR:</span>
+            <span class="text-base text-brand-700" id="resumo-total">R$ 0,00</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Barra de Ação Final: Enviar Pedido via WhatsApp -->
+      <div class="p-4 bg-white border-t border-slate-200 sticky bottom-0 z-10 shadow-lg">
+        <button type="button" onclick="finalizarPedidoWhatsApp()" id="btn-enviar-pedido" 
+                class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white py-3.5 px-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-600/20 transition cursor-pointer">
+          <i data-lucide="message-circle" class="w-5 h-5"></i>
+          <span>ENVIAR PEDIDO NO WHATSAPP</span>
+        </button>
+        <p class="text-center text-[10px] text-slate-400 font-medium mt-1.5">
+          🔒 Seu pedido será enviado diretamente para a cozinha do restaurante.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: SUCESSO DO PEDIDO ENVIADO                               -->
+  <!-- ============================================================== -->
+  <div id="modal-sucesso" class="fixed inset-0 bg-slate-950/70 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 text-center max-w-sm w-full space-y-4 shadow-2xl animate-pop-in">
+      <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center shadow-inner">
+        <i data-lucide="check" class="w-8 h-8"></i>
+      </div>
+      <div>
+        <h3 class="text-lg font-black text-slate-900 tracking-tight">Pedido Enviado com Sucesso! 🎉</h3>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed" id="sucesso-msg-pedido">
+          Seu pedido já foi encaminhado para a cozinha e enviado no WhatsApp da hamburgueria.
+        </p>
+      </div>
+      <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200 text-xs space-y-1">
+        <div class="font-extrabold text-slate-800" id="sucesso-numero-comanda">Comanda #105</div>
+        <div class="text-[11px] text-slate-500" id="sucesso-tempo-estimado">Tempo estimado: 30 a 50 minutos</div>
+      </div>
+      <button onclick="fecharModalSucesso()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-black text-xs py-3 rounded-xl transition shadow-md">
+        Fazer Outro Pedido
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: CONFIGURAÇÕES DA LOJA (WHATSAPP, TAXA, NOME)            -->
+  <!-- ============================================================== -->
+  <div id="modal-config" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 max-w-md w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-brand-600"></i>
+          <h3 class="font-black text-sm text-slate-900">Configurações do Cardápio Digital</h3>
+        </div>
+        <button onclick="fecharModalConfig()" class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">WhatsApp do Restaurante (onde chegam os pedidos):</label>
+          <input type="text" id="cfg-whatsapp" placeholder="Ex: 5511999999999" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
+          <span class="text-[10px] text-slate-400">Inclua o 55 e o DDD (somente números).</span>
+        </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Nome do Estabelecimento:</label>
+          <input type="text" id="cfg-nome" placeholder="Ex: NALIM Burger & Cozinha" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Taxa de Entrega (R$):</label>
+            <input type="number" step="0.5" id="cfg-taxa" placeholder="5.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="font-bold text-slate-700 block mb-1">Grátis a partir de (R$):</label>
+            <input type="number" step="1" id="cfg-frete-gratis" placeholder="60.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-2">
+        <button onclick="fecharModalConfig()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl transition">
+          Cancelar
+        </button>
+        <button onclick="salvarConfiguracoes()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-black py-2.5 rounded-xl transition shadow-md">
+          Salvar Dados
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT: LÓGICA COMPLETA DO CARDÁPIO DIGITAL                -->
+  <!-- ============================================================== -->
+  <script>
+    const API_BASE = window.location.origin;
+
+    // Configurações do Restaurante
+    let lojaConfig = {
+      whatsapp: localStorage.getItem('nalim_whatsapp_delivery') || '5511999999999',
+      nome: localStorage.getItem('nalim_empresa_nome') || 'NALIM Burger & Cozinha',
+      taxaEntrega: parseFloat(localStorage.getItem('nalim_taxa_entrega') || '5.00'),
+      freteGratisApartirDe: parseFloat(localStorage.getItem('nalim_frete_gratis') || '60.00')
+    };
+
+    // Produtos Padrão Deliciosos e Testados
+    const PRODUTOS_DEFAULT = [
+      {
+        codigo: 'PROD001',
+        nome: 'X-Burguer Tradicional',
+        categoria: 'Hambúrguer',
+        preco: 20.00,
+        descricao: 'Pão brioche tostado na manteiga, blend suculento 120g, queijo cheddar fatiado derretido e maionese especial da casa.',
+        foto: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['Pão Brioche', 'Blend Bovino 120g', 'Cheddar Duplo', 'Molho da Casa']
+      },
+      {
+        codigo: 'PROD002',
+        nome: 'X-Bacon Especial Artesanal',
+        categoria: 'Hambúrguer',
+        preco: 25.00,
+        descricao: 'Pão brioche selado, blend artesanal 120g, 40g de bacon crocante em tiras, queijo cheddar duplo e molho defumado.',
+        foto: 'https://images.unsplash.com/photo-1553979459-d2229ba7433b?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['Pão Brioche', 'Blend Bovino 120g', 'Bacon Fatiado Crocante', 'Cheddar Duplo', 'Molho da Casa']
+      },
+      {
+        codigo: 'PROD004',
+        nome: 'Combo X-Burguer Completo',
+        categoria: 'Combo',
+        preco: 24.00,
+        descricao: 'O campeão de vendas! 1 X-Burguer Tradicional + Porção individual de Batatas Crocantes + 1 Refrigerante Lata 350ml geladinho.',
+        foto: 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['X-Burguer Tradicional', 'Batata Palito Crocante', 'Refrigerante Lata 350ml']
+      },
+      {
+        codigo: 'PROD005',
+        nome: 'Batata Rústica com Alecrim & Páprica',
+        categoria: 'Porção',
+        preco: 12.00,
+        descricao: 'Batatas rústicas com casca, douradas e crocantes, temperadas com sal marinho, alecrim fresco e páprica defumada.',
+        foto: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['Batata Rústica 250g', 'Alecrim & Páprica', 'Maionese da Casa (Sachê)']
+      },
+      {
+        codigo: 'PROD006',
+        nome: 'Mini Coxinhas Crocantes (8 unid.)',
+        categoria: 'Porção',
+        preco: 16.00,
+        descricao: 'Coxinhas douradas com massa leve e sequinha, recheadas de frango desfiado suculento com toque de requeijão cremoso.',
+        foto: 'https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['8 Mini Coxinhas', 'Molho Picante da Casa']
+      },
+      {
+        codigo: 'PROD003',
+        nome: 'Refrigerante Lata 350ml',
+        categoria: 'Bebida',
+        preco: 6.00,
+        descricao: 'Coca-Cola Tradicional, Coca Zero, Guaraná Antarctica ou Fanta Laranja estupidamente gelada.',
+        foto: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['Lata 350ml']
+      },
+      {
+        codigo: 'PROD007',
+        nome: 'Suco Natural de Laranja 500ml',
+        categoria: 'Bebida',
+        preco: 9.00,
+        descricao: 'Suco 100% fruta espremido na hora com laranjas pêra frescas selecionadas, sem adição de água ou conservantes.',
+        foto: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['Garrafa 500ml Suco Natural']
+      },
+      {
+        codigo: 'PROD008',
+        nome: 'Brownie Belga com Sorvete de Creme',
+        categoria: 'Sobremesa',
+        preco: 15.00,
+        descricao: 'Brownie artesanal morno feito com cacau nobre 70%, nozes picadas, servido com bola de sorvete de baunilha e calda de chocolate.',
+        foto: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=600&q=80',
+        ingredientes: ['Brownie Cacau 70%', 'Sorvete Baunilha', 'Calda de Chocolate']
+      }
+    ];
+
+    // Opcionais / Adicionais Extras
+    const EXTRAS_DEFAULT = [
+      { nome: 'Bacon Fatiado Crocante', preco: 4.00 },
+      { nome: 'Dobro de Queijo Cheddar', preco: 3.00 },
+      { nome: 'Blend Bovino Extra 120g', preco: 8.00 },
+      { nome: 'Pote de Molho Especial (50g)', preco: 2.50 },
+      { nome: 'Cebola Caramelizada', preco: 3.00 }
+    ];
+
+    let produtos = [];
+    let extrasDisponiveis = EXTRAS_DEFAULT;
+    let categoriaAtiva = 'todos';
+    let buscaTermo = '';
+
+    // Estado da Sacola de Compras
+    let sacola = [];
+    let tipoEntrega = 'delivery'; // 'delivery' ou 'retirada'
+
+    // Estado do Item sendo Personalizado no Modal
+    let itemEmEdicao = null;
+    let qtdEdicao = 1;
+
+    // Inicialização da Página
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarConfiguracoes();
+      carregarProdutos();
+      lucide.createIcons();
+    });
+
+    function carregarConfiguracoes() {
+      document.getElementById('loja-nome').textContent = lojaConfig.nome;
+      document.getElementById('banner-taxa-entrega').textContent = `Taxa: ${formatarMoeda(lojaConfig.taxaEntrega)}`;
+      document.getElementById('cfg-whatsapp').value = lojaConfig.whatsapp;
+      document.getElementById('cfg-nome').value = lojaConfig.nome;
+      document.getElementById('cfg-taxa').value = lojaConfig.taxaEntrega;
+      document.getElementById('cfg-frete-gratis').value = lojaConfig.freteGratisApartirDe;
+    }
+
+    async function carregarProdutos() {
+      // 1. Tenta carregar do backend caso esteja online
+      try {
+        const res = await fetch(`${API_BASE}/api/operacional/public/cardapio`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.produtos && data.produtos.length > 0) {
+            produtos = data.produtos.map(p => ({
+              codigo: p.codigo,
+              nome: p.nome,
+              categoria: p.categoria,
+              preco: p.preco_salao || p.preco_venda || 20.00,
+              descricao: p.descricao || 'Hambúrguer artesanal saboroso.',
+              foto: p.foto || getFotoPadrao(p.categoria),
+              ingredientes: p.ingredientes || ['Pão Brioche', 'Blend Bovino', 'Queijo Cheddar']
+            }));
+            if (data.extras && data.extras.length > 0) {
+              extrasDisponiveis = data.extras.map(e => ({
+                nome: e.nome,
+                preco: e.preco_extra
+              }));
+            }
+            renderizarCardapio();
+            return;
+          }
+        }
+      } catch (e) {
+        // Modo offline / standalone
+      }
+
+      // 2. Se offline, tenta pegar do localStorage do NALIM
+      try {
+        const localStore = JSON.parse(localStorage.getItem('nalim_store') || 'null');
+        if (localStore && localStore.meses && localStore.activeMonth) {
+          const prodsLocal = localStore.meses[localStore.activeMonth].produtos;
+          if (prodsLocal && prodsLocal.length > 0) {
+            produtos = prodsLocal.map(p => ({
+              codigo: p.codigo,
+              nome: p.nome,
+              categoria: p.categoria,
+              preco: p.precoVenda || 20.00,
+              descricao: p.descricao || 'Produto artesanal.',
+              foto: getFotoPadrao(p.categoria),
+              ingredientes: ['Pão Brioche', 'Blend Bovino', 'Queijo Cheddar', 'Molho']
+            }));
+            renderizarCardapio();
+            return;
+          }
+        }
+      } catch (err) {}
+
+      // 3. Fallback: Produtos padrão deliciosos
+      produtos = PRODUTOS_DEFAULT;
+      renderizarCardapio();
+    }
+
+    function getFotoPadrao(cat) {
+      if (!cat) return PRODUTOS_DEFAULT[0].foto;
+      const c = cat.toLowerCase();
+      if (c.includes('hamb') || c.includes('burg')) return PRODUTOS_DEFAULT[0].foto;
+      if (c.includes('combo')) return PRODUTOS_DEFAULT[2].foto;
+      if (c.includes('beb')) return PRODUTOS_DEFAULT[5].foto;
+      if (c.includes('porç') || c.includes('frita')) return PRODUTOS_DEFAULT[3].foto;
+      if (c.includes('sobre')) return PRODUTOS_DEFAULT[7].foto;
+      return PRODUTOS_DEFAULT[0].foto;
+    }
+
+    // Renderização dos Produtos
+    function renderizarCardapio() {
+      const container = document.getElementById('produtos-container');
+      container.innerHTML = '';
+
+      let listaFiltrada = produtos.filter(p => {
+        const bateCat = (categoriaAtiva === 'todos') || (p.categoria === categoriaAtiva);
+        const bateBusca = !buscaTermo || 
+          p.nome.toLowerCase().includes(buscaTermo.toLowerCase()) || 
+          p.descricao.toLowerCase().includes(buscaTermo.toLowerCase());
+        return bateCat && bateBusca;
+      });
+
+      if (listaFiltrada.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 px-4 bg-white rounded-3xl border border-slate-200">
+            <i data-lucide="search-x" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+            <h4 class="font-bold text-slate-700 text-sm">Nenhum produto encontrado</h4>
+            <p class="text-xs text-slate-400 mt-1">Tente buscar por outro termo ou escolha outra categoria.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      listaFiltrada.forEach(prod => {
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl p-3.5 border border-slate-200 shadow-2xs hover:shadow-md transition flex items-center justify-between gap-3 cursor-pointer group";
+        card.onclick = () => abrirModalPersonalizar(prod);
+
+        card.innerHTML = `
+          <div class="min-w-0 flex-1 space-y-1">
+            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-brand-50 text-brand-700">
+              ${prod.categoria}
+            </span>
+            <h3 class="font-black text-sm text-slate-900 leading-snug group-hover:text-brand-700 transition">
+              ${prod.nome}
+            </h3>
+            <p class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+              ${prod.descricao}
+            </p>
+            <div class="pt-1 flex items-center gap-2">
+              <span class="text-xs font-black text-brand-700">
+                ${formatarMoeda(prod.preco)}
+              </span>
+            </div>
+          </div>
+
+          <div class="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 bg-slate-100 border border-slate-100">
+            <img src="${prod.foto}" alt="${prod.nome}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+            <button class="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shadow-md active:scale-90 transition">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    // Filtros & Pesquisa
+    function filtrarCategoria(cat) {
+      categoriaAtiva = cat;
+      document.querySelectorAll('.cat-pill').forEach(btn => {
+        if (btn.getAttribute('data-cat') === cat) {
+          btn.className = "cat-pill px-3 py-1.5 rounded-full bg-brand-700 text-white shrink-0 shadow-2xs transition";
+        } else {
+          btn.className = "cat-pill px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-200 transition";
+        }
+      });
+      renderizarCardapio();
+    }
+
+    function buscarProdutos(termo) {
+      buscaTermo = termo.trim();
+      const btnLimpar = document.getElementById('btn-limpar-busca');
+      if (buscaTermo.length > 0) btnLimpar.classList.remove('hidden');
+      else btnLimpar.classList.add('hidden');
+      renderizarCardapio();
+    }
+
+    function limparBusca() {
+      document.getElementById('input-busca').value = '';
+      buscarProdutos('');
+    }
+
+    // Modal de Personalização
+    function abrirModalPersonalizar(prod) {
+      itemEmEdicao = JSON.parse(JSON.stringify(prod));
+      qtdEdicao = 1;
+
+      document.getElementById('cust-item-img').src = prod.foto;
+      document.getElementById('cust-item-cat').textContent = prod.categoria;
+      document.getElementById('cust-item-nome').textContent = prod.nome;
+      document.getElementById('cust-item-desc').textContent = prod.descricao;
+      document.getElementById('cust-item-preco-base').textContent = formatarMoeda(prod.preco);
+      document.getElementById('cust-qtd-val').textContent = '1';
+      document.getElementById('cust-obs').value = '';
+
+      // Mostra / Esconde Seção de Carne
+      const secaoPonto = document.getElementById('cust-secao-ponto');
+      if (prod.categoria.toLowerCase().includes('hamb') || prod.categoria.toLowerCase().includes('combo')) {
+        secaoPonto.classList.remove('hidden');
+      } else {
+        secaoPonto.classList.add('hidden');
+      }
+
+      // Preenche Ingredientes para Retirar
+      const listaIngr = document.getElementById('cust-lista-ingredientes');
+      listaIngr.innerHTML = '';
+      if (prod.ingredientes && prod.ingredientes.length > 0) {
+        prod.ingredientes.forEach((ing, idx) => {
+          const label = document.createElement('label');
+          label.className = "flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 cursor-pointer hover:bg-rose-50 hover:border-rose-200 transition";
+          label.innerHTML = `
+            <span class="flex items-center gap-2">
+              <input type="checkbox" name="retirar_ing" value="${ing}" onchange="recalcularTotalEdicao()" class="text-rose-600 rounded focus:ring-rose-500">
+              <span>SEM ${ing}</span>
+            </span>
+            <span class="text-[10px] text-rose-500 font-extrabold uppercase">Retirar</span>
+          `;
+          listaIngr.appendChild(label);
+        });
+      } else {
+        listaIngr.innerHTML = '<span class="text-xs text-slate-400">Nenhum ingrediente modificável.</span>';
+      }
+
+      // Preenche Extras / Adicionais
+      const listaExtras = document.getElementById('cust-lista-extras');
+      listaExtras.innerHTML = '';
+      extrasDisponiveis.forEach(ext => {
+        const label = document.createElement('label');
+        label.className = "flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 cursor-pointer hover:bg-brand-50 hover:border-brand-200 transition";
+        label.innerHTML = `
+          <span class="flex items-center gap-2">
+            <input type="checkbox" name="add_extra" value="${ext.nome}" data-preco="${ext.preco}" onchange="recalcularTotalEdicao()" class="text-brand-600 rounded focus:ring-brand-500">
+            <span>+ ${ext.nome}</span>
+          </span>
+          <span class="text-xs font-black text-brand-700">+ ${formatarMoeda(ext.preco)}</span>
+        `;
+        listaExtras.appendChild(label);
+      });
+
+      recalcularTotalEdicao();
+      document.getElementById('modal-personalizar').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharModalPersonalizar() {
+      document.getElementById('modal-personalizar').classList.add('hidden');
+      itemEmEdicao = null;
+    }
+
+    function alterarQtdPersonalizar(delta) {
+      qtdEdicao = Math.max(1, qtdEdicao + delta);
+      document.getElementById('cust-qtd-val').textContent = qtdEdicao;
+      recalcularTotalEdicao();
+    }
+
+    function recalcularTotalEdicao() {
+      if (!itemEmEdicao) return;
+      let precoUnit = itemEmEdicao.preco;
+
+      const extrasMarcados = document.querySelectorAll('input[name="add_extra"]:checked');
+      extrasMarcados.forEach(chk => {
+        precoUnit += parseFloat(chk.getAttribute('data-preco') || 0);
+      });
+
+      const total = precoUnit * qtdEdicao;
+      document.getElementById('cust-total-btn').textContent = formatarMoeda(total);
+    }
+
+    function adicionarAoCarrinhoConfirmado() {
+      if (!itemEmEdicao) return;
+
+      // Coleta ingredientes a retirar
+      const retirados = [];
+      document.querySelectorAll('input[name="retirar_ing"]:checked').forEach(c => {
+        retirados.push(`SEM ${c.value}`);
+      });
+
+      // Coleta extras
+      const extras = [];
+      let valorExtras = 0;
+      document.querySelectorAll('input[name="add_extra"]:checked').forEach(c => {
+        extras.push(`+ EXTRA: ${c.value}`);
+        valorExtras += parseFloat(c.getAttribute('data-preco') || 0);
+      });
+
+      // Ponto da carne (se visível)
+      let ponto = '';
+      if (!document.getElementById('cust-secao-ponto').classList.contains('hidden')) {
+        const rPonto = document.querySelector('input[name="ponto_carne"]:checked');
+        if (rPonto) ponto = `Ponto: ${rPonto.value}`;
+      }
+
+      // Observações
+      const obs = document.getElementById('cust-obs').value.trim();
+
+      // Monta texto de modificações
+      const mods = [];
+      if (ponto) mods.push(ponto);
+      if (retirados.length > 0) mods.push(retirados.join(' • '));
+      if (extras.length > 0) mods.push(extras.join(' • '));
+      if (obs) mods.push(`Obs: ${obs}`);
+
+      const precoUnitFinal = itemEmEdicao.preco + valorExtras;
+
+      // Adiciona à sacola
+      sacola.push({
+        idUnico: Date.now() + Math.random(),
+        produtoCodigo: itemEmEdicao.codigo,
+        nome: itemEmEdicao.nome,
+        precoUnit: precoUnitFinal,
+        precoBase: itemEmEdicao.preco,
+        qtd: qtdEdicao,
+        modificacoes: mods.join(' | ') || 'Padrão da Casa'
+      });
+
+      fecharModalPersonalizar();
+      atualizarSacolaUI();
+    }
+
+    // Atualização da Sacola UI
+    function atualizarSacolaUI() {
+      const barra = document.getElementById('barra-sacola-flutuante');
+      const badgeQtd = document.getElementById('sacola-badge-qtd');
+      const resumoItens = document.getElementById('sacola-resumo-itens');
+      const totalFlutuante = document.getElementById('sacola-total-flutuante');
+
+      const totalQtd = sacola.reduce((acc, it) => acc + it.qtd, 0);
+      const subtotal = sacola.reduce((acc, it) => acc + (it.precoUnit * it.qtd), 0);
+
+      if (totalQtd > 0) {
+        barra.classList.remove('hidden');
+        badgeQtd.textContent = totalQtd;
+        resumoItens.textContent = `${totalQtd} ${totalQtd === 1 ? 'item selecionado' : 'itens selecionados'}`;
+        totalFlutuante.textContent = formatarMoeda(subtotal);
+      } else {
+        barra.classList.add('hidden');
+        fecharDrawerSacola();
+      }
+    }
+
+    // Drawer da Sacola
+    function abrirDrawerSacola() {
+      renderizarItensSacola();
+      atualizarValoresCheckout();
+      document.getElementById('drawer-sacola').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharDrawerSacola() {
+      document.getElementById('drawer-sacola').classList.add('hidden');
+    }
+
+    function renderizarItensSacola() {
+      const lista = document.getElementById('sacola-itens-lista');
+      const countLabel = document.getElementById('sacola-count-label');
+      lista.innerHTML = '';
+
+      const totalQtd = sacola.reduce((acc, it) => acc + it.qtd, 0);
+      countLabel.textContent = `${totalQtd} ${totalQtd === 1 ? 'item adicionado' : 'itens adicionados'}`;
+
+      if (sacola.length === 0) {
+        lista.innerHTML = `<p class="text-xs text-slate-400 py-3 text-center">Sua sacola está vazia.</p>`;
+        return;
+      }
+
+      sacola.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = "bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-start justify-between gap-2";
+        div.innerHTML = `
+          <div class="min-w-0 flex-1">
+            <h5 class="text-xs font-black text-slate-900 leading-tight">${item.nome}</h5>
+            ${item.modificacoes && item.modificacoes !== 'Padrão da Casa' ? 
+              `<p class="text-[10px] text-slate-500 mt-0.5 leading-snug">${item.modificacoes}</p>` : ''}
+            <div class="mt-1 text-xs font-black text-brand-700">
+              ${formatarMoeda(item.precoUnit * item.qtd)}
+              ${item.qtd > 1 ? `<span class="text-[10px] text-slate-400 font-normal">(${formatarMoeda(item.precoUnit)} cada)</span>` : ''}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="alterarQtdSacola(${index}, -1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs hover:bg-slate-100">
+              -
+            </button>
+            <span class="text-xs font-black w-4 text-center text-slate-800">${item.qtd}</span>
+            <button onclick="alterarQtdSacola(${index}, 1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs hover:bg-slate-100">
+              +
+            </button>
+            <button onclick="removerItemSacola(${index})" class="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 font-bold flex items-center justify-center text-xs hover:bg-rose-100 ml-1">
+              ✕
+            </button>
+          </div>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function alterarQtdSacola(index, delta) {
+      sacola[index].qtd += delta;
+      if (sacola[index].qtd <= 0) {
+        sacola.splice(index, 1);
+      }
+      renderizarItensSacola();
+      atualizarSacolaUI();
+      atualizarValoresCheckout();
+    }
+
+    function removerItemSacola(index) {
+      sacola.splice(index, 1);
+      renderizarItensSacola();
+      atualizarSacolaUI();
+      atualizarValoresCheckout();
+    }
+
+    // Tipo de Entrega (Delivery vs Retirada)
+    function setTipoEntrega(tipo) {
+      tipoEntrega = tipo;
+      const btnDelivery = document.getElementById('btn-tipo-delivery');
+      const btnRetirada = document.getElementById('btn-tipo-retirada');
+      const formEnd = document.getElementById('form-endereco');
+
+      if (tipo === 'delivery') {
+        btnDelivery.className = "border-2 border-brand-600 bg-brand-50 text-brand-800 p-3 rounded-2xl font-black text-xs flex flex-col items-center justify-center gap-1 transition";
+        btnRetirada.className = "border-2 border-slate-200 bg-white text-slate-600 p-3 rounded-2xl font-black text-xs flex flex-col items-center justify-center gap-1 transition hover:bg-slate-50";
+        formEnd.classList.remove('hidden');
+      } else {
+        btnRetirada.className = "border-2 border-brand-600 bg-brand-50 text-brand-800 p-3 rounded-2xl font-black text-xs flex flex-col items-center justify-center gap-1 transition";
+        btnDelivery.className = "border-2 border-slate-200 bg-white text-slate-600 p-3 rounded-2xl font-black text-xs flex flex-col items-center justify-center gap-1 transition hover:bg-slate-50";
+        formEnd.classList.add('hidden');
+      }
+
+      atualizarValoresCheckout();
+    }
+
+    function atualizarValoresCheckout() {
+      const subtotal = sacola.reduce((acc, it) => acc + (it.precoUnit * it.qtd), 0);
+      let taxa = 0;
+
+      if (tipoEntrega === 'delivery') {
+        if (subtotal >= lojaConfig.freteGratisApartirDe) {
+          taxa = 0;
+          document.getElementById('badge-taxa-checkout').textContent = 'GRÁTIS! 🎁';
+        } else {
+          taxa = lojaConfig.taxaEntrega;
+          document.getElementById('badge-taxa-checkout').textContent = `Taxa ${formatarMoeda(taxa)}`;
+        }
+      }
+
+      const total = subtotal + taxa;
+
+      document.getElementById('resumo-subtotal').textContent = formatarMoeda(subtotal);
+      document.getElementById('resumo-taxa').textContent = taxa === 0 ? 'GRÁTIS' : formatarMoeda(taxa);
+      document.getElementById('resumo-total').textContent = formatarMoeda(total);
+    }
+
+    function atualizarEstiloPagamento() {
+      const radios = document.querySelectorAll('input[name="forma_pagto"]');
+      radios.forEach(r => {
+        const parent = r.closest('label');
+        if (r.checked) {
+          parent.className = "border-2 border-brand-600 bg-brand-50 text-brand-800 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center";
+        } else {
+          parent.className = "border-2 border-slate-200 bg-white text-slate-600 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center hover:bg-slate-50";
+        }
+      });
+
+      const selected = document.querySelector('input[name="forma_pagto"]:checked').value;
+      const campoTroco = document.getElementById('campo-troco');
+      if (selected === 'Dinheiro') campoTroco.classList.remove('hidden');
+      else campoTroco.classList.add('hidden');
+    }
+
+    // ==============================================================
+    // ENVIO DO PEDIDO PARA O WHATSAPP E INTEGRAÇÃO KDS
+    // ==============================================================
+    async function finalizarPedidoWhatsApp() {
+      if (sacola.length === 0) {
+        alert('Sua sacola está vazia! Escolha algum item antes de finalizar.');
+        return;
+      }
+
+      const nomeCliente = document.getElementById('cli-nome').value.trim();
+      const whatsappCliente = document.getElementById('cli-whatsapp').value.trim();
+
+      if (!nomeCliente) {
+        alert('Por favor, informe seu Nome Completo para identificarmos seu pedido.');
+        document.getElementById('cli-nome').focus();
+        return;
+      }
+
+      if (!whatsappCliente) {
+        alert('Por favor, informe seu WhatsApp para enviarmos as atualizações de entrega.');
+        document.getElementById('cli-whatsapp').focus();
+        return;
+      }
+
+      // Se for entrega, valida endereço
+      let rua = '', numero = '', bairro = '', complemento = '', referencia = '';
+      if (tipoEntrega === 'delivery') {
+        rua = document.getElementById('end-rua').value.trim();
+        numero = document.getElementById('end-numero').value.trim();
+        bairro = document.getElementById('end-bairro').value.trim();
+        complemento = document.getElementById('end-complemento').value.trim();
+        referencia = document.getElementById('end-referencia').value.trim();
+
+        if (!rua || !numero || !bairro) {
+          alert('Por favor, preencha a Rua, Número e Bairro para podermos entregar seu pedido!');
+          document.getElementById('end-rua').focus();
+          return;
+        }
+      }
+
+      const formaPagto = document.querySelector('input[name="forma_pagto"]:checked').value;
+      const troco = formaPagto === 'Dinheiro' ? document.getElementById('troco-para').value.trim() : '';
+
+      const subtotal = sacola.reduce((acc, it) => acc + (it.precoUnit * it.qtd), 0);
+      let taxa = 0;
+      if (tipoEntrega === 'delivery') {
+        taxa = subtotal >= lojaConfig.freteGratisApartirDe ? 0 : lojaConfig.taxaEntrega;
+      }
+      const totalGeral = subtotal + taxa;
+
+      // Gera número sequencial de comanda
+      const numComanda = Math.floor(100 + Math.random() * 900);
+      const agoraHora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // 1. FORMATAR MENSAGEM DO WHATSAPP
+      let itensFormatados = '';
+      sacola.forEach(it => {
+        itensFormatados += `\n• *${it.qtd}x ${it.nome}*`;
+        itensFormatados += `\n  _Valor: ${formatarMoeda(it.precoUnit * it.qtd)}_`;
+        if (it.modificacoes && it.modificacoes !== 'Padrão da Casa') {
+          itensFormatados += `\n  _${it.modificacoes}_`;
+        }
+      });
+
+      let enderecoTexto = '';
+      if (tipoEntrega === 'delivery') {
+        enderecoTexto = `🛵 *TIPO:* Delivery (Entrega)
+📍 *Endereço:* ${rua}, Nº ${numero} - ${bairro}
+${complemento ? `🏢 *Complemento:* ${complemento}\n` : ''}${referencia ? `📌 *Ponto de Ref:* ${referencia}\n` : ''}`;
+      } else {
+        enderecoTexto = `🏬 *TIPO:* Retirada no Balcão (Balcão do Restaurante)\n`;
+      }
+
+      let infoPagto = `💳 *Forma de Pagamento:* ${formaPagto}`;
+      if (formaPagto === 'Dinheiro' && troco) {
+        infoPagto += ` (Troco para: ${troco})`;
+      }
+
+      const msgWhatsApp = `🍔 *NOVO PEDIDO ONLINE — ${lojaConfig.nome.toUpperCase()}*
+*Pedido #${numComanda}* • *${agoraHora}*
+----------------------------------------
+👤 *Cliente:* ${nomeCliente}
+📱 *WhatsApp:* ${whatsappCliente}
+${enderecoTexto}----------------------------------------
+🛒 *ITENS DO PEDIDO:*${itensFormatados}
+
+----------------------------------------
+💵 *RESUMO FINANCEIRO:*
+• Subtotal: ${formatarMoeda(subtotal)}
+• Taxa de Entrega: ${taxa === 0 ? 'GRÁTIS' : formatarMoeda(taxa)}
+💰 *TOTAL: ${formatarMoeda(totalGeral)}*
+
+${infoPagto}
+----------------------------------------
+_Pedido gerado pelo Cardápio Digital NALIM_`;
+
+      // 2. SINCRONIZAÇÃO COM A COZINHA (KDS) & BANCO DE DADOS
+      // Salva em localStorage no padrão do NALIM KDS
+      try {
+        let kdsOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        kdsOrders.unshift({
+          id: numComanda,
+          dataHora: agoraHora,
+          identificacao: `${tipoEntrega === 'delivery' ? 'Delivery' : 'Retirada'} #${numComanda} (${nomeCliente})`,
+          canal: 'Delivery Próprio',
+          status: 'Na Chapa',
+          tempoDecorrido: 'Agora',
+          items: sacola.map(it => ({
+            nome: it.nome,
+            qtd: it.qtd,
+            modificacoes: it.modificacoes
+          }))
+        });
+        localStorage.setItem('nalim_kds_orders', JSON.stringify(kdsOrders));
+      } catch (err) {}
+
+      // Tenta enviar para a API Python se o servidor estiver rodando
+      try {
+        fetch(`${API_BASE}/api/operacional/public/pedidos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            identificacao: `${tipoEntrega === 'delivery' ? 'Delivery' : 'Retirada'} #${numComanda} (${nomeCliente} - ${whatsappCliente})`,
+            canal: 'Delivery Próprio',
+            forma_pagto: formaPagto,
+            endereco: tipoEntrega === 'delivery' ? `${rua}, ${numero} - ${bairro}` : 'Retirada Balcão',
+            itens: sacola.map(it => ({
+              produto_codigo: it.produtoCodigo,
+              quantidade: it.qtd,
+              modificacoes: it.modificacoes,
+              preco_unitario: it.precoUnit
+            }))
+          })
+        }).catch(() => {});
+      } catch (e) {}
+
+      // 3. ABRIR O WHATSAPP DO RESTAURANTE
+      const urlWhats = `https://api.whatsapp.com/send?phone=${lojaConfig.whatsapp}&text=${encodeURIComponent(msgWhatsApp)}`;
+      window.open(urlWhats, '_blank');
+
+      // 4. FEEDBACK DE SUCESSO & LIMPEZA DA SACOLA
+      fecharDrawerSacola();
+      sacola = [];
+      atualizarSacolaUI();
+
+      document.getElementById('sucesso-numero-comanda').textContent = `Comanda #${numComanda}`;
+      document.getElementById('sucesso-tempo-estimado').textContent = tipoEntrega === 'delivery' ? 
+        'Tempo estimado de entrega: 30 a 50 minutos' : 
+        'Tempo estimado para retirada: 15 a 25 minutos';
+      document.getElementById('modal-sucesso').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharModalSucesso() {
+      document.getElementById('modal-sucesso').classList.add('hidden');
+    }
+
+    // Modal de Configurações
+    function abrirModalConfig() {
+      document.getElementById('modal-config').classList.remove('hidden');
+    }
+
+    function fecharModalConfig() {
+      document.getElementById('modal-config').classList.add('hidden');
+    }
+
+    function salvarConfiguracoes() {
+      const zap = document.getElementById('cfg-whatsapp').value.replace(/\D/g, '');
+      const nome = document.getElementById('cfg-nome').value.trim();
+      const taxa = parseFloat(document.getElementById('cfg-taxa').value) || 5.00;
+      const gratis = parseFloat(document.getElementById('cfg-frete-gratis').value) || 60.00;
+
+      if (zap) {
+        lojaConfig.whatsapp = zap;
+        localStorage.setItem('nalim_whatsapp_delivery', zap);
+      }
+      if (nome) {
+        lojaConfig.nome = nome;
+        localStorage.setItem('nalim_empresa_nome', nome);
+      }
+      lojaConfig.taxaEntrega = taxa;
+      localStorage.setItem('nalim_taxa_entrega', taxa.toString());
+
+      lojaConfig.freteGratisApartirDe = gratis;
+      localStorage.setItem('nalim_frete_gratis', gratis.toString());
+
+      carregarConfiguracoes();
+      fecharModalConfig();
+      alert('Configurações do cardápio salvas com sucesso!');
+    }
+
+    // Utilitários de Formatação
+    function formatarMoeda(val) {
+      return (val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+  </script>
+</body>
+</html>

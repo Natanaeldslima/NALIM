@@ -110,10 +110,15 @@
             <i data-lucide="wallet" class="w-4 h-4 text-slate-500"></i>
             <span>Fechamento de Caixa</span>
           </button>
-          <a href="/garcom" target="_blank" id="btn-garcom-app" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
+          <a href="/garcom" target="_blank" id="btn-garcom-app" class="w-full flex items-center gap-3 px-5 py-2 text-left hover:bg-slate-50 transition text-slate-600">
             <i data-lucide="smartphone" class="w-4 h-4 text-emerald-600"></i>
             <span>App Garçom (Celular)</span>
             <span class="ml-auto bg-emerald-50 text-emerald-700 text-[9px] px-1.5 py-0.5 rounded font-bold">Mobile</span>
+          </a>
+          <a href="/cardapio" target="_blank" id="btn-cardapio-online" class="w-full flex items-center gap-3 px-5 py-2 text-left hover:bg-emerald-50/70 transition text-emerald-800 font-bold bg-emerald-50/40 rounded-xl my-0.5 border border-emerald-200/60">
+            <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-600"></i>
+            <span>Cardápio Digital</span>
+            <span class="ml-auto bg-emerald-600 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black animate-pulse">NOVO</span>
           </a>
         </div>
 
@@ -285,13 +290,21 @@
               Clique no item para personalizar (sem cebola, com bacon adicional, ponto da carne).
             </p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <button onclick="copiarLinkCardapio()" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold px-3 py-1.5 rounded-lg border border-emerald-300 shadow-2xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer">
+              <i data-lucide="share-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span id="btn-copiar-label">Copiar Link do Cardápio</span>
+            </button>
+            <a href="/cardapio" target="_blank" class="text-xs bg-white hover:bg-slate-50 text-slate-700 font-bold px-3 py-1.5 rounded-lg border border-slate-300 shadow-2xs flex items-center gap-1.5 transition">
+              <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-500"></i>
+              <span>Ver Cardápio Web</span>
+            </a>
             <a href="/garcom" target="_blank" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg border border-emerald-500 shadow-2xs flex items-center gap-1.5 transition">
               <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
-              <span>Abrir App do Garçom</span>
+              <span>App Garçom</span>
             </a>
-            <span class="text-xs bg-slate-100 text-slate-600 font-bold px-3 py-1.5 rounded-lg border border-slate-200">
-              💻 Frente de Caixa / PDV
+            <span class="text-xs bg-slate-100 text-slate-600 font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 hidden sm:inline-block">
+              💻 PDV
             </span>
           </div>
         </div>
@@ -4786,6 +4799,46 @@ _Painel Estratégico NALIM Food Service_`;
         switchView('dashboard');
       }
     }
+
+    // -------------------------------------------------------------
+    // COPIAR LINK DO CARDÁPIO DIGITAL / DELIVERY PRÓPRIO
+    // -------------------------------------------------------------
+    function copiarLinkCardapio() {
+      const link = `${window.location.origin}/cardapio`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(() => {
+          const lbl = document.getElementById('btn-copiar-label');
+          if (lbl) {
+            const original = lbl.textContent;
+            lbl.textContent = 'Link Copiado! ✓';
+            setTimeout(() => { lbl.textContent = original; }, 2500);
+          }
+          alert(`✓ Link do Cardápio copiado com sucesso!\n\n${link}\n\nEnvie para seus clientes no WhatsApp ou adicione na bio do Instagram!`);
+        }).catch(() => {
+          prompt('Copie o link do seu cardápio abaixo:', link);
+        });
+      } else {
+        prompt('Copie o link do seu cardápio abaixo:', link);
+      }
+    }
+
+    // SINCRONIZAÇÃO EM TEMPO REAL: Recebe pedidos novos do Cardápio Digital
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'nalim_kds_orders' && e.newValue) {
+        try {
+          const novosPedidos = JSON.parse(e.newValue);
+          if (Array.isArray(novosPedidos) && novosPedidos.length > 0) {
+            novosPedidos.forEach(np => {
+              const jaExiste = store.kdsOrders.some(p => p.id === np.id);
+              if (!jaExiste) {
+                store.kdsOrders.unshift(np);
+              }
+            });
+            renderKds();
+          }
+        } catch (err) {}
+      }
+    });
 
     // INICIALIZAÇÃO
     window.addEventListener('DOMContentLoaded', () => {
