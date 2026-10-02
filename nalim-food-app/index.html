@@ -652,26 +652,45 @@
                 </div>
                 <p class="text-xs text-slate-500 mt-0.5">Confronto do CMV Teórico (Fichas Técnicas) com o CMV Real (Inventário) para identificar sobras, quebras ou desvios.</p>
               </div>
-              <button type="button" onclick="calcularAuditoriaEstoque()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1.5">
-                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Recalcular Auditoria
-              </button>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" onclick="abrirModalInventarioFisico('final')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1.5">
+                  <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> 📋 Fazer Contagem Física (2 Min)
+                </button>
+                <button type="button" onclick="abrirModalLancarCompra()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1.5">
+                  <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> + Lançar Compra
+                </button>
+                <button type="button" onclick="calcularAuditoriaEstoque()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Recalcular
+                </button>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
-                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Estoque Inicial (R$)</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[10px] font-black uppercase text-slate-500">Estoque Inicial (R$)</label>
+                  <button type="button" onclick="abrirModalInventarioFisico('inicial')" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline">Contar Unid/Kg</button>
+                </div>
                 <input type="number" id="aud-est-inicial" value="1200.00" step="50" oninput="calcularAuditoriaEstoque()" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-black text-slate-800 text-sm">
                 <span class="text-[10px] text-slate-400 mt-1 block">Valor em estoque no início do período</span>
               </div>
               <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
-                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">(+) Compras do Período (R$)</label>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[10px] font-black uppercase text-slate-500">(+) Compras do Período (R$)</label>
+                  <button type="button" onclick="abrirModalLancarCompra()" class="text-[10px] font-bold text-amber-600 hover:text-amber-800 underline">+ Lançar NF</button>
+                </div>
                 <input type="number" id="aud-compras" value="1800.00" step="50" oninput="calcularAuditoriaEstoque()" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-black text-slate-800 text-sm">
-                <span class="text-[10px] text-slate-400 mt-1 block">Notas fiscais de compras de insumos</span>
+                <span class="text-[10px] text-slate-400 mt-1 block" id="aud-compras-desc">Notas fiscais de compras de insumos</span>
               </div>
-              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50">
-                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">(-) Estoque Final Apurado (R$)</label>
-                <input type="number" id="aud-est-final" value="2320.00" step="50" oninput="calcularAuditoriaEstoque()" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-black text-slate-800 text-sm">
-                <span class="text-[10px] text-slate-400 mt-1 block">Contagem física na prateleira/geladeira</span>
+              <div class="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/60 ring-1 ring-emerald-200">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-[10px] font-black uppercase text-emerald-900">(-) Estoque Final Apurado (R$)</label>
+                  <button type="button" onclick="abrirModalInventarioFisico('final')" class="text-[10px] font-black text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-1.5 py-0.5 rounded transition flex items-center gap-1">
+                    <i data-lucide="clipboard-check" class="w-3 h-3"></i> Contar Unid/Kg
+                  </button>
+                </div>
+                <input type="number" id="aud-est-final" value="2320.00" step="50" oninput="calcularAuditoriaEstoque()" class="w-full bg-white border border-emerald-300 rounded-lg p-2 font-black text-emerald-900 text-sm">
+                <span class="text-[10px] text-emerald-700 mt-1 block">Calculado por unidades/kg na despensa</span>
               </div>
               <div class="p-3.5 rounded-xl border border-blue-200 bg-blue-50/70 flex flex-col justify-between">
                 <div>
@@ -1743,6 +1762,127 @@
           <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">Salvar Ficha & Preços</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: CONTAGEM FÍSICA GUIADA (INVENTÁRIO EM UNIDADES / KG)     -->
+  <!-- ============================================================== -->
+  <div id="modal-inventario-fisico" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-5 shadow-2xl border border-slate-100 space-y-3.5 max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm" id="modal-inv-titulo">Contagem Física de Estoque (Inventário)</h3>
+            <p class="text-[11px] text-slate-500">Digite apenas as quantidades em quilos e unidades. O NALIM calcula o valor em R$ sozinho.</p>
+          </div>
+        </div>
+        <button type="button" onclick="fecharModalInventarioFisico()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Banner Dica de Ouro -->
+      <div class="p-3 bg-amber-50/80 border border-amber-200 rounded-xl flex items-start gap-2.5">
+        <span class="text-amber-600 text-base leading-none mt-0.5">💡</span>
+        <div class="text-xs text-amber-900 leading-snug">
+          <strong>Regra dos 5 Itens Críticos (Curva ABC):</strong> 80% do dinheiro parado no seu estoque está em <strong>Carnes, Queijos, Bacon, Batatas e Bebidas</strong>. Não perca tempo contando sal nem guardanapo! Use o filtro abaixo para auditar sua geladeira em menos de 2 minutos.
+        </div>
+      </div>
+
+      <!-- Filtro de Visualização -->
+      <div class="flex items-center justify-between gap-2 pt-1">
+        <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-bold">
+          <button type="button" id="btn-filtro-inv-abc" onclick="filtrarInventarioModal('abc')" class="px-3 py-1 rounded-lg bg-white shadow-xs text-slate-900 flex items-center gap-1">
+            ⭐ Curva ABC (Itens Críticos)
+          </button>
+          <button type="button" id="btn-filtro-inv-todos" onclick="filtrarInventarioModal('todos')" class="px-3 py-1 rounded-lg text-slate-500 hover:text-slate-900">
+            Todos os Insumos
+          </button>
+        </div>
+        <span class="text-xs text-slate-400 font-semibold" id="inv-count-filtro-label">Carregando itens...</span>
+      </div>
+
+      <!-- Tabela / Lista de Contagem com Scroll -->
+      <div class="flex-1 overflow-y-auto pr-1 space-y-2 border border-slate-100 rounded-xl p-2 bg-slate-50/50" id="inv-itens-container">
+        <!-- Linhas geradas dinamicamente via JS -->
+      </div>
+
+      <!-- Rodapé com Total em R$ e Ação -->
+      <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/90 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 p-4 sm:p-5 rounded-b-2xl">
+        <div>
+          <span class="text-[10px] font-black uppercase text-slate-400 block tracking-wider" id="inv-destino-label">Estoque Final Apurado:</span>
+          <span class="text-2xl font-black text-emerald-700" id="inv-total-dinheiro">R$ 0,00</span>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button type="button" onclick="fecharModalInventarioFisico()" class="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-50">
+            Cancelar
+          </button>
+          <button type="button" onclick="aplicarContagemNoAuditor()" class="flex-1 sm:flex-none px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Salvar e Aplicar no Auditor
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: LANÇAR NOTA DE COMPRA / FORNECEDOR                      -->
+  <!-- ============================================================== -->
+  <div id="modal-lancar-compra" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm">Lançar Compra / Nota Fiscal</h3>
+            <p class="text-[11px] text-slate-500">Adicione compras para somar no mês automaticamente.</p>
+          </div>
+        </div>
+        <button type="button" onclick="fecharModalLancarCompra()" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form onsubmit="salvarLancamentoCompra(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Fornecedor / Loja</label>
+          <input type="text" id="compra-fornecedor" placeholder="Ex: Frigorífico Boi Nobre, Atacadão Bebidas..." required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Data da Compra</label>
+            <input type="date" id="compra-data" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Valor Total (R$)</label>
+            <input type="number" step="0.01" min="0.01" id="compra-valor" placeholder="0.00" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-black text-amber-700 text-sm">
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="fecharModalLancarCompra()" class="px-3 py-1.5 bg-slate-100 rounded-lg font-bold text-xs text-slate-700">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs transition">
+            + Adicionar Compra
+          </button>
+        </div>
+      </form>
+
+      <!-- Histórico de Compras do Mês -->
+      <div class="pt-2 border-t border-slate-100">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[10px] font-black uppercase text-slate-400">Compras Lançadas no Mês:</span>
+          <span class="text-xs font-black text-slate-800" id="compras-total-modal-val">R$ 0,00</span>
+        </div>
+        <div class="max-h-36 overflow-y-auto space-y-1.5 text-xs pr-1" id="lista-compras-mes-modal">
+          <!-- Renderizado dinamicamente -->
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4677,8 +4817,340 @@
     }
 
     // ================================================================
-    // 2. AUDITORIA DE ESTOQUE (CMV TEÓRICO VS. REAL)
+    // 2. AUDITORIA DE ESTOQUE, INVENTÁRIO FÍSICO & CURVA ABC
     // ================================================================
+    let tipoInventarioAtivo = 'final';
+    let filtroInventarioAtivo = 'abc';
+    let contagemTemporaria = {};
+
+    if (!store.comprasNotas) {
+      store.comprasNotas = [
+        { id: 1, data: '2026-10-01', fornecedor: 'Frigorífico Boi Nobre (Carnes / Bacon)', valor: 950.00, mes: '2026-10' },
+        { id: 2, data: '2026-10-02', fornecedor: 'Distribuidora Bebidas & Batatas Central', valor: 850.00, mes: '2026-10' }
+      ];
+    }
+    if (!store.contagens) {
+      store.contagens = {};
+    }
+
+    function isInsumoCurvaA(ins) {
+      const nome = (ins.nome || '').toLowerCase();
+      const custoCompra = (ins.valorCompra && ins.qtdCompra) ? (ins.valorCompra / ins.qtdCompra) : (ins.custoUnit || 0);
+      return nome.includes('blend') || nome.includes('carne') || nome.includes('cheddar') ||
+             nome.includes('bacon') || nome.includes('batata') || nome.includes('refrigerante') ||
+             nome.includes('pão') || custoCompra >= 10 || ins.valorCompra >= 20;
+    }
+
+    function abrirModalInventarioFisico(tipo) {
+      tipoInventarioAtivo = tipo || 'final';
+      const modal = document.getElementById('modal-inventario-fisico');
+      const titulo = document.getElementById('modal-inv-titulo');
+      const labelDestino = document.getElementById('inv-destino-label');
+      
+      if (titulo) {
+        titulo.textContent = tipoInventarioAtivo === 'final' 
+          ? 'Contagem Física — Estoque Final (Geladeira & Prateleira)' 
+          : 'Contagem Física — Estoque Inicial (Início do Período)';
+      }
+      if (labelDestino) {
+        labelDestino.textContent = tipoInventarioAtivo === 'final' 
+          ? 'Estoque Final Apurado:' 
+          : 'Estoque Inicial Apurado:';
+      }
+
+      // Carrega contagem salva anteriormente ou inicializa com valores padrão realistas
+      const chaveSalva = `${store.activeMonth}_${tipoInventarioAtivo}`;
+      if (store.contagens[chaveSalva]) {
+        contagemTemporaria = JSON.parse(JSON.stringify(store.contagens[chaveSalva]));
+      } else {
+        contagemTemporaria = {};
+        const insumos = getActiveData().insumos || [];
+        insumos.forEach(ins => {
+          if (tipoInventarioAtivo === 'final') {
+            if (ins.codigo === 'INS001') contagemTemporaria[ins.codigo] = 40;  // 40 pães
+            else if (ins.codigo === 'INS002') contagemTemporaria[ins.codigo] = 8; // 8 kg blend
+            else if (ins.codigo === 'INS003') contagemTemporaria[ins.codigo] = 4; // 4 kg cheddar
+            else if (ins.codigo === 'INS004') contagemTemporaria[ins.codigo] = 3; // 3 kg bacon
+            else if (ins.codigo === 'INS005') contagemTemporaria[ins.codigo] = 3; // 3 kg molho
+            else if (ins.codigo === 'INS006') contagemTemporaria[ins.codigo] = 200; // 200 emb
+            else if (ins.codigo === 'INS007') contagemTemporaria[ins.codigo] = 48; // 48 refri
+            else if (ins.codigo === 'INS008') contagemTemporaria[ins.codigo] = 10; // 10 kg batata
+            else contagemTemporaria[ins.codigo] = ins.qtdCompra || 0;
+          } else {
+            contagemTemporaria[ins.codigo] = ins.qtdCompra || 0;
+          }
+        });
+      }
+
+      filtrarInventarioModal(filtroInventarioAtivo);
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function fecharModalInventarioFisico() {
+      const modal = document.getElementById('modal-inventario-fisico');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function filtrarInventarioModal(filtro) {
+      filtroInventarioAtivo = filtro;
+      const btnAbc = document.getElementById('btn-filtro-inv-abc');
+      const btnTodos = document.getElementById('btn-filtro-inv-todos');
+
+      if (btnAbc && btnTodos) {
+        if (filtro === 'abc') {
+          btnAbc.className = 'px-3 py-1 rounded-lg bg-white shadow-xs text-slate-900 flex items-center gap-1 font-bold';
+          btnTodos.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-slate-900 font-bold';
+        } else {
+          btnTodos.className = 'px-3 py-1 rounded-lg bg-white shadow-xs text-slate-900 flex items-center gap-1 font-bold';
+          btnAbc.className = 'px-3 py-1 rounded-lg text-slate-500 hover:text-slate-900 font-bold';
+        }
+      }
+
+      renderizarItensInventarioModal();
+    }
+
+    function renderizarItensInventarioModal() {
+      const container = document.getElementById('inv-itens-container');
+      const countLabel = document.getElementById('inv-count-filtro-label');
+      if (!container) return;
+
+      const insumos = getActiveData().insumos || [];
+      const listaFiltrada = insumos.filter(ins => {
+        if (filtroInventarioAtivo === 'abc') {
+          return isInsumoCurvaA(ins);
+        }
+        return true;
+      });
+
+      if (countLabel) {
+        countLabel.textContent = `${listaFiltrada.length} ${listaFiltrada.length === 1 ? 'item' : 'itens'}`;
+      }
+
+      if (listaFiltrada.length === 0) {
+        container.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">Nenhum insumo encontrado.</div>';
+        recalcularTotalInventarioModal();
+        return;
+      }
+
+      container.innerHTML = listaFiltrada.map(ins => {
+        const isCurvaA = isInsumoCurvaA(ins);
+        const custoUnitarioCompra = (ins.valorCompra && ins.qtdCompra) ? (ins.valorCompra / ins.qtdCompra) : (ins.custoUnit || 0);
+        const und = ins.undCompra || ins.undUso || 'UN';
+        const qtdAtual = contagemTemporaria[ins.codigo] !== undefined ? contagemTemporaria[ins.codigo] : 0;
+        const subtotal = qtdAtual * custoUnitarioCompra;
+        const step = (und === 'KG' || und === 'L' || und === 'g') ? '0.5' : '1';
+
+        return `
+          <div class="p-2.5 bg-white border border-slate-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:border-slate-300 transition shadow-2xs">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-black text-xs text-slate-900">${ins.nome}</span>
+                ${isCurvaA ? '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-black tracking-tight">⭐ Curva A (Alto Valor)</span>' : ''}
+              </div>
+              <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
+                <span>Custo: <strong class="text-slate-700">${formatarMoeda(custoUnitarioCompra)}</strong> / ${und}</span>
+                <span>•</span>
+                <span class="text-slate-400">Cód: ${ins.codigo}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              <div class="flex items-center border border-slate-300 rounded-lg bg-slate-50 overflow-hidden">
+                <button type="button" onclick="ajustarQtdContagem('${ins.codigo}', -${step}, '${step}')" class="px-2.5 py-1 text-slate-600 hover:bg-slate-200 font-black text-sm select-none">-</button>
+                <input type="number" step="${step}" min="0" value="${qtdAtual}" 
+                  oninput="atualizarItemContagem('${ins.codigo}', this.value)"
+                  class="w-16 text-center bg-white py-1 font-black text-slate-900 text-xs border-x border-slate-300 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                <button type="button" onclick="ajustarQtdContagem('${ins.codigo}', ${step}, '${step}')" class="px-2.5 py-1 text-slate-600 hover:bg-slate-200 font-black text-sm select-none">+</button>
+                <span class="px-1.5 text-[10px] font-black text-slate-400 bg-slate-100 select-none">${und}</span>
+              </div>
+
+              <div class="text-right w-24 flex-shrink-0">
+                <span class="text-[10px] text-slate-400 block font-semibold">Subtotal:</span>
+                <span class="text-xs font-black text-slate-900 block" id="inv-subtotal-${ins.codigo}">${formatarMoeda(subtotal)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      recalcularTotalInventarioModal();
+    }
+
+    function ajustarQtdContagem(codigo, delta, stepStr) {
+      const step = parseFloat(stepStr) || 1;
+      const atual = contagemTemporaria[codigo] !== undefined ? contagemTemporaria[codigo] : 0;
+      let novo = Math.max(0, atual + delta);
+      novo = Math.round(novo * 10) / 10;
+      contagemTemporaria[codigo] = novo;
+      renderizarItensInventarioModal();
+    }
+
+    function atualizarItemContagem(codigo, valor) {
+      const valNum = Math.max(0, parseFloat(valor) || 0);
+      contagemTemporaria[codigo] = valNum;
+      
+      const ins = (getActiveData().insumos || []).find(i => i.codigo === codigo);
+      if (ins) {
+        const custoUnitarioCompra = (ins.valorCompra && ins.qtdCompra) ? (ins.valorCompra / ins.qtdCompra) : (ins.custoUnit || 0);
+        const subtotal = valNum * custoUnitarioCompra;
+        const elSub = document.getElementById(`inv-subtotal-${codigo}`);
+        if (elSub) elSub.textContent = formatarMoeda(subtotal);
+      }
+      recalcularTotalInventarioModal();
+    }
+
+    function recalcularTotalInventarioModal() {
+      const insumos = getActiveData().insumos || [];
+      let totalDinheiro = 0;
+
+      insumos.forEach(ins => {
+        const qtd = contagemTemporaria[ins.codigo] !== undefined ? contagemTemporaria[ins.codigo] : 0;
+        const custo = (ins.valorCompra && ins.qtdCompra) ? (ins.valorCompra / ins.qtdCompra) : (ins.custoUnit || 0);
+        totalDinheiro += (qtd * custo);
+      });
+
+      const elTotal = document.getElementById('inv-total-dinheiro');
+      if (elTotal) elTotal.textContent = formatarMoeda(totalDinheiro);
+      return totalDinheiro;
+    }
+
+    function aplicarContagemNoAuditor() {
+      const total = recalcularTotalInventarioModal();
+      const chaveSalva = `${store.activeMonth}_${tipoInventarioAtivo}`;
+      store.contagens[chaveSalva] = JSON.parse(JSON.stringify(contagemTemporaria));
+
+      if (tipoInventarioAtivo === 'final') {
+        const inputFinal = document.getElementById('aud-est-final');
+        if (inputFinal) inputFinal.value = total.toFixed(2);
+      } else {
+        const inputInicial = document.getElementById('aud-est-inicial');
+        if (inputInicial) inputInicial.value = total.toFixed(2);
+      }
+
+      calcularAuditoriaEstoque();
+      fecharModalInventarioFisico();
+      alert(`✓ Contagem física de ${formatarMoeda(total)} aplicada com sucesso no Estoque ${tipoInventarioAtivo === 'final' ? 'Final' : 'Inicial'}!`);
+    }
+
+    // Modal de Lançamento de Compras
+    function abrirModalLancarCompra() {
+      const modal = document.getElementById('modal-lancar-compra');
+      const inputData = document.getElementById('compra-data');
+      if (inputData && !inputData.value) {
+        inputData.value = new Date().toISOString().split('T')[0];
+      }
+      renderizarListaComprasModal();
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function fecharModalLancarCompra() {
+      const modal = document.getElementById('modal-lancar-compra');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function renderizarListaComprasModal() {
+      const container = document.getElementById('lista-compras-mes-modal');
+      const totalVal = document.getElementById('compras-total-modal-val');
+      if (!container) return;
+
+      const mesAtivo = store.activeMonth;
+      const comprasMes = (store.comprasNotas || []).filter(c => c.mes === mesAtivo);
+      let total = 0;
+      comprasMes.forEach(c => total += c.valor);
+
+      if (totalVal) totalVal.textContent = formatarMoeda(total);
+
+      if (comprasMes.length === 0) {
+        container.innerHTML = '<span class="text-slate-400 italic block py-2 text-center text-[11px]">Nenhuma nota de compra lançada neste mês.</span>';
+        return;
+      }
+
+      container.innerHTML = comprasMes.map(c => `
+        <div class="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-lg">
+          <div>
+            <span class="font-bold text-slate-800 block">${c.fornecedor}</span>
+            <span class="text-[10px] text-slate-400">${c.data}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="font-black text-amber-700">${formatarMoeda(c.valor)}</span>
+            <button type="button" onclick="excluirLancamentoCompra(${c.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Excluir compra">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function salvarLancamentoCompra(e) {
+      if (e) e.preventDefault();
+      const fornecedor = document.getElementById('compra-fornecedor')?.value.trim();
+      const dataCompra = document.getElementById('compra-data')?.value;
+      const valor = parseFloat(document.getElementById('compra-valor')?.value) || 0;
+
+      if (!fornecedor || valor <= 0) {
+        alert('Por favor, informe o fornecedor e um valor válido de compra.');
+        return;
+      }
+
+      const novaCompra = {
+        id: Date.now(),
+        data: dataCompra || new Date().toISOString().split('T')[0],
+        fornecedor: fornecedor,
+        valor: valor,
+        mes: store.activeMonth
+      };
+
+      store.comprasNotas = store.comprasNotas || [];
+      store.comprasNotas.push(novaCompra);
+
+      // Soma compras do mês ativo e atualiza campo do auditor
+      const mesAtivo = store.activeMonth;
+      let totalCompras = 0;
+      store.comprasNotas.filter(c => c.mes === mesAtivo).forEach(c => totalCompras += c.valor);
+
+      const inputCompras = document.getElementById('aud-compras');
+      if (inputCompras) inputCompras.value = totalCompras.toFixed(2);
+
+      const descCompras = document.getElementById('aud-compras-desc');
+      if (descCompras) {
+        const nNotas = store.comprasNotas.filter(c => c.mes === mesAtivo).length;
+        descCompras.textContent = `${nNotas} notas fiscais lançadas no mês`;
+      }
+
+      calcularAuditoriaEstoque();
+      renderizarListaComprasModal();
+
+      // Limpa inputs
+      document.getElementById('compra-fornecedor').value = '';
+      document.getElementById('compra-valor').value = '';
+      alert(`✓ Compra de ${formatarMoeda(valor)} (${fornecedor}) adicionada com sucesso!`);
+    }
+
+    function excluirLancamentoCompra(id) {
+      if (!confirm('Deseja realmente excluir este lançamento de compra?')) return;
+      store.comprasNotas = (store.comprasNotas || []).filter(c => c.id !== id);
+
+      const mesAtivo = store.activeMonth;
+      let totalCompras = 0;
+      store.comprasNotas.filter(c => c.mes === mesAtivo).forEach(c => totalCompras += c.valor);
+
+      const inputCompras = document.getElementById('aud-compras');
+      if (inputCompras) inputCompras.value = totalCompras.toFixed(2);
+
+      const descCompras = document.getElementById('aud-compras-desc');
+      if (descCompras) {
+        const nNotas = store.comprasNotas.filter(c => c.mes === mesAtivo).length;
+        descCompras.textContent = nNotas > 0 ? `${nNotas} notas fiscais lançadas no mês` : 'Notas fiscais de compras de insumos';
+      }
+
+      calcularAuditoriaEstoque();
+      renderizarListaComprasModal();
+    }
+
     function calcularAuditoriaEstoque() {
       const data = getActiveData();
       const estIni = parseFloat(document.getElementById('aud-est-inicial')?.value) || 0;
