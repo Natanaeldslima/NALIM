@@ -213,3 +213,115 @@ def registrar_fechamento_caixa(
         "status_conferencia": status_conferencia,
         "mensagem": "Fechamento de caixa gravado com sucesso!"
     }
+
+# 6. Cardápio Público para Clientes Finais (Delivery / WhatsApp)
+@router.get("/public/cardapio")
+def listar_cardapio_publico(db: Session = Depends(get_db)):
+    from models import Tenant
+    produtos = db.query(Produto).filter(
+        Produto.ativo == True
+    ).all()
+
+    insumos_extras = db.query(Insumo).filter(
+        Insumo.preco_venda_extra > 0
+    ).all()
+
+    cardapio = []
+    for p in produtos:
+        ingredientes_nomes = [it.insumo.nome for it in p.ficha_tecnica if it.insumo]
+        cardapio.append({
+            "codigo": p.codigo,
+            "nome": p.nome,
+            "categoria": p.categoria,
+            "descricao": p.descricao,
+            "preco_salao": p.preco_salao,
+            "preco_ifood": p.preco_ifood,
+            "ingredientes": ingredientes_nomes
+        })
+
+    extras = [{
+        "codigo": i.codigo,
+        "nome": i.nome,
+        "preco_extra": i.preco_venda_extra
+    } for i in insumos_extras]
+
+    return {"produtos": cardapio, "extras": extras}
+
+# 7. Criar Pedido Público vindo do Cardápio Digital (sem autenticação de funcionário)
+@router.post("/public/pedidos")
+def criar_pedido_publico(
+    dados: PedidoCreate,
+    db: Session = Depends(get_db)
+):
+    if not dados.itens:
+        raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item.")
+
+    from models import Tenant
+    tenant = db.query(Tenant).first()
+    tenant_id = tenant.id if tenant else 1
+
+    ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == tenant_id).order_by(Pedido.id.desc()).first()
+    numero_comanda = (ultimo_pedido.numero_comanda + 1) if ultimo_pedido and ultimo_pedido.numero_comanda else 101
+
+    novo_pedido = Pedido(
+        tenant_id=tenant_id,
+        numero_comanda=numero_comanda,
+        data_hora=datetime.datetime.utcnow(),
+        canal=dados.canal or "Delivery Próprio",
+        identificacao=dados.identificacao or f"Delivery #{numero_comanda}",
+        forma_pagto=dados.forma_pagto,
+        status_kds="Na Chapa"
+    )
+    db.add(novo_pedido)
+    db.flush()
+
+    total_bruto = 0.0
+    cmv_total = 0.0
+
+    for item_input in dados.itens:
+        prod = db.query(Produto).filter(
+            Produto.tenant_id == tenant_id,
+            Produto.codigo == item_input.produto_codigo
+        ).first()
+
+        cmv_prod = 0.0
+        if prod:
+            for ft in prod.ficha_tecnica:
+                if ft.insumo:
+                    cmv_prod += ft.quantidade * ft.insumo.custo_unitario
+
+        item_total = item_input.preco_unitario * item_input.quantidade
+        total_bruto += item_total
+        cmv_total += cmv_prod * item_input.quantidade
+
+        item_db = ItemPedido(
+            pedido_id=novo_pedido.id,
+            produto_id=prod.id if prod else None,
+            nome_produto=prod.nome if prod else item_input.produto_codigo,
+            quantidade=item_input.quantidade,
+            preco_unitario=item_input.preco_unitario,
+            cmv_unitario=cmv_prod,
+            modificacoes=item_input.modificacoes
+        )
+        db.add(item_db)
+
+    # Delivery Próprio: 0% taxa de marketplace! (Apenas 1.5% máquina se cartão)
+    taxa_canal = total_bruto * 0.015 if ("Cartão" in dados.forma_pagto) else 0.0
+    lucro_liquido = total_bruto - cmv_total - taxa_canal
+
+    novo_pedido.valor_bruto = total_bruto
+    novo_pedido.cmv_total = cmv_total
+    novo_pedido.taxa_canal = taxa_canal
+    novo_pedido.lucro_liquido = lucro_liquido
+
+    db.commit()
+    db.refresh(novo_pedido)
+
+    return {
+        "sucesso": True,
+        "numero_comanda": novo_pedido.numero_comanda,
+        "pedido_id": novo_pedido.id,
+        "total": round(total_bruto, 2),
+        "status_kds": novo_pedido.status_kds,
+        "mensagem": "Pedido recebido com sucesso na cozinha!"
+    }
