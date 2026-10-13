@@ -188,3 +188,31 @@ class PerdaItemResponse(BaseModel):
     custo_total: float
     class Config:
         from_attributes = True
+# Mesas & Comandas
+class ItemMesaInput(BaseModel):
+    produto_codigo: str
+    nome: str
+    quantidade: int = 1
+    preco_unitario: float
+    modificacoes: Optional[str] = None
+
+class AdicionarItensMesaInput(BaseModel):
+    itens: List[ItemMesaInput]
+
+class FecharMesaRequest(BaseModel):
+    forma_pagto: str = "PIX"
+    parcelas: int = 1
+    taxa_aplicada: float = 0.0
+    valor_total_pago: float
+
+class ConfigTaxasCartaoInput(BaseModel):
+    taxa_debito: float = 1.99
+    taxa_credito_vista: float = 3.49
+    taxa_credito_parcelado: float = 4.99
+    repassar_taxa_cartao: bool = False
+
+class ConfigTaxasCartaoResponse(BaseModel):
+    taxa_debito: float
+    taxa_credito_vista: float
+    taxa_credito_parcelado: float
+    repassar_taxa_cartao: bool

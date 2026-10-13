@@ -20,6 +20,7 @@ class Tenant(Base):
     fechamentos = relationship("FechamentoCaixa", back_populates="tenant", cascade="all, delete-orphan")
     perdas = relationship("PerdaItem", back_populates="tenant", cascade="all, delete-orphan")
     configuracoes = relationship("ConfiguracaoEmpresa", back_populates="tenant", uselist=False, cascade="all, delete-orphan")
+    mesas = relationship("Mesa", back_populates="tenant", cascade="all, delete-orphan")
 
 class User(Base):
     __tablename__ = "usuarios"
@@ -118,6 +119,19 @@ class ItemPedido(Base):
 
     pedido = relationship("Pedido", back_populates="itens")
 
+class Mesa(Base):
+    __tablename__ = "mesas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    numero = Column(String(50), nullable=False)  # ex: 'Mesa 01', 'Mesa 02', 'Balcão'
+    status = Column(String(20), default="LIVRE")  # 'LIVRE', 'OCUPADA'
+    consumo_acumulado = Column(Float, default=0.0)
+    itens_json = Column(Text, default="[]")
+    aberta_em = Column(DateTime, nullable=True)
+
+    tenant = relationship("Tenant", back_populates="mesas")
+
 class CustoFixo(Base):
     __tablename__ = "custos_fixos"
 
@@ -156,6 +170,10 @@ class ConfiguracaoEmpresa(Base):
     dias_trabalhados_mes = Column(Integer, default=26)
     meta_lucro_desejada = Column(Float, default=3000.0)
     aliquota_ifood = Column(Float, default=0.23)
+    taxa_debito = Column(Float, default=1.99)
+    taxa_credito_vista = Column(Float, default=3.49)
+    taxa_credito_parcelado = Column(Float, default=4.99)
+    repassar_taxa_cartao = Column(Boolean, default=False)
 
     tenant = relationship("Tenant", back_populates="configuracoes")
 
