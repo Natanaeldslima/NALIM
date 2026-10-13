@@ -1,12 +1,34 @@
-import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+﻿import datetime
+import json
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, Produto, Insumo, Pedido, ItemPedido, FechamentoCaixa
-from schemas import PedidoCreate, KdsUpdateStatus, FechamentoCaixaCreate
-from auth import require_role
+from models import User, Produto, Insumo, Pedido, ItemPedido, FechamentoCaixa, Mesa, ConfiguracaoEmpresa, Tenant
+from schemas import (
+    PedidoCreate, KdsUpdateStatus, FechamentoCaixaCreate,
+    AdicionarItensMesaInput, FecharMesaRequest,
+    ConfigTaxasCartaoInput, ConfigTaxasCartaoResponse
+)
+from auth import require_role, SECRET_KEY, ALGORITHM
+import jwt
 
 router = APIRouter(prefix="/api/operacional", tags=["Operacional (PDV, Cozinha & Caixa)"])
+
+def get_tenant_id_permissive(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> int:
+    """Extrai tenant_id do token se fornecido, ou faz fallback para o tenant principal (para telas de cozinha / abas anônimas)."""
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ")[1]
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = int(payload.get("sub", 0))
+            user = db.query(User).filter(User.id == user_id).first()
+            if user:
+                return user.tenant_id
+        except Exception:
+            pass
+    first_tenant = db.query(Tenant).first()
+    return first_tenant.id if first_tenant else 1
 
 # 1. Cardápio Limpo para Atendimento (SEM CMV, SEM LUCRO)
 @router.get("/cardapio")
@@ -26,7 +48,6 @@ def listar_cardapio_operacional(
 
     cardapio = []
     for p in produtos:
-        # Puxa ingredientes apenas com nomes para a personalização ("SEM Cebola")
         ingredientes_nomes = [it.insumo.nome for it in p.ficha_tecnica if it.insumo]
         cardapio.append({
             "codigo": p.codigo,
@@ -56,7 +77,6 @@ def criar_pedido(
     if not dados.itens:
         raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item.")
 
-    # Gera próximo número de comanda
     ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == current_user.tenant_id).order_by(Pedido.id.desc()).first()
     numero_comanda = (ultimo_pedido.numero_comanda + 1) if ultimo_pedido and ultimo_pedido.numero_comanda else 101
 
@@ -87,7 +107,6 @@ def criar_pedido(
             Produto.codigo == item_input.produto_codigo
         ).first()
 
-        # Calcula CMV da receita no servidor
         cmv_prod = 0.0
         if prod:
             for ft in prod.ficha_tecnica:
@@ -109,7 +128,6 @@ def criar_pedido(
         )
         db.add(item_db)
 
-    # Taxa estimada de canal (iFood 23% vs Salão/Balcão 2% máquina)
     taxa_canal = total_bruto * 0.23 if dados.canal == "iFood" else total_bruto * 0.02
     lucro_liquido = total_bruto - cmv_total - taxa_canal
 
@@ -120,7 +138,6 @@ def criar_pedido(
 
     db.commit()
 
-    # Retorno limpo para o operador (sem lucro ou cmv)
     return {
         "sucesso": True,
         "pedido_id": novo_pedido.id,
@@ -132,23 +149,24 @@ def criar_pedido(
         "mensagem": "Pedido registrado com sucesso e enviado para a Cozinha/KDS!"
     }
 
-# 3. KDS — Painel da Cozinha em Tempo Real
+# 3. KDS — Painel da Cozinha em Tempo Real (Funciona com ou sem Token para Telas e Abas Anônimas)
 @router.get("/kds")
+@router.get("/kds/realtime")
 def listar_pedidos_kds(
-    current_user: User = Depends(require_role(["operador", "gerente", "dono"])),
+    tenant_id: int = Depends(get_tenant_id_permissive),
     db: Session = Depends(get_db)
 ):
     pedidos = db.query(Pedido).filter(
-        Pedido.tenant_id == current_user.tenant_id,
+        Pedido.tenant_id == tenant_id,
         Pedido.status_kds.in_(["Na Chapa", "Pronto"])
-    ).order_by(Pedido.id.asc()).all()
+    ).order_by(Pedido.id.desc()).all()
 
     tickets = []
     for p in pedidos:
         tickets.append({
             "id": p.id,
             "numero_comanda": p.numero_comanda,
-            "data_hora": p.data_hora.strftime("%H:%M"),
+            "data_hora": p.data_hora.strftime("%H:%M") if p.data_hora else datetime.datetime.now().strftime("%H:%M"),
             "canal": p.canal,
             "identificacao": p.identificacao,
             "status": p.status_kds,
@@ -166,12 +184,12 @@ def listar_pedidos_kds(
 def atualizar_status_kds(
     pedido_id: int,
     dados: KdsUpdateStatus,
-    current_user: User = Depends(require_role(["operador", "gerente", "dono"])),
+    tenant_id: int = Depends(get_tenant_id_permissive),
     db: Session = Depends(get_db)
 ):
     pedido = db.query(Pedido).filter(
         Pedido.id == pedido_id,
-        Pedido.tenant_id == current_user.tenant_id
+        Pedido.tenant_id == tenant_id
     ).first()
     if not pedido:
         raise HTTPException(status_code=404, detail="Pedido não encontrado.")
@@ -180,7 +198,237 @@ def atualizar_status_kds(
     db.commit()
     return {"sucesso": True, "pedido_id": pedido.id, "novo_status": pedido.status_kds}
 
-# 5. Fechamento de Caixa Diário
+# 5. GESTÃO DE MESAS (Comanda Acumulada, Status Livre/Ocupada e Zeramento)
+@router.get("/mesas")
+def listar_mesas(
+    tenant_id: int = Depends(get_tenant_id_permissive),
+    db: Session = Depends(get_db)
+):
+    mesas_existentes = db.query(Mesa).filter(Mesa.tenant_id == tenant_id).order_by(Mesa.id.asc()).all()
+
+    # Se ainda não existem mesas cadastradas para este tenant, inicializa Mesa 01 a 10 + Balcão
+    if not mesas_existentes:
+        nomes_padrao = [f"Mesa {i:02d}" for i in range(1, 11)] + ["Balcão"]
+        for nome in nomes_padrao:
+            m = Mesa(
+                tenant_id=tenant_id,
+                numero=nome,
+                status="LIVRE",
+                consumo_acumulado=0.0,
+                itens_json="[]"
+            )
+            db.add(m)
+        db.commit()
+        mesas_existentes = db.query(Mesa).filter(Mesa.tenant_id == tenant_id).order_by(Mesa.id.asc()).all()
+
+    resultado = []
+    for m in mesas_existentes:
+        try:
+            itens_parsed = json.loads(m.itens_json or "[]")
+        except Exception:
+            itens_parsed = []
+
+        resultado.append({
+            "id": m.id,
+            "numero": m.numero,
+            "status": m.status,
+            "consumo_acumulado": round(m.consumo_acumulado, 2),
+            "itens": itens_parsed,
+            "aberta_em": m.aberta_em.strftime("%H:%M") if m.aberta_em else None
+        })
+
+    return {"mesas": resultado}
+
+@router.post("/mesas/{mesa_identificador}/adicionar-itens")
+def adicionar_itens_mesa(
+    mesa_identificador: str,
+    dados: AdicionarItensMesaInput,
+    tenant_id: int = Depends(get_tenant_id_permissive),
+    db: Session = Depends(get_db)
+):
+    if not dados.itens:
+        raise HTTPException(status_code=400, detail="Nenhum item informado.")
+
+    # Busca a mesa por número (ex: 'Mesa 03' ou 'Balcão')
+    mesa = db.query(Mesa).filter(
+        Mesa.tenant_id == tenant_id,
+        Mesa.numero == mesa_identificador
+    ).first()
+
+    if not mesa:
+        mesa = Mesa(
+            tenant_id=tenant_id,
+            numero=mesa_identificador,
+            status="LIVRE",
+            consumo_acumulado=0.0,
+            itens_json="[]"
+        )
+        db.add(mesa)
+        db.flush()
+
+    try:
+        itens_acumulados = json.loads(mesa.itens_json or "[]")
+    except Exception:
+        itens_acumulados = []
+
+    subtotal_rodada = 0.0
+    agora_hora = datetime.datetime.now().strftime("%H:%M")
+
+    for it in dados.itens:
+        total_item = it.preco_unitario * it.quantidade
+        subtotal_rodada += total_item
+        itens_acumulados.append({
+            "produto_codigo": it.produto_codigo,
+            "nome": it.nome,
+            "quantidade": it.quantidade,
+            "preco_unitario": it.preco_unitario,
+            "total": total_item,
+            "modificacoes": it.modificacoes,
+            "hora": agora_hora
+        })
+
+    mesa.consumo_acumulado += subtotal_rodada
+    mesa.itens_json = json.dumps(itens_acumulados, ensure_ascii=False)
+    mesa.status = "OCUPADA"
+    if not mesa.aberta_em:
+        mesa.aberta_em = datetime.datetime.utcnow()
+
+    # Gera Pedido automático no KDS para a cozinha produzir a rodada imediatamente
+    ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == tenant_id).order_by(Pedido.id.desc()).first()
+    numero_comanda = (ultimo_pedido.numero_comanda + 1) if ultimo_pedido and ultimo_pedido.numero_comanda else 101
+
+    pedido_kds = Pedido(
+        tenant_id=tenant_id,
+        numero_comanda=numero_comanda,
+        data_hora=datetime.datetime.utcnow(),
+        canal="Salão",
+        identificacao=f"{mesa.numero} (Salão)",
+        forma_pagto="Em Aberto (Mesa)",
+        status_kds="Na Chapa",
+        valor_bruto=subtotal_rodada,
+        cmv_total=subtotal_rodada * 0.30,  # Estimativa inicial 30%
+        taxa_canal=subtotal_rodada * 0.02,
+        lucro_liquido=subtotal_rodada * 0.68
+    )
+    db.add(pedido_kds)
+    db.flush()
+
+    for it in dados.itens:
+        prod = db.query(Produto).filter(
+            Produto.tenant_id == tenant_id,
+            Produto.codigo == it.produto_codigo
+        ).first()
+
+        db.add(ItemPedido(
+            pedido_id=pedido_kds.id,
+            produto_id=prod.id if prod else None,
+            nome_produto=it.nome,
+            quantidade=it.quantidade,
+            preco_unitario=it.preco_unitario,
+            cmv_unitario=it.preco_unitario * 0.30,
+            modificacoes=it.modificacoes
+        ))
+
+    db.commit()
+
+    return {
+        "sucesso": True,
+        "mesa": mesa.numero,
+        "status": mesa.status,
+        "consumo_acumulado": round(mesa.consumo_acumulado, 2),
+        "total_itens": len(itens_acumulados),
+        "pedido_kds_id": pedido_kds.id,
+        "numero_comanda": pedido_kds.numero_comanda,
+        "mensagem": f"Rodada adicionada com sucesso! Pedido #{pedido_kds.numero_comanda} despachado para a Cozinha/KDS."
+    }
+
+@router.post("/mesas/{mesa_identificador}/fechar")
+def fechar_e_zerar_mesa(
+    mesa_identificador: str,
+    dados: FecharMesaRequest,
+    tenant_id: int = Depends(get_tenant_id_permissive),
+    db: Session = Depends(get_db)
+):
+    mesa = db.query(Mesa).filter(
+        Mesa.tenant_id == tenant_id,
+        Mesa.numero == mesa_identificador
+    ).first()
+
+    if not mesa:
+        raise HTTPException(status_code=404, detail="Mesa não encontrada.")
+
+    valor_consumido = mesa.consumo_acumulado
+
+    # ZERA A MESA COMPLETAMENTE PARA LIBERAR PARA O PRÓXIMO CLIENTE
+    mesa.status = "LIVRE"
+    mesa.consumo_acumulado = 0.0
+    mesa.itens_json = "[]"
+    mesa.aberta_em = None
+
+    db.commit()
+
+    return {
+        "sucesso": True,
+        "mesa": mesa_identificador,
+        "status": "LIVRE",
+        "consumo_fechado": round(valor_consumido, 2),
+        "valor_total_pago": round(dados.valor_total_pago, 2),
+        "forma_pagto": dados.forma_pagto,
+        "mensagem": f"{mesa_identificador} fechada e zerada com sucesso! Mesa livre para novos clientes."
+    }
+
+# 6. CONFIGURAÇÃO DE TAXAS E JUROS DA MÁQUINA DE CARTÃO
+@router.get("/config-taxas")
+def obter_config_taxas(
+    tenant_id: int = Depends(get_tenant_id_permissive),
+    db: Session = Depends(get_db)
+):
+    config = db.query(ConfiguracaoEmpresa).filter(ConfiguracaoEmpresa.tenant_id == tenant_id).first()
+    if not config:
+        config = ConfiguracaoEmpresa(
+            tenant_id=tenant_id,
+            taxa_debito=1.99,
+            taxa_credito_vista=3.49,
+            taxa_credito_parcelado=4.99,
+            repassar_taxa_cartao=False
+        )
+        db.add(config)
+        db.commit()
+
+    return {
+        "taxa_debito": config.taxa_debito if hasattr(config, "taxa_debito") else 1.99,
+        "taxa_credito_vista": config.taxa_credito_vista if hasattr(config, "taxa_credito_vista") else 3.49,
+        "taxa_credito_parcelado": config.taxa_credito_parcelado if hasattr(config, "taxa_credito_parcelado") else 4.99,
+        "repassar_taxa_cartao": config.repassar_taxa_cartao if hasattr(config, "repassar_taxa_cartao") else False
+    }
+
+@router.post("/config-taxas")
+def salvar_config_taxas(
+    dados: ConfigTaxasCartaoInput,
+    tenant_id: int = Depends(get_tenant_id_permissive),
+    db: Session = Depends(get_db)
+):
+    config = db.query(ConfiguracaoEmpresa).filter(ConfiguracaoEmpresa.tenant_id == tenant_id).first()
+    if not config:
+        config = ConfiguracaoEmpresa(tenant_id=tenant_id)
+        db.add(config)
+
+    config.taxa_debito = dados.taxa_debito
+    config.taxa_credito_vista = dados.taxa_credito_vista
+    config.taxa_credito_parcelado = dados.taxa_credito_parcelado
+    config.repassar_taxa_cartao = dados.repassar_taxa_cartao
+
+    db.commit()
+    return {
+        "sucesso": True,
+        "taxa_debito": config.taxa_debito,
+        "taxa_credito_vista": config.taxa_credito_vista,
+        "taxa_credito_parcelado": config.taxa_credito_parcelado,
+        "repassar_taxa_cartao": config.repassar_taxa_cartao,
+        "mensagem": "Taxas de cartão e maquininha salvas com sucesso!"
+    }
+
+# 7. Fechamento de Caixa Diário
 @router.post("/caixa")
 def registrar_fechamento_caixa(
     dados: FechamentoCaixaCreate,
@@ -214,17 +462,11 @@ def registrar_fechamento_caixa(
         "mensagem": "Fechamento de caixa gravado com sucesso!"
     }
 
-# 6. Cardápio Público para Clientes Finais (Delivery / WhatsApp)
+# 8. Cardápio Público para Clientes Finais (Delivery / WhatsApp)
 @router.get("/public/cardapio")
 def listar_cardapio_publico(db: Session = Depends(get_db)):
-    from models import Tenant
-    produtos = db.query(Produto).filter(
-        Produto.ativo == True
-    ).all()
-
-    insumos_extras = db.query(Insumo).filter(
-        Insumo.preco_venda_extra > 0
-    ).all()
+    produtos = db.query(Produto).filter(Produto.ativo == True).all()
+    insumos_extras = db.query(Insumo).filter(Insumo.preco_venda_extra > 0).all()
 
     cardapio = []
     for p in produtos:
@@ -247,7 +489,7 @@ def listar_cardapio_publico(db: Session = Depends(get_db)):
 
     return {"produtos": cardapio, "extras": extras}
 
-# 7. Criar Pedido Público vindo do Cardápio Digital (sem autenticação de funcionário)
+# 9. Criar Pedido Público vindo do Cardápio Digital (sem autenticação)
 @router.post("/public/pedidos")
 def criar_pedido_publico(
     dados: PedidoCreate,
@@ -256,7 +498,6 @@ def criar_pedido_publico(
     if not dados.itens:
         raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item.")
 
-    from models import Tenant
     tenant = db.query(Tenant).first()
     tenant_id = tenant.id if tenant else 1
 
@@ -305,7 +546,6 @@ def criar_pedido_publico(
         )
         db.add(item_db)
 
-    # Delivery Próprio: 0% taxa de marketplace! (Apenas 1.5% máquina se cartão)
     taxa_canal = total_bruto * 0.015 if ("Cartão" in dados.forma_pagto) else 0.0
     lucro_liquido = total_bruto - cmv_total - taxa_canal
 
