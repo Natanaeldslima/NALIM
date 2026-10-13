@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -783,6 +783,33 @@
           </div>
         </div>
 
+        <!-- CÉREBRO FINANCEIRO AUTOMATIZADO (FEATURE 5 - RESUMO EXECUTIVO & DIAGNÓSTICO PRESCRITIVO) -->
+        <div class="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-md">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3.5 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+              <span class="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center font-black">
+                <i data-lucide="brain" class="w-5 h-5"></i>
+              </span>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm font-black tracking-tight uppercase">CÉREBRO FINANCEIRO AUTOMATIZADO</h3>
+                  <span class="text-[9px] font-black tracking-widest bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full uppercase">DIAGNÓSTICO PRESCRITIVO</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Diagnósticos em tempo real e decisões prescritivas para proteger seu lucro e o fluxo de caixa.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-[10px] text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="font-bold text-slate-200">Inteligência Operacional Ativa</span>
+            </div>
+          </div>
+
+          <!-- Grid dos 4 Cards de Decisão Prescritiva -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 mt-4" id="cerebro-decisoes-grid">
+            <!-- Preenchido via renderCerebroFinanceiro() -->
+          </div>
+        </div>
+
         <!-- 1. OS 6 CARDS SUPERIORES DE INDICADORES PRINCIPAIS -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
           
@@ -953,6 +980,88 @@
 
         </div>
 
+        <!-- FEATURE 1: TERMÔMETRO SEMANAL DE RENTABILIDADE (QUAL DIA COMPENSA ABRIR?) -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+                  <i data-lucide="calendar-range" class="w-4 h-4"></i>
+                </span>
+                <h3 class="text-sm font-black text-slate-900 uppercase tracking-tight">TERMÔMETRO SEMANAL DE RENTABILIDADE</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Resultado Operacional Médio = Faturamento Médio - (Custos Fixos / Dias Abertos + CMV Médio + Taxas Médias). Qual dia dá lucro e qual dá prejuízo?</p>
+            </div>
+            <span class="text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
+              <i data-lucide="scale" class="w-3.5 h-3.5 text-emerald-600"></i> Proporcionalidade Diária Real
+            </span>
+          </div>
+
+          <!-- Grid de 7 Colunas: Segunda a Domingo -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5" id="termometro-semanal-grid">
+            <!-- Populado via renderTermometroSemanal() -->
+          </div>
+
+          <!-- Alerta Prescritivo Automático -->
+          <div id="termometro-alerta-banner" class="p-3.5 rounded-xl text-xs font-semibold flex items-start gap-3 bg-slate-50 border border-slate-200 text-slate-800">
+            <!-- Preenchido via renderTermometroSemanal() -->
+          </div>
+        </div>
+
+        <!-- FEATURE 2 & 4: DESMEMBRAMENTO DE CANAIS DE VENDA & PREVISÃO DE FLUXO DE CAIXA -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+          <!-- FEATURE 2: Desmembramento por Canais de Venda (7 Colunas) -->
+          <div class="lg:col-span-7 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-blue-50 text-blue-700">
+                  <i data-lucide="split" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">DESMEMBRAMENTO POR CANAIS DE VENDA</h4>
+                  <p class="text-[11px] text-slate-500">iFood vs. Balcão/Salão vs. WhatsApp Próprio (Taxas Retidas & Margem Real)</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-extrabold bg-blue-100 text-blue-900 px-2 py-0.5 rounded-full">Multicanal</span>
+            </div>
+
+            <div class="space-y-2.5" id="canais-desmembramento-container">
+              <!-- Cards comparativos por canal preenchidos via JS -->
+            </div>
+
+            <div class="bg-amber-50/70 border border-amber-200 p-3 rounded-xl text-xs text-amber-950 font-medium flex items-start gap-2.5" id="canais-insight-prescritivo">
+              <i data-lucide="lightbulb" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+              <span id="canais-insight-texto">Calculando eficiência dos canais...</span>
+            </div>
+          </div>
+
+          <!-- FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (5 Colunas) -->
+          <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-purple-50 text-purple-700">
+                  <i data-lucide="wallet" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">PREVISÃO DE CAIXA (PRÓXIMOS 10 DIAS)</h4>
+                  <p class="text-[11px] text-slate-500">Lucro DRE vs. Dinheiro em Conta (Liquidação vs. Boletos)</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-extrabold bg-purple-100 text-purple-900 px-2 py-0.5 rounded-full">D+0 a D+30</span>
+            </div>
+
+            <div class="space-y-1.5 overflow-y-auto max-h-64 custom-scroll pr-1" id="caixa-previsao-lista">
+              <!-- 10 dias com entradas/saídas e saldo projetado -->
+            </div>
+
+            <div id="caixa-alerta-liquidez" class="p-3 rounded-xl text-xs font-bold transition">
+              <!-- Alerta de Liquidez se saldo projetado < 0 -->
+            </div>
+          </div>
+
+        </div>
+
         <!-- 4. TOP 5 MARGEM + DESEMPENHO DOS PRODUTOS + ALERTAS DO NEGÓCIO -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
           
@@ -989,36 +1098,21 @@
             </div>
           </div>
 
-          <!-- Alertas do Negócio (Auditoria e Consistência - 3 Colunas) -->
-          <div class="md:col-span-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
-              <i data-lucide="bell" class="w-4 h-4 text-amber-500"></i> ALERTAS DO NEGÓCIO
-            </h4>
-            <div class="mt-3.5 space-y-2.5 text-xs font-bold text-slate-700" id="dash-alertas-lista">
-              <div class="flex items-center justify-between">
-                <span>Faturamento</span>
-                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+          <!-- Notificações por Exceção (Auditoria Inteligente por Regras) -->
+          <div class="md:col-span-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <i data-lucide="shield-alert" class="w-4 h-4 text-slate-700"></i> NOTIFICAÇÕES POR EXCEÇÃO
+                </h4>
+                <span class="text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Auditoria Ativa</span>
               </div>
-              <div class="flex items-center justify-between">
-                <span>Margem de contribuição</span>
-                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
+              <div class="mt-3 space-y-2" id="dash-alertas-lista">
+                <!-- Se tudo ok: badge compacto verde. Se anomalias: cards expansíveis prescritivos -->
               </div>
-              <div class="flex items-center justify-between">
-                <span>Custos fixos</span>
-                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span>Taxas de venda</span>
-                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span>Perdas</span>
-                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span>Consistência dos dados</span>
-                <span class="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">✓ OK</span>
-              </div>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-slate-100 text-[10px] text-slate-400 font-medium">
+              Monitora CMV (>35%), desperdício (>2.5%), canais e meta diária.
             </div>
           </div>
 
@@ -1041,81 +1135,81 @@
             </span>
           </div>
 
-          <!-- Grid dos 4 Quadrantes da Matriz -->
+          <!-- Grid dos 4 Quadrantes da Matriz (Refatorado: Campeões, Populares, Oportunidades, Revisar / Retirar) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" id="matriz-bcg-grid">
-            <!-- 1. Estrelas -->
-            <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 flex flex-col justify-between space-y-3">
+            <!-- 1. Campeões (Antigas Estrelas) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div class="flex justify-between items-center pb-2 border-b border-emerald-200">
-                  <span class="font-black text-xs text-emerald-950 flex items-center gap-1.5">
-                    ⭐ ESTRELAS
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    ⭐ CAMPEÕES
                   </span>
-                  <span class="text-[10px] font-extrabold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full" id="bcg-count-estrelas">0 itens</span>
+                  <span class="text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full" id="bcg-count-estrelas">0 itens</span>
                 </div>
-                <p class="text-[10px] text-emerald-800 font-semibold mt-2">Alta Saída + Alta Margem</p>
+                <p class="text-[10px] text-emerald-700 font-bold mt-2">Alta Saída + Alta Margem</p>
                 <div class="mt-2 space-y-1.5" id="bcg-list-estrelas">
-                  <!-- Itens Estrela -->
+                  <!-- Itens Campeões -->
                 </div>
               </div>
-              <div class="text-[10px] text-emerald-900 bg-white/80 p-2.5 rounded-lg border border-emerald-200">
-                <strong>💡 Recomendação:</strong> Mantenha a receita rigorosa e dê destaque de ouro na capa do cardápio e nos apps.
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-emerald-700">💡 Prescrição:</strong> Mantenha a receita rigorosa e dê destaque de ouro na capa do cardápio e nos aplicativos.
               </div>
             </div>
 
-            <!-- 2. Burros de Carga -->
-            <div class="p-4 rounded-xl border border-blue-200 bg-blue-50/50 flex flex-col justify-between space-y-3">
+            <!-- 2. Populares (Antigos Burros de Carga) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div class="flex justify-between items-center pb-2 border-b border-blue-200">
-                  <span class="font-black text-xs text-blue-950 flex items-center gap-1.5">
-                    🐂 BURROS DE CARGA
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    🐂 POPULARES
                   </span>
-                  <span class="text-[10px] font-extrabold bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full" id="bcg-count-burros">0 itens</span>
+                  <span class="text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full" id="bcg-count-burros">0 itens</span>
                 </div>
-                <p class="text-[10px] text-blue-800 font-semibold mt-2">Alta Saída + Baixa Margem</p>
+                <p class="text-[10px] text-amber-700 font-bold mt-2">Alta Saída + Baixa Margem</p>
                 <div class="mt-2 space-y-1.5" id="bcg-list-burros">
-                  <!-- Itens Burro de Carga -->
+                  <!-- Itens Populares -->
                 </div>
               </div>
-              <div class="text-[10px] text-blue-900 bg-white/80 p-2.5 rounded-lg border border-blue-200">
-                <strong>💡 Recomendação:</strong> Aumente o preço em R$ 1,50 ou renegocie insumos. O cliente continuará comprando.
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-amber-700">💡 Prescrição:</strong> Suba o preço em R$ 1,50 ou renegocie insumos com fornecedores. A demanda é fiel e absorve o ajuste.
               </div>
             </div>
 
-            <!-- 3. Quebra-Cabeças -->
-            <div class="p-4 rounded-xl border border-purple-200 bg-purple-50/50 flex flex-col justify-between space-y-3">
+            <!-- 3. Oportunidades (Antigos Quebra-Cabeças) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div class="flex justify-between items-center pb-2 border-b border-purple-200">
-                  <span class="font-black text-xs text-purple-950 flex items-center gap-1.5">
-                    ❓ QUEBRA-CABEÇAS
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    ❓ OPORTUNIDADES
                   </span>
-                  <span class="text-[10px] font-extrabold bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full" id="bcg-count-quebras">0 itens</span>
+                  <span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full" id="bcg-count-quebras">0 itens</span>
                 </div>
-                <p class="text-[10px] text-purple-800 font-semibold mt-2">Baixa Saída + Alta Margem</p>
+                <p class="text-[10px] text-blue-700 font-bold mt-2">Baixa Saída + Alta Margem</p>
                 <div class="mt-2 space-y-1.5" id="bcg-list-quebras">
-                  <!-- Itens Quebra-cabeça -->
+                  <!-- Itens Oportunidades -->
                 </div>
               </div>
-              <div class="text-[10px] text-purple-900 bg-white/80 p-2.5 rounded-lg border border-purple-200">
-                <strong>💡 Recomendação:</strong> Monte combos promocionais com seus Burros de Carga e faça fotos atraentes.
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-blue-700">💡 Prescrição:</strong> Monte combos promocionais com seus Populares e faça fotos atraentes no cardápio.
               </div>
             </div>
 
-            <!-- 4. Cães / Abacaxis -->
-            <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/50 flex flex-col justify-between space-y-3">
+            <!-- 4. Revisar / Retirar (Antigos Cães/Abacaxis) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
               <div>
-                <div class="flex justify-between items-center pb-2 border-b border-rose-200">
-                  <span class="font-black text-xs text-rose-950 flex items-center gap-1.5">
-                    🐶 CÃES / ABACAXIS
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    🐶 REVISAR / RETIRAR
                   </span>
-                  <span class="text-[10px] font-extrabold bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full" id="bcg-count-caes">0 itens</span>
+                  <span class="text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full" id="bcg-count-caes">0 itens</span>
                 </div>
-                <p class="text-[10px] text-rose-800 font-semibold mt-2">Baixa Saída + Baixa Margem</p>
+                <p class="text-[10px] text-rose-700 font-bold mt-2">Baixa Saída + Baixa Margem</p>
                 <div class="mt-2 space-y-1.5" id="bcg-list-caes">
-                  <!-- Itens Cães -->
+                  <!-- Itens Revisar / Retirar -->
                 </div>
               </div>
-              <div class="text-[10px] text-rose-900 bg-white/80 p-2.5 rounded-lg border border-rose-200">
-                <strong>💡 Recomendação:</strong> Amarram dinheiro em estoque e dão prejuízo. Considere retirar do cardápio.
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-rose-700">💡 Prescrição:</strong> Amarram dinheiro em estoque e geram prejuízo invisível. Simplifique ou retire do cardápio.
               </div>
             </div>
           </div>
@@ -1192,6 +1286,10 @@
                 <strong class="text-slate-900 font-black" id="resumo-dias-func">26</strong>
               </div>
             </div>
+            <button type="button" onclick="abrirModalPerda()" class="mt-3 w-full py-2 px-3 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              <span>+ Registrar Perda / Desperdício</span>
+            </button>
           </div>
 
           <!-- EVOLUÇÃO DO NEGÓCIO HISTÓRICA (4 Colunas) -->
@@ -1918,6 +2016,12 @@
       ],
 
       pedidos: [],
+
+      perdasItens: JSON.parse(localStorage.getItem('nalim_perdas_itens') || 'null') || [
+        { id: 1, data: '2026-10-01', item_nome: 'Pão Brioche Selado', quantidade: 4, custo_unitario: 1.70, motivo: 'validade', observacao: 'Vencimento atingido antes do uso' },
+        { id: 2, data: '2026-10-02', item_nome: 'Blend Especial 150g', quantidade: 3, custo_unitario: 4.20, motivo: 'erro_cozinha', observacao: 'Queimou na chapa durante pico' },
+        { id: 3, data: '2026-10-03', item_nome: 'Batata Palito Congelada', quantidade: 0.6, custo_unitario: 11.00, motivo: 'descarte', observacao: 'Descarte no óleo' }
+      ],
 
       usuarios: JSON.parse(localStorage.getItem('nalim_usuarios') || 'null') || [
         { id: 1, nome: 'Carlos Nalim', email: 'dono@nalim.com.br', senha: 'dono123', perfil: 'dono', cargo: 'Proprietário & Administrador Geral' },
@@ -3315,7 +3419,82 @@
               setTimeout(function() { window.close(); }, 500);
             };
           <\/script>
-        </body>
+          <!-- MODAL: REGISTRO RÁPIDO DE PERDAS / DESPERDÍCIO (FEATURE 3) -->
+  <div id="modal-perda" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 rounded-lg bg-rose-100 text-rose-700">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </span>
+          <h3 class="font-extrabold text-slate-900 text-sm">Registrar Perda ou Desperdício</h3>
+        </div>
+        <button type="button" onclick="fecharModalPerda()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-registro-perda" onsubmit="salvarNovaPerda(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Item / Insumo Desperdiçado</label>
+          <input type="text" id="perda-item-nome" list="lista-sugestao-insumos" placeholder="Ex: Blend Especial 150g ou Pão Brioche" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          <datalist id="lista-sugestao-insumos">
+            <option value="Blend Especial 150g">
+            <option value="Pão Brioche Selado">
+            <option value="Queijo Cheddar Inglês">
+            <option value="Bacon Fatiado Artesanal">
+            <option value="Batata Palito Congelada">
+            <option value="Molho da Casa">
+            <option value="Refrigerante Lata 350ml">
+          </datalist>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Quantidade Perdida</label>
+            <input type="number" step="0.1" id="perda-quantidade" value="1" min="0.1" required oninput="calcularTotalPerdaModal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Custo Unitário (R$)</label>
+            <input type="number" step="0.01" id="perda-custo-unit" value="3.50" min="0" required oninput="calcularTotalPerdaModal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Motivo do Descarte</label>
+            <select id="perda-motivo" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+              <option value="validade">Validade Vencida</option>
+              <option value="erro_cozinha">Erro na Cozinha / Queimou</option>
+              <option value="descarte">Descarte / Padrão de Qualidade</option>
+              <option value="avaria">Avaria / Embalagem Rompida</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Data da Perda</label>
+            <input type="date" id="perda-data" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Observação Opcional</label>
+          <input type="text" id="perda-obs" placeholder="Ex: Queimou na chapa durante o pico de sábado" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-700 font-medium">
+        </div>
+
+        <!-- Preview do Impacto no Lucro -->
+        <div class="bg-rose-50 border border-rose-200 p-3 rounded-xl flex justify-between items-center text-xs">
+          <span class="font-bold text-rose-900">Prejuízo Direto no Lucro Operacional:</span>
+          <strong class="text-rose-700 font-black text-sm" id="perda-preview-total">R$ 3,50</strong>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="fecharModalPerda()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl shadow-xs transition cursor-pointer">Gravar Perda</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
         </html>
       `);
       janela.document.close();
@@ -4103,7 +4282,10 @@
       // 5. Margem de Contribuição e Lucro
       const margemContrib = fatTotal - cmvTotal - taxasTotal - impostosValor;
       const margemContribPct = fatTotal > 0 ? (margemContrib / fatTotal) : 0.50;
-      const perdas = data.perdas || 0.00;
+      // FEATURE 3: Calcula perdas registradas reais do mês ativo
+      const perdasItensMes = (store.perdasItens || []).filter(p => p.data && p.data.startsWith(mesAtivo));
+      const somaPerdasRegistradas = perdasItensMes.reduce((acc, p) => acc + (p.quantidade * p.custo_unitario), 0);
+      const perdas = somaPerdasRegistradas > 0 ? somaPerdasRegistradas : (data.perdas || 0.00);
       const lucroOperacional = margemContrib - custosFixosProporcionais - perdas;
       const margemLucroPct = fatTotal > 0 ? (lucroOperacional / fatTotal) * 100 : 0;
 
@@ -4364,11 +4546,43 @@
         });
       }
 
-      // Renderiza Engenharia de Cardápio (Matriz BCG Gastronômica)
+      // Renderiza Engenharia de Cardápio (Matriz BCG Gastronômica: Campeões, Populares, Oportunidades, Revisar / Retirar)
       renderEngenhariaCardapio(produtosArray);
 
       // Renderiza gráficos com os dias reais de venda do mês
       renderCharts(peDiario, diasComVenda, mesAtivo);
+
+      // ==========================================
+      // NOVOS COMPONENTES DO CÉREBRO FINANCEIRO
+      // ==========================================
+      renderCerebroFinanceiro({
+        fatTotal,
+        lucroOperacional,
+        margemLucroPct,
+        peDiario,
+        fatMedioDia,
+        diasTrabalhadosReais,
+        diasBateram,
+        atingimentoPct,
+        produtoStats,
+        pedidosDoMes,
+        totFixos
+      });
+
+      renderTermometroSemanal(pedidosDoMes, totFixos, diasTrabalhadosReais);
+      renderDesmembramentoCanais(pedidosDoMes);
+      renderPrevisaoCaixa(pedidosDoMes, data);
+      renderNotificacoesExcecao({
+        fatTotal,
+        cmvTotal,
+        perdas,
+        margemLucroPct,
+        diasTrabalhadosReais,
+        diasBateram,
+        atingimentoPct
+      });
+
+      if (window.lucide) lucide.createIcons();
     }
 
     let chartDiarioInst = null;
@@ -4616,11 +4830,627 @@
       }
 
       renderBcgList(estrelas, 'bcg-list-estrelas', 'bcg-count-estrelas', 'text-emerald-700');
-      renderBcgList(burros, 'bcg-list-burros', 'bcg-count-burros', 'text-blue-700');
+      renderBcgList(burros, 'bcg-list-burros', 'bcg-count-burros', 'text-amber-700');
       renderBcgList(quebras, 'bcg-list-quebras', 'bcg-count-quebras', 'text-purple-700');
       renderBcgList(caes, 'bcg-list-caes', 'bcg-count-caes', 'text-rose-700');
     }
 
+    // ================================================================
+    // MÓDULO FINANCEIRO INTELIGENTE — FUNÇÕES EXECUTIVAS & PRESCRITIVAS
+    // ================================================================
+
+    /**
+     * FEATURE 5: Card de "Decisões do Cérebro Financeiro" (Resumo Executivo em IA/Regras)
+     */
+    function renderCerebroFinanceiro(metrics) {
+      const container = document.getElementById('cerebro-decisoes-grid');
+      if (!container) return;
+
+      const {
+        fatTotal,
+        lucroOperacional,
+        margemLucroPct,
+        peDiario,
+        fatMedioDia,
+        diasTrabalhadosReais,
+        diasBateram,
+        atingimentoPct,
+        produtoStats,
+        pedidosDoMes,
+        totFixos
+      } = metrics;
+
+      // 1. Status da Meta
+      const metaBatida = atingimentoPct >= 75;
+      const metaBadge = metaBatida ? 'bg-emerald-500 text-slate-950' : 'bg-amber-500 text-slate-950';
+      const metaTexto = `Você bateu a meta em <strong>${diasBateram} de ${diasTrabalhadosReais} dias</strong> trabalhados (${atingimentoPct}%). ${metaBatida ? 'Ritmo excelente para fechar o mês no azul.' : 'Atenção aos dias fracos para não corroer a margem fixa.'}`;
+
+      // 2. Ajuste Prescritivo de Preço
+      const prods = Object.values(produtoStats || {}).filter(p => p.vendasQtd > 0);
+      prods.sort((a, b) => b.vendasQtd - a.vendasQtd);
+      const itemAjuste = prods.find(p => {
+        const mPct = p.faturamento > 0 ? (p.margemGerada / p.faturamento) * 100 : 0;
+        return mPct < 50;
+      }) || prods[0];
+
+      let precoTexto = 'Preços calibrados com as fichas técnicas atuais.';
+      if (itemAjuste) {
+        const mPct = itemAjuste.faturamento > 0 ? Math.round((itemAjuste.margemGerada / itemAjuste.faturamento) * 100) : 0;
+        const ganhoEstimado = Math.round(itemAjuste.vendasQtd * 1.50);
+        precoTexto = `O produto <strong>${itemAjuste.nome}</strong> tem margem de <strong>${mPct}%</strong>. Subir R$ 1,50 não derruba vendas e injeta <strong>+R$ ${formatarNumero(ganhoEstimado)}</strong> direto no seu caixa mensal.`;
+      }
+
+      // 3. Dia Crítico da Semana
+      const termometro = calcularMetricasSemana(pedidosDoMes, totFixos);
+      const diaPrejuizo = termometro.find(d => d.status === 'prejuizo' && d.vezesAberto > 0);
+      const melhorDia = [...termometro].sort((a, b) => b.resultadoOperacionalDiario - a.resultadoOperacionalDiario)[0];
+      
+      let diaTitulo = 'Dia Crítico';
+      let diaTexto = '';
+      let diaBadge = 'bg-blue-500 text-white';
+      if (diaPrejuizo) {
+        diaTitulo = `Alerta: ${diaPrejuizo.diaNome}`;
+        diaBadge = 'bg-rose-500 text-white';
+        diaTexto = `Suas ${diaPrejuizo.diaNome.toLowerCase()}s geram prejuízo médio de <strong class="text-rose-400">-R$ ${formatarNumero(Math.abs(diaPrejuizo.resultadoOperacionalDiario))}</strong> por dia após custos fixos. Avalie operar com equipe mínima ou focar delivery.`;
+      } else if (melhorDia && melhorDia.faturamentoMedio > 0) {
+        const pctLucro = fatTotal > 0 ? Math.round((melhorDia.faturamentoTotal / fatTotal) * 100) : 0;
+        diaTitulo = `Pico: ${melhorDia.diaNome}`;
+        diaBadge = 'bg-emerald-500 text-slate-950';
+        diaTexto = `Seu melhor dia de vendas é <strong>${melhorDia.diaNome}</strong>, gerando <strong>${pctLucro}%</strong> do faturamento semanal com lucro médio de <strong>+R$ ${formatarNumero(melhorDia.resultadoOperacionalDiario)}</strong> por turno.`;
+      } else {
+        diaTexto = 'Aguardando pedidos para compor a inteligência dos dias da semana.';
+      }
+
+      // 4. Eficiência de Canais
+      const canaisData = calcularDesmembramentoCanais(pedidosDoMes);
+      const chIfood = canaisData.find(c => c.canal.toLowerCase().includes('ifood'));
+      const chProprio = canaisData.find(c => !c.canal.toLowerCase().includes('ifood') && !c.canal.toLowerCase().includes('99'));
+      
+      let canalTexto = '';
+      if (chIfood && chProprio && chIfood.faturamentoBruto > 0) {
+        const taxaIfood = chIfood.taxasRetidas;
+        const economia = Math.round(taxaIfood * 0.35);
+        canalTexto = `Canal Próprio entrega <strong>${chProprio.margemLiquidaRealPct}%</strong> de margem real contra <strong>${chIfood.margemLiquidaRealPct}%</strong> do iFood. Migrar 10 pedidos/semana gera <strong>+R$ ${formatarNumero(economia)}/mês</strong> limpos.`;
+      } else {
+        canalTexto = `Canal próprio entrega margem líquida superior a 50%, sem comissões de intermediação abusivas.`;
+      }
+
+      container.innerHTML = `
+        <div class="p-3.5 rounded-xl border border-slate-800 bg-slate-800/70 flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex justify-between items-center pb-1">
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="target" class="w-3.5 h-3.5 text-emerald-400"></i> STATUS DA META
+              </span>
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded ${metaBadge}">${atingimentoPct}%</span>
+            </div>
+            <p class="text-[11px] text-slate-200 leading-relaxed mt-1">${metaTexto}</p>
+          </div>
+          <span class="text-[9px] text-slate-400 block pt-1 border-t border-slate-700/60 font-semibold">Base: Ponto de equilíbrio diário</span>
+        </div>
+
+        <div class="p-3.5 rounded-xl border border-slate-800 bg-slate-800/70 flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex justify-between items-center pb-1">
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-400"></i> AJUSTE DE PREÇO
+              </span>
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-500 text-slate-950">Ação Rápida</span>
+            </div>
+            <p class="text-[11px] text-slate-200 leading-relaxed mt-1">${precoTexto}</p>
+          </div>
+          <span class="text-[9px] text-slate-400 block pt-1 border-t border-slate-700/60 font-semibold">Sem derrubar volume de vendas</span>
+        </div>
+
+        <div class="p-3.5 rounded-xl border border-slate-800 bg-slate-800/70 flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex justify-between items-center pb-1">
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-400"></i> ${diaTitulo}
+              </span>
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded ${diaBadge}">Termômetro</span>
+            </div>
+            <p class="text-[11px] text-slate-200 leading-relaxed mt-1">${diaTexto}</p>
+          </div>
+          <span class="text-[9px] text-slate-400 block pt-1 border-t border-slate-700/60 font-semibold">Após rateio dos custos fixos</span>
+        </div>
+
+        <div class="p-3.5 rounded-xl border border-slate-800 bg-slate-800/70 flex flex-col justify-between space-y-2">
+          <div>
+            <div class="flex justify-between items-center pb-1">
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="split" class="w-3.5 h-3.5 text-purple-400"></i> CANAIS & RETENÇÃO
+              </span>
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-purple-500 text-white">Lucro Real</span>
+            </div>
+            <p class="text-[11px] text-slate-200 leading-relaxed mt-1">${canalTexto}</p>
+          </div>
+          <span class="text-[9px] text-slate-400 block pt-1 border-t border-slate-700/60 font-semibold">Estratégia de migração para o canal próprio</span>
+        </div>
+      `;
+    }
+
+    /**
+     * Calcula métricas por dia da semana para o Termômetro Semanal
+     */
+    function calcularMetricasSemana(pedidosDoMes, totFixos) {
+      const diasSemanaInfo = [
+        { idx: 1, nome: 'Segunda-feira', sigla: 'SEG' },
+        { idx: 2, nome: 'Terça-feira', sigla: 'TER' },
+        { idx: 3, nome: 'Quarta-feira', sigla: 'QUA' },
+        { idx: 4, nome: 'Quinta-feira', sigla: 'QUI' },
+        { idx: 5, nome: 'Sexta-feira', sigla: 'SEX' },
+        { idx: 6, nome: 'Sábado', sigla: 'SÁB' },
+        { idx: 0, nome: 'Domingo', sigla: 'DOM' }
+      ];
+
+      const custoFixoDiario = totFixos / 26;
+
+      return diasSemanaInfo.map(dInfo => {
+        const pedsDia = pedidosDoMes.filter(p => {
+          if (!p.dataIso) return false;
+          const dt = new Date(p.dataIso + 'T12:00:00');
+          return dt.getDay() === dInfo.idx;
+        });
+
+        const datasAbertas = new Set(pedsDia.map(p => p.dataIso)).size;
+        const vezesAberto = datasAbertas > 0 ? datasAbertas : 0;
+        
+        let faturamentoTotal = 0;
+        let cmvTotal = 0;
+        let taxasTotal = 0;
+
+        pedsDia.forEach(p => {
+          faturamentoTotal += p.total;
+          cmvTotal += p.cmv;
+          const t = p.canal === 'iFood' ? p.total * 0.23 : (p.canal === '99Food' ? p.total * 0.18 : p.total * 0.02);
+          taxasTotal += t;
+        });
+
+        const faturamentoMedio = vezesAberto > 0 ? faturamentoTotal / vezesAberto : 0;
+        const cmvMedio = vezesAberto > 0 ? cmvTotal / vezesAberto : 0;
+        const taxasMedias = vezesAberto > 0 ? taxasTotal / vezesAberto : 0;
+
+        // Regra de Cálculo:
+        // Custo_Operacional_Diario = (Custos_Fixos / 26) + CMV_Medio_Dia + Taxas_Medias_Dia
+        const custoOperacionalDiario = vezesAberto > 0 ? (custoFixoDiario + cmvMedio + taxasMedias) : 0;
+        const resultadoOperacionalDiario = vezesAberto > 0 ? (faturamentoMedio - custoOperacionalDiario) : 0;
+        const status = vezesAberto === 0 ? 'fechado' : (resultadoOperacionalDiario >= 0 ? 'lucro' : 'prejuizo');
+
+        return {
+          diaIndex: dInfo.idx,
+          diaNome: dInfo.nome,
+          diaSigla: dInfo.sigla,
+          vezesAberto,
+          faturamentoTotal,
+          faturamentoMedio,
+          cmvMedio,
+          taxasMedias,
+          custoFixoDiario,
+          custoOperacionalDiario,
+          resultadoOperacionalDiario,
+          status
+        };
+      });
+    }
+
+    /**
+     * FEATURE 1: Renderiza Termômetro Semanal de Rentabilidade
+     */
+    function renderTermometroSemanal(pedidosDoMes, totFixos, diasTrabalhados) {
+      const grid = document.getElementById('termometro-semanal-grid');
+      const banner = document.getElementById('termometro-alerta-banner');
+      if (!grid) return;
+
+      const diasData = calcularMetricasSemana(pedidosDoMes, totFixos);
+
+      let diasComPrejuizo = [];
+      let melhorDia = null;
+
+      grid.innerHTML = diasData.map(d => {
+        if (d.status === 'prejuizo' && d.vezesAberto > 0) diasComPrejuizo.push(d);
+        if (d.vezesAberto > 0 && (!melhorDia || d.resultadoOperacionalDiario > melhorDia.resultadoOperacionalDiario)) {
+          melhorDia = d;
+        }
+
+        const isFechado = d.vezesAberto === 0;
+        const isLucro = d.status === 'lucro';
+        
+        let cardBg = isFechado 
+          ? 'bg-slate-50 border-slate-200 opacity-60' 
+          : (isLucro ? 'bg-white border-slate-200' : 'bg-rose-50/40 border-rose-200');
+
+        let statusBadge = isFechado
+          ? '<span class="text-[9px] font-extrabold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">FECHADO</span>'
+          : (isLucro
+              ? '<span class="text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 px-1.5 py-0.5 rounded">LUCRO</span>'
+              : '<span class="text-[9px] font-black bg-rose-100 text-rose-800 border border-rose-300 px-1.5 py-0.5 rounded">PREJUÍZO</span>');
+
+        let resColor = isFechado ? 'text-slate-400' : (isLucro ? 'text-emerald-700' : 'text-rose-600');
+        let sinal = d.resultadoOperacionalDiario >= 0 ? '+' : '';
+
+        return `
+          <div class="p-3 rounded-xl border ${cardBg} shadow-2xs flex flex-col justify-between space-y-2.5">
+            <div>
+              <div class="flex justify-between items-center pb-1.5 border-b border-slate-100">
+                <span class="font-black text-xs text-slate-900">${d.diaSigla}</span>
+                ${statusBadge}
+              </div>
+              <div class="mt-2 space-y-1 text-[11px]">
+                <div class="flex justify-between text-slate-500">
+                  <span>Fat. médio:</span>
+                  <strong class="text-slate-800 font-bold">${isFechado ? 'R$ 0' : formatarMoeda(d.faturamentoMedio)}</strong>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                  <span>Custo total:</span>
+                  <span class="text-slate-600 font-medium">${isFechado ? 'R$ 0' : formatarMoeda(d.custoOperacionalDiario)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100">
+              <span class="text-[9px] font-bold text-slate-400 block uppercase">Resultado / Dia</span>
+              <span class="text-xs font-black ${resColor} block mt-0.5">
+                ${isFechado ? 'R$ 0,00' : `${sinal}${formatarMoeda(d.resultadoOperacionalDiario)}`}
+              </span>
+              <span class="text-[9px] text-slate-400 block mt-0.5">${d.vezesAberto}x aberto no mês</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Banner Prescritivo
+      if (banner) {
+        if (diasComPrejuizo.length > 0) {
+          const nomesPrej = diasComPrejuizo.map(d => d.diaNome).join(', ');
+          const perdasTotalDia = diasComPrejuizo.reduce((acc, d) => acc + Math.abs(d.resultadoOperacionalDiario), 0);
+          banner.className = 'p-3.5 rounded-xl text-xs font-semibold flex items-start gap-3 bg-rose-50 border border-rose-200 text-rose-950';
+          banner.innerHTML = `
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="font-black text-rose-900 block text-xs mb-0.5">Diagnóstico Prescritivo do Termômetro:</strong>
+              <span>Atenção: Suas <strong>${nomesPrej}</strong> geram prejuízo operacional médio de <strong>-R$ ${formatarNumero(perdasTotalDia)}</strong> por dia após rateio dos custos fixos. Avalie operar apenas com delivery/equipe mínima, concentrar promoções de fidelidade nesses dias ou avaliar fechamento estratégico para poupar mão de obra e energia.</span>
+            </div>
+          `;
+        } else if (melhorDia && melhorDia.faturamentoMedio > 0) {
+          banner.className = 'p-3.5 rounded-xl text-xs font-semibold flex items-start gap-3 bg-emerald-50 border border-emerald-200 text-emerald-950';
+          banner.innerHTML = `
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <strong class="font-black text-emerald-900 block text-xs mb-0.5">Diagnóstico Prescritivo do Termômetro:</strong>
+              <span>Excelente rentabilidade! Todos os dias de funcionamento estão cobrindo os custos fixos diários. Seu dia mais rentável é <strong>${melhorDia.diaNome}</strong> com lucro médio limpo de <strong>+R$ ${formatarNumero(melhorDia.resultadoOperacionalDiario)}</strong> por turno.</span>
+            </div>
+          `;
+        } else {
+          banner.className = 'p-3.5 rounded-xl text-xs font-semibold flex items-start gap-3 bg-slate-50 border border-slate-200 text-slate-700';
+          banner.innerHTML = `<span>Aguardando pedidos cadastrados para compor o histórico por dia da semana.</span>`;
+        }
+      }
+    }
+
+    /**
+     * FEATURE 2: Agrupamento por Canal de Venda
+     */
+    function calcularDesmembramentoCanais(pedidosDoMes) {
+      const canaisMap = {
+        'Salão & Balcão': { canal: 'Salão & Balcão', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.02 },
+        'WhatsApp / Próprio': { canal: 'WhatsApp / Próprio', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.015 },
+        'iFood': { canal: 'iFood Marketplace', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.23 },
+        '99Food': { canal: '99Food Marketplace', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.18 }
+      };
+
+      pedidosDoMes.forEach(p => {
+        let ch = canaisMap['Salão & Balcão'];
+        if (p.canal === 'iFood') ch = canaisMap['iFood'];
+        else if (p.canal === '99Food') ch = canaisMap['99Food'];
+        else if (p.canal === 'Delivery Próprio' || p.canal === 'WhatsApp Próprio') ch = canaisMap['WhatsApp / Próprio'];
+        else ch = canaisMap['Salão & Balcão'];
+
+        const taxa = p.canal === 'iFood' ? p.total * 0.23 : (p.canal === '99Food' ? p.total * 0.18 : p.total * 0.02);
+        ch.pedidosCount++;
+        ch.faturamentoBruto += p.total;
+        ch.cmvTotal += p.cmv;
+        ch.taxasRetidas += taxa;
+        ch.lucroLiquido += (p.total - p.cmv - taxa);
+      });
+
+      return Object.values(canaisMap).map(ch => {
+        const taxaEfetivaPct = ch.faturamentoBruto > 0 ? Math.round((ch.taxasRetidas / ch.faturamentoBruto) * 100) : Math.round(ch.taxaBase * 100);
+        const margemLiquidaRealPct = ch.faturamentoBruto > 0 ? Math.round((ch.lucroLiquido / ch.faturamentoBruto) * 100) : 0;
+        return {
+          ...ch,
+          taxaEfetivaPct,
+          margemLiquidaRealPct
+        };
+      });
+    }
+
+    /**
+     * FEATURE 2: Renderiza Desmembramento por Canais de Venda
+     */
+    function renderDesmembramentoCanais(pedidosDoMes) {
+      const container = document.getElementById('canais-desmembramento-container');
+      const insight = document.getElementById('canais-insight-texto');
+      if (!container) return;
+
+      const canais = calcularDesmembramentoCanais(pedidosDoMes);
+      const totalFatGeral = canais.reduce((a, c) => a + c.faturamentoBruto, 0);
+
+      container.innerHTML = canais.map(c => {
+        const pctFat = totalFatGeral > 0 ? Math.round((c.faturamentoBruto / totalFatGeral) * 100) : 0;
+        const corBarra = c.canal.includes('iFood') ? 'bg-rose-500' : (c.canal.includes('99') ? 'bg-amber-500' : 'bg-emerald-600');
+        
+        return `
+          <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/40 space-y-2 text-xs">
+            <div class="flex justify-between items-center font-bold">
+              <span class="text-slate-900 text-xs flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full ${corBarra}"></span> ${c.canal}
+              </span>
+              <div class="text-right">
+                <span class="text-slate-900 font-black">${formatarMoeda(c.faturamentoBruto)}</span>
+                <span class="text-[10px] text-slate-400 font-normal ml-1">(${pctFat}%)</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-[10px] bg-white p-2 rounded-lg border border-slate-100">
+              <div>
+                <span class="text-slate-400 block font-medium">Taxas Retidas</span>
+                <strong class="text-rose-600 font-bold">- ${formatarMoeda(c.taxasRetidas)} (${c.taxaEfetivaPct}%)</strong>
+              </div>
+              <div>
+                <span class="text-slate-400 block font-medium">CMV Insumos</span>
+                <strong class="text-slate-700 font-bold">- ${formatarMoeda(c.cmvTotal)}</strong>
+              </div>
+              <div>
+                <span class="text-slate-400 block font-medium">Margem Líquida Real</span>
+                <strong class="text-emerald-700 font-black text-[11px]">${formatarMoeda(c.lucroLiquido)} (${c.margemLiquidaRealPct}%)</strong>
+              </div>
+            </div>
+
+            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div class="${corBarra} h-1.5 rounded-full" style="width: ${Math.max(5, c.margemLiquidaRealPct)}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (insight) {
+        const ifood = canais.find(c => c.canal.includes('iFood'));
+        const balcao = canais.find(c => c.canal.includes('Salão'));
+        if (ifood && balcao && ifood.faturamentoBruto > 0) {
+          const difMargem = balcao.margemLiquidaRealPct - ifood.margemLiquidaRealPct;
+          insight.innerHTML = `O canal próprio entrega <strong>${balcao.margemLiquidaRealPct}%</strong> de margem real contra apenas <strong>${ifood.margemLiquidaRealPct}%</strong> do iFood (diferença de <strong>+${difMargem} pontos percentuais</strong>). Cada R$ 1.000 que migra do iFood para seu balcão/WhatsApp adiciona <strong>+R$ ${difMargem * 10}</strong> líquidos no seu bolso.`;
+        } else {
+          insight.innerHTML = `Concentre ações de fidelidade e QR Codes nas embalagens para transformar clientes de aplicativo em compradores diretos.`;
+        }
+      }
+    }
+
+    /**
+     * FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (Próximos 10 dias)
+     */
+    function renderPrevisaoCaixa(pedidosDoMes, data) {
+      const container = document.getElementById('caixa-previsao-lista');
+      const alerta = document.getElementById('caixa-alerta-liquidez');
+      if (!container) return;
+
+      const diasProjecao = [];
+      const dataBase = new Date(2026, 9, 4); // 04 de Outubro de 2026
+      let saldoAcumulado = 1450.00;
+
+      const diasSemanaNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+      for (let i = 0; i < 10; i++) {
+        const d = new Date(dataBase);
+        d.setDate(dataBase.getDate() + i);
+        const diaNum = d.getDate();
+        const diaSemanaStr = diasSemanaNomes[d.getDay()];
+        const dataIso = `2026-10-${String(diaNum).padStart(2, '0')}`;
+
+        let entradas = 0;
+        let saidas = 0;
+        let descSaida = '';
+
+        if (d.getDay() === 5 || d.getDay() === 6) entradas = 920.00;
+        else if (d.getDay() === 0) entradas = 750.00;
+        else if (d.getDay() === 3) entradas = 1100.00; // Repasse iFood cai na quarta-feira!
+        else entradas = 480.00;
+
+        // Vencimentos de custos fixos / contas programadas
+        if (diaNum === 5) { saidas += 2500.00; descSaida = 'Pró-Labore Sócios'; }
+        if (diaNum === 10) { saidas += 1700.00; descSaida = 'Aluguel Ponto'; }
+        if (diaNum === 12) { saidas += 750.00; descSaida = 'Energia Elétrica'; }
+
+        saldoAcumulado = saldoAcumulado + entradas - saidas;
+
+        diasProjecao.push({
+          dataIso,
+          diaFormatado: `${String(diaNum).padStart(2, '0')}/10`,
+          diaSemana: diaSemanaStr,
+          entradas,
+          saidas,
+          saldoProjetado: saldoAcumulado,
+          descSaida
+        });
+      }
+
+      let temDeficit = false;
+      let diaCritico = null;
+
+      container.innerHTML = diasProjecao.map(dp => {
+        if (dp.saldoProjetado < 0 && !diaCritico) {
+          temDeficit = true;
+          diaCritico = dp;
+        }
+
+        const saldoCor = dp.saldoProjetado >= 0 ? 'text-slate-900' : 'text-rose-600 font-black';
+        const cardBg = dp.saldoProjetado >= 0 ? 'bg-slate-50/50 border-slate-100' : 'bg-rose-50 border-rose-200';
+
+        return `
+          <div class="flex items-center justify-between p-2 rounded-lg border ${cardBg} text-xs">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-slate-800 text-[11px]">${dp.diaFormatado} (${dp.diaSemana})</span>
+              ${dp.descSaida ? `<span class="text-[9px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-bold">${dp.descSaida}</span>` : ''}
+            </div>
+            <div class="flex items-center gap-3 text-right">
+              <span class="text-[10px] text-emerald-700 font-bold">+R$ ${Math.round(dp.entradas)}</span>
+              ${dp.saidas > 0 ? `<span class="text-[10px] text-rose-600 font-bold">-R$ ${Math.round(dp.saidas)}</span>` : '<span class="text-[10px] text-slate-300">-</span>'}
+              <span class="text-xs font-bold ${saldoCor} min-w-[70px]">${dp.saldoProjetado >= 0 ? 'R$ ' : '-R$ '}${formatarNumero(Math.abs(dp.saldoProjetado), 0)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (alerta) {
+        if (temDeficit && diaCritico) {
+          alerta.className = 'p-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-950 flex items-start gap-2.5';
+          alerta.innerHTML = `
+            <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <span class="block font-black text-rose-900">Alerta de Liquidez em ${diaCritico.diaFormatado}:</span>
+              <span class="font-normal text-rose-800">Saldo projetado negativo em <strong>-R$ ${formatarNumero(Math.abs(diaCritico.saldoProjetado))}</strong> no vencimento de <strong>${diaCritico.descSaida}</strong>. Ação: Antecipe recebíveis de cartão ou negocie postergação de 3 dias para não usar cheque especial.</span>
+            </div>
+          `;
+        } else {
+          alerta.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-center gap-2';
+          alerta.innerHTML = `
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+            <span>Liquidez Saudável: Todas as saídas dos próximos 10 dias estão cobertas pelas entradas previstas.</span>
+          `;
+        }
+      }
+    }
+
+    /**
+     * Refatoração: Notificações por Exceção (Substituição de Alertas Estáticos)
+     */
+    function renderNotificacoesExcecao(metrics) {
+      const el = document.getElementById('dash-alertas-lista');
+      if (!el) return;
+
+      const { fatTotal, cmvTotal, perdas, margemLucroPct, diasTrabalhadosReais, atingimentoPct } = metrics;
+      const cmvPct = fatTotal > 0 ? (cmvTotal / fatTotal) * 100 : 0;
+      const perdasPct = fatTotal > 0 ? (perdas / fatTotal) * 100 : 0;
+
+      const anomalias = [];
+
+      if (cmvPct > 35) {
+        anomalias.push({
+          tipo: 'critico',
+          titulo: 'CMV Acima do Teto',
+          msg: `CMV em <strong>${formatarPct(cmvPct, 1)}</strong> (meta máxima 32%). Renegocie carnes/queijos.`
+        });
+      }
+
+      if (perdasPct > 2.5) {
+        anomalias.push({
+          tipo: 'critico',
+          titulo: 'Desperdício Elevado',
+          msg: `Perdas em <strong>${formatarPct(perdasPct, 1)}</strong> do faturamento. Treine controle de chapa e validade.`
+        });
+      }
+
+      if (atingimentoPct < 70 && diasTrabalhadosReais > 1) {
+        anomalias.push({
+          tipo: 'alerta',
+          titulo: 'Meta Diária Abaixo',
+          msg: `Apenas <strong>${atingimentoPct}%</strong> dos dias bateram a meta. Reforce combos promocionais.`
+        });
+      }
+
+      if (margemLucroPct < 12 && fatTotal > 0) {
+        anomalias.push({
+          tipo: 'alerta',
+          titulo: 'Margem Líquida Comprimida',
+          msg: `Margem em <strong>${formatarPct(margemLucroPct, 1)}</strong>. Direcione mais pedidos ao canal próprio.`
+        });
+      }
+
+      if (anomalias.length === 0) {
+        el.innerHTML = `
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse flex-shrink-0"></span>
+            <div>
+              <span class="text-xs font-black text-emerald-950 block">Sem anomalias financeiras</span>
+              <span class="text-[10px] text-emerald-800 font-medium leading-tight block">CMV (${formatarPct(cmvPct, 1)}), desperdício e cobertura de custos dentro dos parâmetros saudáveis.</span>
+            </div>
+          </div>
+        `;
+      } else {
+        el.innerHTML = anomalias.map(a => `
+          <div class="p-2.5 rounded-xl border ${a.tipo === 'critico' ? 'bg-rose-50 border-rose-200 text-rose-950' : 'bg-amber-50 border-amber-200 text-amber-950'} text-xs space-y-1">
+            <div class="flex justify-between items-center">
+              <strong class="font-black text-[11px]">${a.titulo}</strong>
+              <span class="text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${a.tipo === 'critico' ? 'bg-rose-200 text-rose-900' : 'bg-amber-200 text-amber-900'}">${a.tipo}</span>
+            </div>
+            <p class="text-[10px] leading-tight font-medium">${a.msg}</p>
+          </div>
+        `).join('');
+      }
+    }
+
+    /**
+     * FEATURE 3: MÓDULO DE PERDAS & DESPERDÍCIO
+     */
+    function abrirModalPerda() {
+      const modal = document.getElementById('modal-perda');
+      if (modal) {
+        const inputData = document.getElementById('perda-data');
+        if (inputData) inputData.value = new Date().toISOString().split('T')[0];
+        calcularTotalPerdaModal();
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function fecharModalPerda() {
+      const modal = document.getElementById('modal-perda');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function calcularTotalPerdaModal() {
+      const qtd = parseFloat(document.getElementById('perda-quantidade').value) || 0;
+      const unit = parseFloat(document.getElementById('perda-custo-unit').value) || 0;
+      const total = qtd * unit;
+      const el = document.getElementById('perda-preview-total');
+      if (el) el.textContent = formatarMoeda(total);
+    }
+
+    function salvarNovaPerda(e) {
+      e.preventDefault();
+      const itemNome = document.getElementById('perda-item-nome').value.trim();
+      const qtd = parseFloat(document.getElementById('perda-quantidade').value) || 1;
+      const unit = parseFloat(document.getElementById('perda-custo-unit').value) || 0;
+      const motivo = document.getElementById('perda-motivo').value;
+      const data = document.getElementById('perda-data').value;
+      const obs = document.getElementById('perda-obs').value.trim();
+
+      const novaPerda = {
+        id: Date.now(),
+        data,
+        item_nome: itemNome,
+        quantidade: qtd,
+        custo_unitario: unit,
+        motivo,
+        observacao: obs,
+        custo_total: qtd * unit
+      };
+
+      store.perdasItens = store.perdasItens || [];
+      store.perdasItens.push(novaPerda);
+      localStorage.setItem('nalim_perdas_itens', JSON.stringify(store.perdasItens));
+
+      fecharModalPerda();
+      renderDashboard();
+      alert(`✓ Perda de ${formatarMoeda(qtd * unit)} ("${itemNome}") registrada. DRE e Lucro Operacional recalculados com sucesso!`);
+    }
+
+    function excluirPerda(id) {
+      if (!confirm('Deseja realmente excluir este registro de perda?')) return;
+      store.perdasItens = (store.perdasItens || []).filter(p => p.id !== id);
+      localStorage.setItem('nalim_perdas_itens', JSON.stringify(store.perdasItens));
+      renderDashboard();
+      alert('✓ Registro de perda removido com sucesso.');
+    }
     // ================================================================
     // 2. COMPARTILHAMENTO EXECUTIVO NO WHATSAPP (1 CLIQUE)
     // ================================================================
@@ -4856,5 +5686,80 @@ _Painel Estratégico NALIM Food Service_`;
       lucide.createIcons();
     });
   </script>
+  <!-- MODAL: REGISTRO RÁPIDO DE PERDAS / DESPERDÍCIO (FEATURE 3) -->
+  <div id="modal-perda" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 rounded-lg bg-rose-100 text-rose-700">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </span>
+          <h3 class="font-extrabold text-slate-900 text-sm">Registrar Perda ou Desperdício</h3>
+        </div>
+        <button type="button" onclick="fecharModalPerda()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="form-registro-perda" onsubmit="salvarNovaPerda(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Item / Insumo Desperdiçado</label>
+          <input type="text" id="perda-item-nome" list="lista-sugestao-insumos" placeholder="Ex: Blend Especial 150g ou Pão Brioche" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          <datalist id="lista-sugestao-insumos">
+            <option value="Blend Especial 150g">
+            <option value="Pão Brioche Selado">
+            <option value="Queijo Cheddar Inglês">
+            <option value="Bacon Fatiado Artesanal">
+            <option value="Batata Palito Congelada">
+            <option value="Molho da Casa">
+            <option value="Refrigerante Lata 350ml">
+          </datalist>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Quantidade Perdida</label>
+            <input type="number" step="0.1" id="perda-quantidade" value="1" min="0.1" required oninput="calcularTotalPerdaModal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Custo Unitário (R$)</label>
+            <input type="number" step="0.01" id="perda-custo-unit" value="3.50" min="0" required oninput="calcularTotalPerdaModal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Motivo do Descarte</label>
+            <select id="perda-motivo" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+              <option value="validade">Validade Vencida</option>
+              <option value="erro_cozinha">Erro na Cozinha / Queimou</option>
+              <option value="descarte">Descarte / Padrão de Qualidade</option>
+              <option value="avaria">Avaria / Embalagem Rompida</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Data da Perda</label>
+            <input type="date" id="perda-data" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Observação Opcional</label>
+          <input type="text" id="perda-obs" placeholder="Ex: Queimou na chapa durante o pico de sábado" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-700 font-medium">
+        </div>
+
+        <!-- Preview do Impacto no Lucro -->
+        <div class="bg-rose-50 border border-rose-200 p-3 rounded-xl flex justify-between items-center text-xs">
+          <span class="font-bold text-rose-900">Prejuízo Direto no Lucro Operacional:</span>
+          <strong class="text-rose-700 font-black text-sm" id="perda-preview-total">R$ 3,50</strong>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="fecharModalPerda()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">Cancelar</button>
+          <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl shadow-xs transition cursor-pointer">Gravar Perda</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
