@@ -1,4 +1,4 @@
-import datetime
+﻿import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from database import Base
@@ -18,6 +18,7 @@ class Tenant(Base):
     pedidos = relationship("Pedido", back_populates="tenant", cascade="all, delete-orphan")
     custos_fixos = relationship("CustoFixo", back_populates="tenant", cascade="all, delete-orphan")
     fechamentos = relationship("FechamentoCaixa", back_populates="tenant", cascade="all, delete-orphan")
+    perdas = relationship("PerdaItem", back_populates="tenant", cascade="all, delete-orphan")
     configuracoes = relationship("ConfiguracaoEmpresa", back_populates="tenant", uselist=False, cascade="all, delete-orphan")
 
 class User(Base):
@@ -157,3 +158,17 @@ class ConfiguracaoEmpresa(Base):
     aliquota_ifood = Column(Float, default=0.23)
 
     tenant = relationship("Tenant", back_populates="configuracoes")
+
+class PerdaItem(Base):
+    __tablename__ = "perdas_itens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    data = Column(String(10), default=lambda: datetime.date.today().isoformat())
+    item_nome = Column(String(100), nullable=False)
+    quantidade = Column(Float, default=1.0)
+    custo_unitario = Column(Float, default=0.0)
+    motivo = Column(String(50), default="descarte")  # validade, erro_cozinha, descarte, avaria
+    observacao = Column(String(200), nullable=True)
+
+    tenant = relationship("Tenant", back_populates="perdas")

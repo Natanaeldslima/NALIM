@@ -1,4 +1,4 @@
-from typing import List, Optional
+﻿from typing import List, Optional
 from pydantic import BaseModel
 
 # Auth Schemas
@@ -160,9 +160,31 @@ class DreResponse(BaseModel):
     lucro_bruto: float
     margem_bruta_pct: float
     custos_fixos_total: float
+    total_perdas: float = 0.0
     resultado_liquido: float
     margem_liquida_pct: float
     ponto_equilibrio_mensal: float
     ponto_equilibrio_diario: float
     score_saude_nalim: float
     classificacao_saude: str
+
+# Perdas & Desperdício
+class PerdaItemCreate(BaseModel):
+    data: Optional[str] = None
+    item_nome: str
+    quantidade: float = 1.0
+    custo_unitario: float = 0.0
+    motivo: str = "descarte"  # validade, erro_cozinha, descarte, avaria
+    observacao: Optional[str] = None
+
+class PerdaItemResponse(BaseModel):
+    id: int
+    data: str
+    item_nome: str
+    quantidade: float
+    custo_unitario: float
+    motivo: str
+    observacao: Optional[str] = None
+    custo_total: float
+    class Config:
+        from_attributes = True
