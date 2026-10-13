@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -123,6 +123,29 @@
       </button>
     </div>
   </header>
+
+  <!-- ============================================================== -->
+  <!-- BARRA DE STATUS DA MESA SELECIONADA                            -->
+  <!-- ============================================================== -->
+  <div id="banner-mesa-status" class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between text-xs shadow-2xs">
+    <div class="flex items-center gap-2">
+      <span id="badge-mesa-status" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+        Mesa Livre
+      </span>
+      <span id="texto-mesa-consumo" class="font-extrabold text-slate-700">Conta: R$ 0,00</span>
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <button id="btn-ver-conta-mesa" onclick="abrirModalExtratoMesa()" class="hidden px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs active:scale-95 flex items-center gap-1 transition">
+        <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+        <span>Fechar / Extrato</span>
+      </button>
+
+      <button onclick="abrirModalTaxas()" title="Configurar Taxas da Maquininha" class="p-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">
+        <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+  </div>
 
   <!-- ============================================================== -->
   <!-- LISTA DE PRODUTOS DO CARDÁPIO (TOUCH FRIENDLY)                 -->
@@ -278,26 +301,154 @@
   </div>
 
   <!-- ============================================================== -->
-  <!-- MODAL: SELETOR DE MESAS & AMBIENTES                            -->
+  <!-- MODAL: SELETOR DE MESAS & COMANDAS (DINÂMICO E VISUAL)         -->
   <!-- ============================================================== -->
   <div id="modal-mesas" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 max-w-xs w-full space-y-3.5 shadow-2xl">
+    <div class="bg-white rounded-3xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="font-extrabold text-sm text-slate-900">Selecione a Mesa / Comanda</h3>
-        <button onclick="fecharModalMesas()" class="text-slate-400 p-1">✕</button>
+        <div>
+          <h3 class="font-extrabold text-sm text-slate-900">Mapa de Mesas & Comandas</h3>
+          <p class="text-[10px] text-slate-400">Verde = Livre • Laranja = Ocupada com Consumo</p>
+        </div>
+        <button onclick="fecharModalMesas()" class="text-slate-400 hover:text-slate-700 p-1 font-bold text-sm">✕</button>
       </div>
 
-      <div class="grid grid-cols-3 gap-2 text-xs font-black">
-        <button onclick="selecionarMesa('Mesa 01')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 01</button>
-        <button onclick="selecionarMesa('Mesa 02')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 02</button>
-        <button onclick="selecionarMesa('Mesa 03')" class="p-3 rounded-2xl border-2 border-forest-600 bg-forest-50 text-forest-800">Mesa 03</button>
-        <button onclick="selecionarMesa('Mesa 04')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 04</button>
-        <button onclick="selecionarMesa('Mesa 05')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 05</button>
-        <button onclick="selecionarMesa('Mesa 06')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 06</button>
-        <button onclick="selecionarMesa('Mesa 07')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 07</button>
-        <button onclick="selecionarMesa('Mesa 08')" class="p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 hover:border-forest-500 hover:bg-forest-50">Mesa 08</button>
-        <button onclick="selecionarMesa('Balcão')" class="p-3 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900">Balcão</button>
+      <!-- Grid dinâmico gerado pelo renderGridMesas() -->
+      <div class="grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto custom-scroll p-0.5" id="grid-mesas-container">
+        <!-- Gerado via JavaScript -->
       </div>
+
+      <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 font-medium">
+        <span>* Toque na mesa para atender ou fechar a conta.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: EXTRATO COMPLETO & FECHAMENTO DE CONTA DA MESA          -->
+  <!-- ============================================================== -->
+  <div id="modal-extrato-mesa" class="fixed inset-0 bg-slate-900/70 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl max-h-[92vh] flex flex-col justify-between">
+      
+      <div>
+        <div class="flex items-center justify-between pb-2.5 border-b border-slate-100">
+          <div>
+            <span class="text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 px-2 py-0.5 rounded">Comanda Presencial</span>
+            <h3 class="font-black text-base text-slate-900 mt-0.5" id="extrato-titulo-mesa">Extrato • Mesa 01</h3>
+          </div>
+          <button onclick="fecharModalExtratoMesa()" class="text-slate-400 hover:text-slate-700 p-1 font-bold text-sm">✕</button>
+        </div>
+
+        <!-- Lista de itens já consumidos nesta mesa -->
+        <div class="mt-2.5 overflow-y-auto max-h-44 custom-scroll space-y-1.5 pr-1" id="extrato-itens-lista">
+          <!-- Gerado via JS -->
+        </div>
+      </div>
+
+      <!-- Seletor de Pagamento e Taxas da Maquininha -->
+      <div class="space-y-2.5 pt-2 border-t border-slate-100">
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Forma de Pagamento:</label>
+            <button onclick="abrirModalTaxas()" class="text-[10px] font-bold text-forest-700 hover:underline flex items-center gap-0.5">
+              <i data-lucide="percent" class="w-3 h-3"></i> Taxas Maquininha
+            </button>
+          </div>
+          <div class="grid grid-cols-4 gap-1 text-[11px] font-bold">
+            <button type="button" onclick="setPagtoMesa('PIX')" class="pay-mesa-btn py-2 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-black" data-method="PIX">PIX</button>
+            <button type="button" onclick="setPagtoMesa('Dinheiro')" class="pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold" data-method="Dinheiro">Dinheiro</button>
+            <button type="button" onclick="setPagtoMesa('Débito')" class="pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold" data-method="Débito">Débito</button>
+            <button type="button" onclick="setPagtoMesa('Crédito')" class="pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold" data-method="Crédito">Crédito</button>
+          </div>
+        </div>
+
+        <!-- Opções de Parcelamento de Cartão de Crédito -->
+        <div id="seletor-parcelas-credito" class="hidden bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1">
+          <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Parcelas do Cartão:</label>
+          <select id="select-parcelas-cartao" onchange="recalcularTotalExtrato()" class="w-full bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold text-slate-800">
+            <option value="1">1x (À vista)</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+            <option value="4">4x</option>
+            <option value="5">5x</option>
+            <option value="6">6x</option>
+          </select>
+        </div>
+
+        <!-- Detalhamento de Valores com Taxa de Maquininha Transparente -->
+        <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80 space-y-1 text-xs">
+          <div class="flex justify-between text-slate-500 font-medium">
+            <span>Subtotal Consumido:</span>
+            <span id="extrato-subtotal-valor" class="font-bold text-slate-800">R$ 0,00</span>
+          </div>
+          <div id="extrato-linha-taxa" class="flex justify-between text-slate-500 font-medium">
+            <span id="extrato-taxa-label">Taxa da Maquininha:</span>
+            <span id="extrato-taxa-valor" class="font-bold text-amber-700">R$ 0,00</span>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t border-slate-200 font-black text-slate-900">
+            <span class="text-xs uppercase">TOTAL A RECEBER:</span>
+            <span class="text-xl text-forest-700" id="extrato-total-final">R$ 0,00</span>
+          </div>
+          <p id="extrato-aviso-repassar" class="text-[10px] text-slate-400 font-medium">
+            * Taxa da maquininha absorvida pelo restaurante.
+          </p>
+        </div>
+
+        <!-- Botão Final: Pagar e Zerar Mesa -->
+        <button type="button" onclick="confirmarFechamentoMesa()" id="btn-confirmar-fechamento-mesa" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-black py-3.5 px-4 rounded-2xl shadow-xl transition flex items-center justify-center gap-2 text-sm tracking-wide">
+          <i data-lucide="check-circle" class="w-5 h-5"></i>
+          <span>RECEBER & ZERAR MESA</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: CONFIGURAÇÃO DE TAXAS DA MAQUININHA DE CARTÃO           -->
+  <!-- ============================================================== -->
+  <div id="modal-taxas-maquininha" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 max-w-xs w-full space-y-3.5 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div>
+          <h3 class="font-black text-sm text-slate-900">Taxas da Maquininha</h3>
+          <p class="text-[10px] text-slate-400">Configure as taxas cobradas pelo seu adquirente</p>
+        </div>
+        <button onclick="fecharModalTaxas()" class="text-slate-400 hover:text-slate-700 p-1 font-bold text-sm">✕</button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); salvarConfigTaxasGarcom();" class="space-y-2.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Taxa Débito (%)</label>
+          <input type="number" step="0.01" id="cfg-taxa-debito" value="1.99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Taxa Crédito à Vista (1x) (%)</label>
+          <input type="number" step="0.01" id="cfg-taxa-credito-vista" value="3.49" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Taxa Crédito Parcelado (2x a 6x) (%)</label>
+          <input type="number" step="0.01" id="cfg-taxa-credito-parc" value="4.99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
+        </div>
+
+        <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200/70 space-y-1">
+          <label class="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" id="cfg-repassar-taxa" class="mt-0.5 rounded text-amber-600 focus:ring-amber-500">
+            <span class="text-[11px] font-extrabold text-amber-900 leading-tight">
+              Repassar taxas/juros da maquininha para o cliente
+            </span>
+          </label>
+          <p class="text-[10px] text-amber-700 font-medium">
+            Se marcado, o acréscimo da taxa da maquininha será somado no valor final pago pelo cliente.
+          </p>
+        </div>
+
+        <button type="submit" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2.5 rounded-xl shadow-xs transition">
+          Salvar Configurações
+        </button>
+      </form>
     </div>
   </div>
 
@@ -316,22 +467,35 @@
   </div>
 
   <!-- ============================================================== -->
+    <!-- ============================================================== -->
   <!-- JAVASCRIPT DO APP MOBILE DO GARÇOM                             -->
   <!-- ============================================================== -->
   <script>
     const API_BASE = window.location.origin;
     
     let authToken = null;
-    let mesaAtiva = 'Mesa 03';
-    let formaPagto = 'PIX';
+    let mesaAtiva = 'Mesa 01';
+    let formaPagtoMesa = 'PIX';
     let categoriaAtiva = 'todos';
 
-    // Estado da Comanda
+    const listaNomesMesas = [
+      'Mesa 01', 'Mesa 02', 'Mesa 03', 'Mesa 04', 'Mesa 05',
+      'Mesa 06', 'Mesa 07', 'Mesa 08', 'Mesa 09', 'Mesa 10', 'Balcão'
+    ];
+
+    let mesasConsumoState = {};
+
+    let configTaxasCartao = {
+      taxa_debito: 1.99,
+      taxa_credito_vista: 3.49,
+      taxa_credito_parcelado: 4.99,
+      repassar_taxa_cartao: false
+    };
+
     const comanda = {
       itens: []
     };
 
-    // Item em personalização no modal
     let itemEmCustomizacao = {
       produto: null,
       precoBase: 0,
@@ -340,7 +504,6 @@
       obs: ''
     };
 
-    // Cardápio de Produtos (Carregado da API ou Fallback local)
     let cardapioProdutos = [
       {
         codigo: 'PRD-01',
@@ -398,26 +561,496 @@
       localStorage.removeItem('nalim_email');
       window.location.href = '/login';
     }
-
-    // Inicialização com Verificação Estrita de Autenticação
     async function initGarcomApp() {
       const token = localStorage.getItem('nalim_token');
-      if (!token) {
-        window.location.href = '/login';
-        return;
-      }
-      authToken = token;
+      if (token) authToken = token;
 
       const nome = localStorage.getItem('nalim_nome') || 'Pedro Lucas (Garçom)';
       const nomeLabel = document.getElementById('garcom-nome-label');
       if (nomeLabel) nomeLabel.textContent = nome;
 
+      carregarEstadoMesasLocal();
+      carregarConfigTaxasLocal();
+
       carregarCardapioApi();
+      sincronizarMesasApi();
+      sincronizarTaxasApi();
+
       renderProdutos();
+      renderGridMesas();
+      atualizarBannerMesaAtiva();
+      atualizarBarraComanda();
       lucide.createIcons();
     }
 
-    // Puxa produtos reais do backend
+    function carregarEstadoMesasLocal() {
+      try {
+        const salvo = localStorage.getItem('nalim_mesas_consumo');
+        if (salvo) mesasConsumoState = JSON.parse(salvo);
+      } catch (e) {
+        mesasConsumoState = {};
+      }
+
+      listaNomesMesas.forEach(nome => {
+        if (!mesasConsumoState[nome]) {
+          mesasConsumoState[nome] = {
+            status: 'LIVRE',
+            total: 0.0,
+            itens: [],
+            abertaEm: null
+          };
+        }
+      });
+    }
+
+    function salvarEstadoMesasLocal() {
+      try {
+        localStorage.setItem('nalim_mesas_consumo', JSON.stringify(mesasConsumoState));
+      } catch (e) {}
+    }
+
+    async function sincronizarMesasApi() {
+      try {
+        const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+        const res = await fetch(`${API_BASE}/api/operacional/mesas`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.mesas && Array.isArray(data.mesas)) {
+            data.mesas.forEach(m => {
+              if (!mesasConsumoState[m.numero]) {
+                mesasConsumoState[m.numero] = { status: 'LIVRE', total: 0.0, itens: [] };
+              }
+              if (m.consumo_acumulado > 0 || m.status === 'OCUPADA') {
+                mesasConsumoState[m.numero].status = m.status;
+                mesasConsumoState[m.numero].total = m.consumo_acumulado;
+                mesasConsumoState[m.numero].itens = m.itens || [];
+                mesasConsumoState[m.numero].abertaEm = m.aberta_em;
+              }
+            });
+            salvarEstadoMesasLocal();
+            renderGridMesas();
+            atualizarBannerMesaAtiva();
+          }
+        }
+      } catch (err) {}
+    }
+
+    function renderGridMesas() {
+      const container = document.getElementById('grid-mesas-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      listaNomesMesas.forEach(nome => {
+        const mesa = mesasConsumoState[nome] || { status: 'LIVRE', total: 0, itens: [] };
+        const isAtiva = (nome === mesaAtiva);
+        const isOcupada = (mesa.status === 'OCUPADA' || mesa.total > 0);
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => selecionarMesa(nome);
+
+        let classesBase = 'p-2.5 rounded-2xl flex flex-col justify-between items-center text-center transition active:scale-95 shadow-2xs relative ';
+        
+        if (isAtiva) {
+          classesBase += 'ring-2 ring-forest-600 border-2 border-forest-600 bg-forest-50/90 text-forest-900 font-black ';
+        } else if (isOcupada) {
+          classesBase += 'border border-amber-300 bg-amber-50/60 text-slate-800 hover:border-amber-400 ';
+        } else {
+          classesBase += 'border border-slate-200 bg-white text-slate-700 hover:border-forest-400 hover:bg-forest-50/30 ';
+        }
+
+        btn.className = classesBase;
+
+        btn.innerHTML = `
+          <div class="w-full flex items-center justify-between gap-1 mb-1">
+            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${isOcupada ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800'}">
+              ${isOcupada ? 'Ocupada' : 'Livre'}
+            </span>
+            ${isAtiva ? '<span class="w-2 h-2 rounded-full bg-forest-600"></span>' : ''}
+          </div>
+          <span class="font-extrabold text-xs block leading-tight text-slate-900">${nome}</span>
+          <span class="text-[11px] font-black mt-1 block ${isOcupada ? 'text-amber-800' : 'text-slate-400'}">
+            ${isOcupada ? `R$ ${mesa.total.toFixed(2)}` : 'R$ 0,00'}
+          </span>
+          ${isOcupada && mesa.itens ? `<span class="text-[9px] text-slate-500 font-medium">${mesa.itens.length} ${mesa.itens.length === 1 ? 'item' : 'itens'}</span>` : ''}
+        `;
+
+        container.appendChild(btn);
+      });
+    }
+
+    function abrirModalMesas() {
+      renderGridMesas();
+      document.getElementById('modal-mesas').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharModalMesas() {
+      document.getElementById('modal-mesas').classList.add('hidden');
+    }
+
+    function selecionarMesa(mesa) {
+      mesaAtiva = mesa;
+      document.getElementById('label-mesa-ativa').textContent = mesa;
+      fecharModalMesas();
+      atualizarBannerMesaAtiva();
+      atualizarBarraComanda();
+    }
+
+    function atualizarBannerMesaAtiva() {
+      const mesa = mesasConsumoState[mesaAtiva] || { status: 'LIVRE', total: 0, itens: [] };
+      const isOcupada = (mesa.status === 'OCUPADA' || mesa.total > 0);
+
+      const badge = document.getElementById('badge-mesa-status');
+      const consumoLabel = document.getElementById('texto-mesa-consumo');
+      const btnConta = document.getElementById('btn-ver-conta-mesa');
+      const labelTopo = document.getElementById('label-mesa-ativa');
+
+      if (labelTopo) labelTopo.textContent = mesaAtiva;
+
+      if (isOcupada) {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300';
+        badge.textContent = 'Mesa Ocupada';
+        consumoLabel.textContent = `Consumo: R$ ${mesa.total.toFixed(2)} (${(mesa.itens || []).length} itens)`;
+        btnConta.classList.remove('hidden');
+      } else {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200';
+        badge.textContent = 'Mesa Livre';
+        consumoLabel.textContent = 'Mesa Livre • Sem consumo';
+        btnConta.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+    }
+    function carregarConfigTaxasLocal() {
+      try {
+        const salvo = localStorage.getItem('nalim_config_taxas');
+        if (salvo) configTaxasCartao = JSON.parse(salvo);
+      } catch (e) {}
+
+      const inpDeb = document.getElementById('cfg-taxa-debito');
+      const inpVista = document.getElementById('cfg-taxa-credito-vista');
+      const inpParc = document.getElementById('cfg-taxa-credito-parc');
+      const chkRepassar = document.getElementById('cfg-repassar-taxa');
+
+      if (inpDeb) inpDeb.value = configTaxasCartao.taxa_debito || 1.99;
+      if (inpVista) inpVista.value = configTaxasCartao.taxa_credito_vista || 3.49;
+      if (inpParc) inpParc.value = configTaxasCartao.taxa_credito_parcelado || 4.99;
+      if (chkRepassar) chkRepassar.checked = !!configTaxasCartao.repassar_taxa_cartao;
+    }
+
+    async function sincronizarTaxasApi() {
+      try {
+        const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+        const res = await fetch(`${API_BASE}/api/operacional/config-taxas`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          configTaxasCartao.taxa_debito = data.taxa_debito ?? 1.99;
+          configTaxasCartao.taxa_credito_vista = data.taxa_credito_vista ?? 3.49;
+          configTaxasCartao.taxa_credito_parcelado = data.taxa_credito_parcelado ?? 4.99;
+          configTaxasCartao.repassar_taxa_cartao = !!data.repassar_taxa_cartao;
+          localStorage.setItem('nalim_config_taxas', JSON.stringify(configTaxasCartao));
+          carregarConfigTaxasLocal();
+        }
+      } catch (e) {}
+    }
+
+    function abrirModalTaxas() {
+      carregarConfigTaxasLocal();
+      document.getElementById('modal-taxas-maquininha').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharModalTaxas() {
+      document.getElementById('modal-taxas-maquininha').classList.add('hidden');
+    }
+
+    async function salvarConfigTaxasGarcom() {
+      const taxaDeb = parseFloat(document.getElementById('cfg-taxa-debito').value) || 1.99;
+      const taxaVista = parseFloat(document.getElementById('cfg-taxa-credito-vista').value) || 3.49;
+      const taxaParc = parseFloat(document.getElementById('cfg-taxa-credito-parc').value) || 4.99;
+      const repassar = document.getElementById('cfg-repassar-taxa').checked;
+
+      configTaxasCartao = {
+        taxa_debito: taxaDeb,
+        taxa_credito_vista: taxaVista,
+        taxa_credito_parcelado: taxaParc,
+        repassar_taxa_cartao: repassar
+      };
+
+      localStorage.setItem('nalim_config_taxas', JSON.stringify(configTaxasCartao));
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+        await fetch(`${API_BASE}/api/operacional/config-taxas`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(configTaxasCartao)
+        });
+      } catch (e) {}
+
+      fecharModalTaxas();
+      recalcularTotalExtrato();
+      alert('✓ Configurações de taxas da maquininha salvas com sucesso!');
+    }
+
+    function abrirModalExtratoMesa() {
+      const mesa = mesasConsumoState[mesaAtiva] || { status: 'LIVRE', total: 0, itens: [] };
+      document.getElementById('extrato-titulo-mesa').textContent = `Extrato • ${mesaAtiva}`;
+
+      const box = document.getElementById('extrato-itens-lista');
+      box.innerHTML = '';
+
+      const itens = mesa.itens || [];
+      if (itens.length === 0) {
+        box.innerHTML = `
+          <div class="text-center py-6 text-slate-400">
+            <span class="text-xs font-bold block">Nenhum item consumido nesta mesa.</span>
+          </div>
+        `;
+      } else {
+        itens.forEach(it => {
+          const row = document.createElement('div');
+          row.className = 'p-2 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs';
+          row.innerHTML = `
+            <div>
+              <span class="font-extrabold text-slate-900">${it.quantidade}x ${it.nome}</span>
+              ${it.modificacoes ? `<div class="text-[10px] text-amber-800 font-bold">⚡ ${it.modificacoes}</div>` : ''}
+              ${it.hora ? `<div class="text-[9px] text-slate-400">🕒 Pedido às ${it.hora}</div>` : ''}
+            </div>
+            <span class="font-black text-forest-700 min-w-[60px] text-right">R$ ${it.total ? it.total.toFixed(2) : (it.preco_unitario * it.quantidade).toFixed(2)}</span>
+          `;
+          box.appendChild(row);
+        });
+      }
+
+      setPagtoMesa(formaPagtoMesa || 'PIX');
+      recalcularTotalExtrato();
+
+      document.getElementById('modal-extrato-mesa').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharModalExtratoMesa() {
+      document.getElementById('modal-extrato-mesa').classList.add('hidden');
+    }
+
+    function setPagtoMesa(metodo) {
+      formaPagtoMesa = metodo;
+      document.querySelectorAll('.pay-mesa-btn').forEach(b => {
+        if (b.dataset.method === metodo) {
+          b.className = 'pay-mesa-btn py-2 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-black';
+        } else {
+          b.className = 'pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold';
+        }
+      });
+
+      const seletorCred = document.getElementById('seletor-parcelas-credito');
+      if (metodo === 'Crédito') {
+        seletorCred.classList.remove('hidden');
+      } else {
+        seletorCred.classList.add('hidden');
+      }
+
+      recalcularTotalExtrato();
+    }
+
+    function recalcularTotalExtrato() {
+      const mesa = mesasConsumoState[mesaAtiva] || { status: 'LIVRE', total: 0, itens: [] };
+      const subtotal = mesa.total || 0.0;
+
+      let taxaPct = 0.0;
+      let taxaNome = 'Sem taxa';
+
+      if (formaPagtoMesa === 'Débito') {
+        taxaPct = (configTaxasCartao.taxa_debito || 1.99) / 100;
+        taxaNome = `Taxa Débito (${(taxaPct * 100).toFixed(2)}%)`;
+      } else if (formaPagtoMesa === 'Crédito') {
+        const parc = parseInt(document.getElementById('select-parcelas-cartao')?.value || '1');
+        if (parc === 1) {
+          taxaPct = (configTaxasCartao.taxa_credito_vista || 3.49) / 100;
+          taxaNome = `Taxa Crédito 1x (${(taxaPct * 100).toFixed(2)}%)`;
+        } else {
+          taxaPct = (configTaxasCartao.taxa_credito_parcelado || 4.99) / 100;
+          taxaNome = `Taxa Crédito ${parc}x (${(taxaPct * 100).toFixed(2)}%)`;
+        }
+      }
+
+      const valorTaxa = subtotal * taxaPct;
+      let totalFinal = subtotal;
+
+      const subtotalEl = document.getElementById('extrato-subtotal-valor');
+      const taxaLabelEl = document.getElementById('extrato-taxa-label');
+      const taxaValorEl = document.getElementById('extrato-taxa-valor');
+      const totalFinalEl = document.getElementById('extrato-total-final');
+      const avisoRepassarEl = document.getElementById('extrato-aviso-repassar');
+
+      if (subtotalEl) subtotalEl.textContent = `R$ ${subtotal.toFixed(2)}`;
+      if (taxaLabelEl) taxaLabelEl.textContent = taxaNome + ':';
+
+      if (configTaxasCartao.repassar_taxa_cartao && taxaPct > 0) {
+        totalFinal = subtotal + valorTaxa;
+        if (taxaValorEl) taxaValorEl.textContent = `+ R$ ${valorTaxa.toFixed(2)}`;
+        if (avisoRepassarEl) avisoRepassarEl.textContent = `* Taxa da maquininha repassada ao cliente (+ R$ ${valorTaxa.toFixed(2)}).`;
+      } else {
+        totalFinal = subtotal;
+        if (taxaValorEl) taxaValorEl.textContent = taxaPct > 0 ? `R$ ${valorTaxa.toFixed(2)} (retida)` : 'R$ 0,00';
+        if (avisoRepassarEl) avisoRepassarEl.textContent = taxaPct > 0 
+          ? `* Taxa absorvida pelo restaurante (Líquido a receber: R$ ${(subtotal - valorTaxa).toFixed(2)}).`
+          : '* Nenhuma taxa cobrada nesta forma de pagamento.';
+      }
+
+      if (totalFinalEl) totalFinalEl.textContent = `R$ ${totalFinal.toFixed(2)}`;
+    }
+
+    async function confirmarFechamentoMesa() {
+      const mesa = mesasConsumoState[mesaAtiva];
+      if (!mesa || mesa.total === 0) {
+        alert('Esta mesa não possui consumo em aberto para fechar.');
+        return;
+      }
+
+      const totalPago = parseFloat(document.getElementById('extrato-total-final').textContent.replace('R$', '').replace(',', '.').trim()) || mesa.total;
+      const parc = parseInt(document.getElementById('select-parcelas-cartao')?.value || '1');
+
+      const btn = document.getElementById('btn-confirmar-fechamento-mesa');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-pulse">FINALIZANDO & ZERANDO MESA...</span>`;
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+        await fetch(`${API_BASE}/api/operacional/mesas/${encodeURIComponent(mesaAtiva)}/fechar`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            forma_pagto: formaPagtoMesa,
+            parcelas: parc,
+            taxa_aplicada: 0.0,
+            valor_total_pago: totalPago
+          })
+        });
+      } catch (e) {}
+
+      mesasConsumoState[mesaAtiva] = {
+        status: 'LIVRE',
+        total: 0.0,
+        itens: [],
+        abertaEm: null
+      };
+      salvarEstadoMesasLocal();
+
+      fecharModalExtratoMesa();
+      atualizarBannerMesaAtiva();
+      renderGridMesas();
+
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i><span>RECEBER & ZERAR MESA</span>`;
+      lucide.createIcons();
+
+      alert(`✓ Pagamento de R$ ${totalPago.toFixed(2)} recebido com sucesso!\n\nA comanda da ${mesaAtiva} foi ZERADA e a mesa está LIVRE para novos clientes.`);
+    }
+
+    async function enviarPedidoCozinhaGarcom() {
+      if (comanda.itens.length === 0) return;
+
+      const btn = document.getElementById('btn-enviar-cozinha');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-pulse">DESPACHANDO P/ COZINHA...</span>`;
+
+      let totalRodada = 0;
+      comanda.itens.forEach(it => totalRodada += it.precoUnit * it.qtd);
+
+      const agoraHora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      if (!mesasConsumoState[mesaAtiva]) {
+        mesasConsumoState[mesaAtiva] = { status: 'LIVRE', total: 0.0, itens: [] };
+      }
+
+      const itensParaMesa = comanda.itens.map(it => ({
+        produto_codigo: it.produtoCodigo,
+        nome: it.nome,
+        quantidade: it.qtd,
+        preco_unitario: it.precoUnit,
+        total: it.precoUnit * it.qtd,
+        modificacoes: it.modificacoes,
+        hora: agoraHora
+      }));
+
+      mesasConsumoState[mesaAtiva].status = 'OCUPADA';
+      mesasConsumoState[mesaAtiva].total += totalRodada;
+      mesasConsumoState[mesaAtiva].itens = (mesasConsumoState[mesaAtiva].itens || []).concat(itensParaMesa);
+      if (!mesasConsumoState[mesaAtiva].abertaEm) mesasConsumoState[mesaAtiva].abertaEm = agoraHora;
+
+      salvarEstadoMesasLocal();
+
+      try {
+        let kdsOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        const novoTicketId = Math.floor(100 + Math.random() * 900);
+        kdsOrders.unshift({
+          id: novoTicketId,
+          dataHora: agoraHora,
+          identificacao: `${mesaAtiva} (Salão)`,
+          canal: 'Salão',
+          status: 'Na Chapa',
+          tempoDecorrido: 'Agora',
+          items: comanda.itens.map(it => ({
+            nome: it.nome,
+            qtd: it.qtd,
+            modificacoes: it.modificacoes
+          }))
+        });
+        localStorage.setItem('nalim_kds_orders', JSON.stringify(kdsOrders));
+      } catch (err) {}
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+        const payload = {
+          itens: comanda.itens.map(it => ({
+            produto_codigo: it.produtoCodigo,
+            nome: it.nome,
+            quantidade: it.qtd,
+            preco_unitario: it.precoUnit,
+            modificacoes: it.modificacoes
+          }))
+        };
+
+        const res = await fetch(`${API_BASE}/api/operacional/mesas/${encodeURIComponent(mesaAtiva)}/adicionar-itens`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('sucesso-detalhes').textContent = `Ticket #${data.numero_comanda || 107} da ${mesaAtiva} caiu na chapa agora! Consumo acumulado: R$ ${data.consumo_acumulado.toFixed(2)}`;
+        } else {
+          document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} enviado com sucesso para a cozinha!`;
+        }
+      } catch (err) {
+        document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} registrado e enviado para a chapa.`;
+      }
+
+      fecharDrawerComanda();
+      comanda.itens = [];
+      atualizarBarraComanda();
+      atualizarBannerMesaAtiva();
+      renderGridMesas();
+
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i><span>ENVIAR P/ COZINHA AGORA</span>`;
+      lucide.createIcons();
+
+      document.getElementById('overlay-sucesso').classList.remove('hidden');
+    }
+
+    function fecharOverlaySucesso() {
+      document.getElementById('overlay-sucesso').classList.add('hidden');
+    }
     async function carregarCardapioApi() {
       if (!authToken) return;
       try {
@@ -438,12 +1071,9 @@
             renderProdutos();
           }
         }
-      } catch (err) {
-        console.log('[APP GARÇOM] Usando cardápio local:', err);
-      }
+      } catch (err) {}
     }
 
-    // Renderiza a grade de produtos
     function renderProdutos(filtroTexto = '') {
       const container = document.getElementById('produtos-container');
       container.innerHTML = '';
@@ -493,7 +1123,6 @@
       lucide.createIcons();
     }
 
-    // Modal de Personalização
     function abrirModalPersonalizar(codigo) {
       const prod = cardapioProdutos.find(p => p.codigo === codigo);
       if (!prod) return;
@@ -510,7 +1139,6 @@
       document.getElementById('cust-item-cat').textContent = prod.categoria;
       document.getElementById('cust-obs-input').value = '';
 
-      // Lista de ingredientes removíveis
       const ingDiv = document.getElementById('cust-ingredientes-list');
       ingDiv.innerHTML = '';
       if (prod.ingredientes && prod.ingredientes.length > 0) {
@@ -524,10 +1152,9 @@
           ingDiv.appendChild(lbl);
         });
       } else {
-        ingDiv.innerHTML = '<span class="text-[11px] text-slate-400 block py-1">Produto sem ingredientes configurados para alteração.</span>';
+        ingDiv.innerHTML = '<span class="text-[11px] text-slate-400 block py-1">Produto sem ingredientes adicionais para alteração.</span>';
       }
 
-      // Select de extras
       const extraSelect = document.getElementById('cust-select-extra');
       extraSelect.innerHTML = insumosExtrasDisponiveis
         .map(i => `<option value="${i.codigo}">${i.nome} (+ R$ ${i.preco.toFixed(2)})</option>`)
@@ -631,7 +1258,6 @@
       document.getElementById('comanda-total-flutuante').textContent = `R$ ${totalValor.toFixed(2)}`;
     }
 
-    // Drawer de Revisão da Comanda
     function abrirDrawerComanda() {
       document.getElementById('drawer-mesa-label').textContent = `${mesaAtiva} • Atendimento Presencial`;
       renderItensDrawer();
@@ -688,91 +1314,6 @@
       atualizarBarraComanda();
     }
 
-    function setPagto(metodo) {
-      formaPagto = metodo;
-      document.querySelectorAll('.pay-btn').forEach(b => {
-        if (b.dataset.method === metodo) {
-          b.className = 'pay-btn py-1.5 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-extrabold';
-        } else {
-          b.className = 'pay-btn py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold';
-        }
-      });
-    }
-
-    // Enviar Pedido direto para a Cozinha
-    async function enviarPedidoCozinhaGarcom() {
-      if (comanda.itens.length === 0) return;
-
-      const btn = document.getElementById('btn-enviar-cozinha');
-      btn.disabled = true;
-      btn.innerHTML = `<span class="animate-pulse">DESPACHANDO P/ COZINHA...</span>`;
-
-      let totalValor = 0;
-      comanda.itens.forEach(it => totalValor += it.precoUnit * it.qtd);
-
-      const payload = {
-        canal: "Salão",
-        identificacao: `${mesaAtiva} (Salão)`,
-        forma_pagto: formaPagto,
-        itens: comanda.itens.map(it => ({
-          produto_codigo: it.produtoCodigo,
-          quantidade: it.qtd,
-          modificacoes: it.modificacoes,
-          preco_unitario: it.precoUnit
-        }))
-      };
-
-      try {
-        if (authToken) {
-          const res = await fetch(`${API_BASE}/api/operacional/pedidos`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          document.getElementById('sucesso-detalhes').textContent = `Comanda #${data.numero_comanda || 106} da ${mesaAtiva} caiu na chapa agora!`;
-        } else {
-          document.getElementById('sucesso-detalhes').textContent = `Comanda da ${mesaAtiva} enviada com sucesso para a cozinha!`;
-        }
-      } catch (err) {
-        document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} enviado em modo local para a chapa.`;
-      }
-
-      fecharDrawerComanda();
-      comanda.itens = [];
-      atualizarBarraComanda();
-
-      btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="send" class="w-5 h-5"></i><span>ENVIAR P/ COZINHA AGORA</span>`;
-      lucide.createIcons();
-
-      document.getElementById('overlay-sucesso').classList.remove('hidden');
-    }
-
-    function fecharOverlaySucesso() {
-      document.getElementById('overlay-sucesso').classList.add('hidden');
-    }
-
-    // Modal de Mesas
-    function abrirModalMesas() {
-      document.getElementById('modal-mesas').classList.remove('hidden');
-    }
-
-    function fecharModalMesas() {
-      document.getElementById('modal-mesas').classList.add('hidden');
-    }
-
-    function selecionarMesa(mesa) {
-      mesaAtiva = mesa;
-      document.getElementById('label-mesa-ativa').textContent = mesa;
-      fecharModalMesas();
-      atualizarBarraComanda();
-    }
-
-    // Filtros e busca
     function filtrarCategoria(cat) {
       categoriaAtiva = cat;
       document.querySelectorAll('.cat-pill').forEach(b => {
@@ -800,7 +1341,6 @@
       buscarProdutos('');
     }
 
-    // Start
     window.addEventListener('DOMContentLoaded', initGarcomApp);
   </script>
 </body>

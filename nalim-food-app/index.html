@@ -268,6 +268,12 @@
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
           <span>SAUDÁVEL (87.5/100)</span>
         </div>
+
+        <!-- Botão Taxas da Maquininha -->
+        <button onclick="abrirModalTaxasAdmin()" class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs" title="Configurar Taxas e Juros da Maquininha de Cartão">
+          <i data-lucide="percent" class="w-3.5 h-3.5 text-forest-600"></i>
+          <span class="hidden md:inline">Taxas Maquininha</span>
+        </button>
       </div>
 
     </header>
@@ -1989,31 +1995,36 @@
         items: []
       },
 
-      kdsOrders: [
-        {
-          id: 103,
-          dataHora: '19:42',
-          identificacao: 'Mesa 02',
-          canal: 'Salão',
-          status: 'Na Chapa',
-          tempoDecorrido: '5 min',
-          items: [
-            { nome: 'X-Bacon Especial', qtd: 2, modificacoes: 'SEM Molho da Casa • EXTRA: + Queijo Cheddar' },
-            { nome: 'Refrigerante Lata', qtd: 2, modificacoes: 'Gelado' }
-          ]
-        },
-        {
-          id: 104,
-          dataHora: '19:48',
-          identificacao: 'Pedido iFood #4092 (Lucas R.)',
-          canal: 'iFood',
-          status: 'Montagem',
-          tempoDecorrido: '2 min',
-          items: [
-            { nome: 'X-Burguer Tradicional', qtd: 1, modificacoes: 'SEM Pão Brioche (No Prato) • EXTRA: + Bacon (+ R$ 4,00)' }
-          ]
-        }
-      ],
+      kdsOrders: (function() {
+        let finalizados = [];
+        try { finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]'); } catch(e) {}
+        const seed = [
+          {
+            id: 103,
+            dataHora: '19:42',
+            identificacao: 'Mesa 02',
+            canal: 'Salão',
+            status: 'Na Chapa',
+            tempoDecorrido: '5 min',
+            items: [
+              { nome: 'X-Bacon Especial', qtd: 2, modificacoes: 'SEM Molho da Casa • EXTRA: + Queijo Cheddar' },
+              { nome: 'Refrigerante Lata', qtd: 2, modificacoes: 'Gelado' }
+            ]
+          },
+          {
+            id: 104,
+            dataHora: '19:48',
+            identificacao: 'Pedido iFood #4092 (Lucas R.)',
+            canal: 'iFood',
+            status: 'Montagem',
+            tempoDecorrido: '2 min',
+            items: [
+              { nome: 'X-Burguer Tradicional', qtd: 1, modificacoes: 'SEM Pão Brioche (No Prato) • EXTRA: + Bacon (+ R$ 4,00)' }
+            ]
+          }
+        ];
+        return seed.filter(o => !finalizados.includes(o.id));
+      })(),
 
       pedidos: [],
 
@@ -3269,7 +3280,13 @@
         });
       });
 
-      const taxaPct = canal === 'iFood' ? 0.23 : (canal === '99Food' ? 0.18 : 0.02);
+      let taxaCartaoPct = 0.0;
+      if (store.selectedPaymentMethod === 'Cartão' || store.selectedPaymentMethod === 'Crédito') {
+        taxaCartaoPct = (adminConfigTaxas.taxa_credito_vista || 3.49) / 100;
+      } else if (store.selectedPaymentMethod === 'Débito') {
+        taxaCartaoPct = (adminConfigTaxas.taxa_debito || 1.99) / 100;
+      }
+      const taxaPct = canal === 'iFood' ? 0.23 : (canal === '99Food' ? 0.18 : taxaCartaoPct);
       const taxa = subtotal * taxaPct;
       const lucro = subtotal - cmvTotal - taxa;
 
@@ -3419,81 +3436,8 @@
               setTimeout(function() { window.close(); }, 500);
             };
           <\/script>
-          <!-- MODAL: REGISTRO RÁPIDO DE PERDAS / DESPERDÍCIO (FEATURE 3) -->
-  <div id="modal-perda" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4">
-      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-2">
-          <span class="p-1.5 rounded-lg bg-rose-100 text-rose-700">
-            <i data-lucide="trash-2" class="w-4 h-4"></i>
-          </span>
-          <h3 class="font-extrabold text-slate-900 text-sm">Registrar Perda ou Desperdício</h3>
-        </div>
-        <button type="button" onclick="fecharModalPerda()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
-      </div>
+          
 
-      <form id="form-registro-perda" onsubmit="salvarNovaPerda(event)" class="space-y-3.5">
-        <div>
-          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Item / Insumo Desperdiçado</label>
-          <input type="text" id="perda-item-nome" list="lista-sugestao-insumos" placeholder="Ex: Blend Especial 150g ou Pão Brioche" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
-          <datalist id="lista-sugestao-insumos">
-            <option value="Blend Especial 150g">
-            <option value="Pão Brioche Selado">
-            <option value="Queijo Cheddar Inglês">
-            <option value="Bacon Fatiado Artesanal">
-            <option value="Batata Palito Congelada">
-            <option value="Molho da Casa">
-            <option value="Refrigerante Lata 350ml">
-          </datalist>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Quantidade Perdida</label>
-            <input type="number" step="0.1" id="perda-quantidade" value="1" min="0.1" required oninput="calcularTotalPerdaModal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Custo Unitário (R$)</label>
-            <input type="number" step="0.01" id="perda-custo-unit" value="3.50" min="0" required oninput="calcularTotalPerdaModal()" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Motivo do Descarte</label>
-            <select id="perda-motivo" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
-              <option value="validade">Validade Vencida</option>
-              <option value="erro_cozinha">Erro na Cozinha / Queimou</option>
-              <option value="descarte">Descarte / Padrão de Qualidade</option>
-              <option value="avaria">Avaria / Embalagem Rompida</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Data da Perda</label>
-            <input type="date" id="perda-data" required class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-bold text-slate-800">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Observação Opcional</label>
-          <input type="text" id="perda-obs" placeholder="Ex: Queimou na chapa durante o pico de sábado" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-700 font-medium">
-        </div>
-
-        <!-- Preview do Impacto no Lucro -->
-        <div class="bg-rose-50 border border-rose-200 p-3 rounded-xl flex justify-between items-center text-xs">
-          <span class="font-bold text-rose-900">Prejuízo Direto no Lucro Operacional:</span>
-          <strong class="text-rose-700 font-black text-sm" id="perda-preview-total">R$ 3,50</strong>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="fecharModalPerda()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">Cancelar</button>
-          <button type="submit" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-black rounded-xl shadow-xs transition cursor-pointer">Gravar Perda</button>
-        </div>
-      </form>
-    </div>
-  </div>
 </body>
         </html>
       `);
@@ -3608,7 +3552,7 @@
           </div>
 
           <div class="mt-4 pt-3 border-t border-slate-100">
-            <button onclick="concluirKdsTicket(${index})" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs">
+            <button onclick="concluirKdsTicket(${ord.id})" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs">
               <i data-lucide="check" class="w-4 h-4"></i> Pronto / Liberar p/ Garçom
             </button>
           </div>
@@ -3618,9 +3562,87 @@
       lucide.createIcons();
     }
 
-    function concluirKdsTicket(idx) {
-      store.kdsOrders.splice(idx, 1);
+    function concluirKdsTicket(ticketId) {
+      try {
+        let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
+        if (!finalizados.includes(ticketId)) {
+          finalizados.push(ticketId);
+          localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
+        }
+      } catch (e) {}
+
+      store.kdsOrders = store.kdsOrders.filter(o => o.id !== ticketId);
+
+      try {
+        let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        ords = ords.filter(o => o.id !== ticketId);
+        localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
+      } catch (e) {}
+
+      const token = localStorage.getItem('nalim_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`/api/operacional/kds/${ticketId}/status`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ status_kds: 'Entregue' })
+      }).catch(() => {});
+
       renderKds();
+    }
+
+    async function sincronizarKdsRealtime() {
+      let finalizados = [];
+      try {
+        finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
+      } catch (e) {}
+
+      try {
+        const token = localStorage.getItem('nalim_token');
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/api/operacional/kds/realtime', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tickets && Array.isArray(data.tickets)) {
+            let mudou = false;
+            data.tickets.forEach(tk => {
+              if (finalizados.includes(tk.id)) return;
+              const jaExiste = store.kdsOrders.some(o => o.id === tk.id);
+              if (!jaExiste) {
+                store.kdsOrders.unshift({
+                  id: tk.id,
+                  dataHora: tk.data_hora,
+                  identificacao: tk.identificacao,
+                  canal: tk.canal || 'Salão',
+                  status: tk.status || 'Na Chapa',
+                  tempoDecorrido: 'Recente',
+                  items: tk.itens.map(it => ({
+                    nome: it.nome,
+                    qtd: it.quantidade,
+                    modificacoes: it.modificacoes
+                  }))
+                });
+                mudou = true;
+              }
+            });
+            if (mudou) renderKds();
+          }
+        }
+      } catch (err) {}
+
+      try {
+        const localOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        let mudouLocal = false;
+        localOrders.forEach(lo => {
+          if (finalizados.includes(lo.id)) return;
+          const jaExiste = store.kdsOrders.some(o => o.id === lo.id);
+          if (!jaExiste) {
+            store.kdsOrders.unshift(lo);
+            mudouLocal = true;
+          }
+        });
+        if (mudouLocal) renderKds();
+      } catch (e) {}
     }
 
     // ================================================================
@@ -5670,6 +5692,84 @@ _Painel Estratégico NALIM Food Service_`;
       }
     });
 
+    // ================================================================
+    // CONFIGURAÇÃO DE TAXAS DA MAQUININHA DE CARTÃO (ADMIN)
+    // ================================================================
+    let adminConfigTaxas = {
+      taxa_debito: 1.99,
+      taxa_credito_vista: 3.49,
+      taxa_credito_parcelado: 4.99,
+      repassar_taxa_cartao: false
+    };
+
+    function carregarConfigTaxasAdmin() {
+      try {
+        const salvo = localStorage.getItem('nalim_config_taxas');
+        if (salvo) adminConfigTaxas = JSON.parse(salvo);
+      } catch (e) {}
+
+      const inpDeb = document.getElementById('admin-cfg-debito');
+      const inpVista = document.getElementById('admin-cfg-vista');
+      const inpParc = document.getElementById('admin-cfg-parc');
+      const chkRep = document.getElementById('admin-cfg-repassar');
+
+      if (inpDeb) inpDeb.value = adminConfigTaxas.taxa_debito || 1.99;
+      if (inpVista) inpVista.value = adminConfigTaxas.taxa_credito_vista || 3.49;
+      if (inpParc) inpParc.value = adminConfigTaxas.taxa_credito_parcelado || 4.99;
+      if (chkRep) chkRep.checked = !!adminConfigTaxas.repassar_taxa_cartao;
+
+      fetch('/api/operacional/config-taxas').then(r => r.json()).then(d => {
+        if (d && d.taxa_debito !== undefined) {
+          adminConfigTaxas = d;
+          localStorage.setItem('nalim_config_taxas', JSON.stringify(d));
+          if (inpDeb) inpDeb.value = d.taxa_debito;
+          if (inpVista) inpVista.value = d.taxa_credito_vista;
+          if (inpParc) inpParc.value = d.taxa_credito_parcelado;
+          if (chkRep) chkRep.checked = !!d.repassar_taxa_cartao;
+        }
+      }).catch(() => {});
+    }
+
+    function abrirModalTaxasAdmin() {
+      carregarConfigTaxasAdmin();
+      document.getElementById('modal-taxas-admin').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function fecharModalTaxasAdmin() {
+      document.getElementById('modal-taxas-admin').classList.add('hidden');
+    }
+
+    async function salvarConfigTaxasAdmin() {
+      const taxaDeb = parseFloat(document.getElementById('admin-cfg-debito').value) || 1.99;
+      const taxaVista = parseFloat(document.getElementById('admin-cfg-vista').value) || 3.49;
+      const taxaParc = parseFloat(document.getElementById('admin-cfg-parc').value) || 4.99;
+      const repassar = document.getElementById('admin-cfg-repassar').checked;
+
+      adminConfigTaxas = {
+        taxa_debito: taxaDeb,
+        taxa_credito_vista: taxaVista,
+        taxa_credito_parcelado: taxaParc,
+        repassar_taxa_cartao: repassar
+      };
+
+      localStorage.setItem('nalim_config_taxas', JSON.stringify(adminConfigTaxas));
+
+      try {
+        const token = localStorage.getItem('nalim_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        await fetch('/api/operacional/config-taxas', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(adminConfigTaxas)
+        });
+      } catch (e) {}
+
+      fecharModalTaxasAdmin();
+      alert('✓ Configurações de taxas da maquininha salvas com sucesso!');
+    }
+
     // INICIALIZAÇÃO
     window.addEventListener('DOMContentLoaded', () => {
       verificarAutenticacao();
@@ -5683,9 +5783,69 @@ _Painel Estratégico NALIM Food Service_`;
       popularSimulador();
       renderCustos();
       renderEquipe();
+      sincronizarKdsRealtime();
+      setInterval(sincronizarKdsRealtime, 3000);
+      carregarConfigTaxasAdmin();
       lucide.createIcons();
     });
   </script>
+
+  <!-- MODAL: CONFIGURAÇÃO DE TAXAS E JUROS DA MAQUININHA DE CARTÃO -->
+  <div id="modal-taxas-admin" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="p-1.5 rounded-lg bg-emerald-100 text-emerald-800">
+            <i data-lucide="percent" class="w-4 h-4"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-sm">Taxas da Maquininha</h3>
+            <p class="text-[11px] text-slate-400">Juros e taxas cobradas por transação</p>
+          </div>
+        </div>
+        <button onclick="fecharModalTaxasAdmin()" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); salvarConfigTaxasAdmin();" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Taxa Débito (%)</label>
+          <input type="number" step="0.01" id="admin-cfg-debito" value="1.99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Taxa Crédito à Vista (1x) (%)</label>
+          <input type="number" step="0.01" id="admin-cfg-vista" value="3.49" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Taxa Crédito Parcelado (2x a 6x) (%)</label>
+          <input type="number" step="0.01" id="admin-cfg-parc" value="4.99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
+        </div>
+
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200/70 space-y-1.5">
+          <label class="flex items-start gap-2 cursor-pointer">
+            <input type="checkbox" id="admin-cfg-repassar" class="mt-0.5 rounded text-amber-600 focus:ring-amber-500">
+            <span class="text-xs font-extrabold text-amber-900 leading-tight">
+              Repassar taxas/juros da maquininha para o cliente
+            </span>
+          </label>
+          <p class="text-[11px] text-amber-700 font-medium">
+            Se marcado, o acréscimo da taxa da maquininha será calculado e somado no valor a cobrar no fechamento da conta/pedido.
+          </p>
+        </div>
+
+        <div class="pt-2 flex gap-2">
+          <button type="button" onclick="fecharModalTaxasAdmin()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl transition">
+            Cancelar
+          </button>
+          <button type="submit" class="flex-1 bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2.5 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Salvar Taxas</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
   <!-- MODAL: REGISTRO RÁPIDO DE PERDAS / DESPERDÍCIO (FEATURE 3) -->
   <div id="modal-perda" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4">
