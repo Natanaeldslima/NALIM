@@ -1,4 +1,4 @@
-﻿import datetime
+import datetime
 import json
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
@@ -120,7 +120,7 @@ def criar_pedido(
         item_db = ItemPedido(
             pedido_id=novo_pedido.id,
             produto_id=prod.id if prod else None,
-            nome_produto=prod.nome if prod else item_input.produto_codigo,
+            nome_produto=item_input.nome or (prod.nome if prod else item_input.produto_codigo),
             quantidade=item_input.quantidade,
             preco_unitario=item_input.preco_unitario,
             cmv_unitario=cmv_prod,
@@ -358,6 +358,15 @@ def fechar_e_zerar_mesa(
         raise HTTPException(status_code=404, detail="Mesa não encontrada.")
 
     valor_consumido = mesa.consumo_acumulado
+
+    # Atualiza pedidos em aberto desta mesa para a forma de pagamento final
+    pedidos_mesa = db.query(Pedido).filter(
+        Pedido.tenant_id == tenant_id,
+        Pedido.identificacao.like(f"%{mesa_identificador}%"),
+        Pedido.forma_pagto == "Em Aberto (Mesa)"
+    ).all()
+    for p_mesa in pedidos_mesa:
+        p_mesa.forma_pagto = dados.forma_pagto
 
     # ZERA A MESA COMPLETAMENTE PARA LIBERAR PARA O PRÓXIMO CLIENTE
     mesa.status = "LIVRE"
