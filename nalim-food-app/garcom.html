@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -581,6 +581,9 @@
       atualizarBannerMesaAtiva();
       atualizarBarraComanda();
       lucide.createIcons();
+
+      // Sincronização contínua com Balcão / Outros Garçons a cada 3 segundos
+      setInterval(sincronizarMesasApi, 3000);
     }
 
     function carregarEstadoMesasLocal() {
@@ -617,15 +620,12 @@
           const data = await res.json();
           if (data.mesas && Array.isArray(data.mesas)) {
             data.mesas.forEach(m => {
-              if (!mesasConsumoState[m.numero]) {
-                mesasConsumoState[m.numero] = { status: 'LIVRE', total: 0.0, itens: [] };
-              }
-              if (m.consumo_acumulado > 0 || m.status === 'OCUPADA') {
-                mesasConsumoState[m.numero].status = m.status;
-                mesasConsumoState[m.numero].total = m.consumo_acumulado;
-                mesasConsumoState[m.numero].itens = m.itens || [];
-                mesasConsumoState[m.numero].abertaEm = m.aberta_em;
-              }
+              mesasConsumoState[m.numero] = {
+                status: m.status || 'LIVRE',
+                total: m.consumo_acumulado || 0.0,
+                itens: m.itens || [],
+                abertaEm: m.aberta_em || null
+              };
             });
             salvarEstadoMesasLocal();
             renderGridMesas();
@@ -987,25 +987,6 @@
       salvarEstadoMesasLocal();
 
       try {
-        let kdsOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        const novoTicketId = Math.floor(100 + Math.random() * 900);
-        kdsOrders.unshift({
-          id: novoTicketId,
-          dataHora: agoraHora,
-          identificacao: `${mesaAtiva} (Salão)`,
-          canal: 'Salão',
-          status: 'Na Chapa',
-          tempoDecorrido: 'Agora',
-          items: comanda.itens.map(it => ({
-            nome: it.nome,
-            qtd: it.qtd,
-            modificacoes: it.modificacoes
-          }))
-        });
-        localStorage.setItem('nalim_kds_orders', JSON.stringify(kdsOrders));
-      } catch (err) {}
-
-      try {
         const headers = { 'Content-Type': 'application/json' };
         if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
 
@@ -1032,6 +1013,25 @@
           document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} enviado com sucesso para a cozinha!`;
         }
       } catch (err) {
+        // Fallback offline se o backend estiver inacessível
+        try {
+          let kdsOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+          const novoTicketId = Math.floor(100 + Math.random() * 900);
+          kdsOrders.unshift({
+            id: novoTicketId,
+            dataHora: agoraHora,
+            identificacao: `${mesaAtiva} (Salão)`,
+            canal: 'Salão',
+            status: 'Na Chapa',
+            tempoDecorrido: 'Agora',
+            items: comanda.itens.map(it => ({
+              nome: it.nome,
+              qtd: it.qtd,
+              modificacoes: it.modificacoes
+            }))
+          });
+          localStorage.setItem('nalim_kds_orders', JSON.stringify(kdsOrders));
+        } catch (e) {}
         document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} registrado e enviado para a chapa.`;
       }
 
