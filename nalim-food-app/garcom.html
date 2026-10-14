@@ -127,6 +127,26 @@
   <!-- ============================================================== -->
   <!-- BARRA DE STATUS DA MESA SELECIONADA                            -->
   <!-- ============================================================== -->
+  <!-- ============================================================== -->
+  <!-- BANNER DE NOTIFICAÇÃO: PEDIDO PRONTO NA COZINHA (CHAMAR GARÇOM)  -->
+  <!-- ============================================================== -->
+  <div id="banner-pedidos-prontos" class="hidden bg-amber-500 text-slate-950 px-4 py-2.5 shadow-md flex items-center justify-between font-black text-xs border-b border-amber-600 sticky top-14 z-25">
+    <div class="flex items-center gap-2 min-w-0 pr-2">
+      <span class="text-base animate-bounce">🔔</span>
+      <div class="truncate">
+        <span class="block leading-tight uppercase font-black text-slate-950">PEDIDO PRONTO P/ RECOLHER!</span>
+        <span id="banner-pedidos-prontos-detalhe" class="text-[11px] font-bold text-amber-950 truncate block">Mesa 03 • Ticket #108</span>
+      </div>
+    </div>
+    <button type="button" id="btn-marcar-servido-banner" onclick="marcarPrimeiroPedidoProntoServido()" class="shrink-0 bg-slate-950 hover:bg-black text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-md transition active:scale-95 flex items-center gap-1 cursor-pointer">
+      <i data-lucide="check" class="w-3.5 h-3.5"></i>
+      <span>✓ Servido na Mesa</span>
+    </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- BARRA DE STATUS DA MESA SELECIONADA                            -->
+  <!-- ============================================================== -->
   <div id="banner-mesa-status" class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between text-xs shadow-2xs">
     <div class="flex items-center gap-2">
       <span id="badge-mesa-status" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -139,10 +159,6 @@
       <button id="btn-ver-conta-mesa" onclick="abrirModalExtratoMesa()" class="hidden px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs active:scale-95 flex items-center gap-1 transition">
         <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
         <span>Fechar / Extrato</span>
-      </button>
-
-      <button onclick="abrirModalTaxas()" title="Configurar Taxas da Maquininha" class="p-1.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 transition">
-        <i data-lucide="settings" class="w-3.5 h-3.5"></i>
       </button>
     </div>
   </div>
@@ -345,27 +361,35 @@
         </div>
       </div>
 
-      <!-- Seletor de Pagamento e Taxas da Maquininha -->
+      <!-- Seletor de Pagamento (PIX, Dinheiro, Débito, Crédito) -->
       <div class="space-y-2.5 pt-2 border-t border-slate-100">
         <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Forma de Pagamento:</label>
-            <button onclick="abrirModalTaxas()" class="text-[10px] font-bold text-forest-700 hover:underline flex items-center gap-0.5">
-              <i data-lucide="percent" class="w-3 h-3"></i> Taxas Maquininha
-            </button>
+          <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">
+            Forma de Pagamento Selecionada:
+          </label>
+          <div class="grid grid-cols-4 gap-1.5 text-xs font-black">
+            <button type="button" onclick="setPagtoMesa('PIX')" class="pay-mesa-btn py-2.5 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-black transition active:scale-95 shadow-2xs" data-method="PIX">PIX</button>
+            <button type="button" onclick="setPagtoMesa('Dinheiro')" class="pay-mesa-btn py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold transition hover:bg-slate-50" data-method="Dinheiro">Dinheiro</button>
+            <button type="button" onclick="setPagtoMesa('Débito')" class="pay-mesa-btn py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold transition hover:bg-slate-50" data-method="Débito">Débito</button>
+            <button type="button" onclick="setPagtoMesa('Crédito')" class="pay-mesa-btn py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold transition hover:bg-slate-50" data-method="Crédito">Crédito</button>
           </div>
-          <div class="grid grid-cols-4 gap-1 text-[11px] font-bold">
-            <button type="button" onclick="setPagtoMesa('PIX')" class="pay-mesa-btn py-2 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-black" data-method="PIX">PIX</button>
-            <button type="button" onclick="setPagtoMesa('Dinheiro')" class="pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold" data-method="Dinheiro">Dinheiro</button>
-            <button type="button" onclick="setPagtoMesa('Débito')" class="pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold" data-method="Débito">Débito</button>
-            <button type="button" onclick="setPagtoMesa('Crédito')" class="pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold" data-method="Crédito">Crédito</button>
+        </div>
+
+        <!-- Calculadora de Troco (Aparece se for Dinheiro) -->
+        <div id="campo-troco-garcom" class="hidden bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1.5 text-xs">
+          <label class="block text-[10px] font-extrabold text-slate-600 uppercase tracking-wider">Valor em Dinheiro Entregue pelo Cliente (R$):</label>
+          <div class="flex items-center gap-2">
+            <input type="number" step="0.50" id="input-dinheiro-cliente" placeholder="Ex: 50.00" oninput="calcularTrocoGarcom()" class="flex-1 bg-white border border-slate-200 rounded-lg p-2 font-black text-slate-900 text-xs focus:ring-1 focus:ring-forest-500">
+            <div class="bg-emerald-100 text-emerald-900 px-3 py-2 rounded-lg font-black text-xs min-w-[110px] text-center" id="display-troco-garcom">
+              Troco: R$ 0,00
+            </div>
           </div>
         </div>
 
         <!-- Opções de Parcelamento de Cartão de Crédito -->
-        <div id="seletor-parcelas-credito" class="hidden bg-slate-50 p-2 rounded-xl border border-slate-200 space-y-1">
-          <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Parcelas do Cartão:</label>
-          <select id="select-parcelas-cartao" onchange="recalcularTotalExtrato()" class="w-full bg-white border border-slate-200 rounded-lg p-1.5 text-xs font-bold text-slate-800">
+        <div id="seletor-parcelas-credito" class="hidden bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1">
+          <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Número de Parcelas do Cartão:</label>
+          <select id="select-parcelas-cartao" onchange="recalcularTotalExtrato()" class="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs font-bold text-slate-800">
             <option value="1">1x (À vista)</option>
             <option value="2">2x</option>
             <option value="3">3x</option>
@@ -375,8 +399,8 @@
           </select>
         </div>
 
-        <!-- Detalhamento de Valores com Taxa de Maquininha Transparente -->
-        <div class="bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80 space-y-1 text-xs">
+        <!-- Detalhamento de Valores da Conta -->
+        <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1.5 text-xs">
           <div class="flex justify-between text-slate-500 font-medium">
             <span>Subtotal Consumido:</span>
             <span id="extrato-subtotal-valor" class="font-bold text-slate-800">R$ 0,00</span>
@@ -385,70 +409,22 @@
             <span id="extrato-taxa-label">Taxa da Maquininha:</span>
             <span id="extrato-taxa-valor" class="font-bold text-amber-700">R$ 0,00</span>
           </div>
-          <div class="flex justify-between items-center pt-1 border-t border-slate-200 font-black text-slate-900">
+          <div class="flex justify-between items-center pt-1.5 border-t border-slate-200 font-black text-slate-900">
             <span class="text-xs uppercase">TOTAL A RECEBER:</span>
             <span class="text-xl text-forest-700" id="extrato-total-final">R$ 0,00</span>
           </div>
           <p id="extrato-aviso-repassar" class="text-[10px] text-slate-400 font-medium">
-            * Taxa da maquininha absorvida pelo restaurante.
+            * Forma de pagamento sem acréscimo.
           </p>
         </div>
 
         <!-- Botão Final: Pagar e Zerar Mesa -->
-        <button type="button" onclick="confirmarFechamentoMesa()" id="btn-confirmar-fechamento-mesa" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-black py-3.5 px-4 rounded-2xl shadow-xl transition flex items-center justify-center gap-2 text-sm tracking-wide">
+        <button type="button" onclick="confirmarFechamentoMesa()" id="btn-confirmar-fechamento-mesa" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-black py-3.5 px-4 rounded-2xl shadow-xl transition flex items-center justify-center gap-2 text-sm tracking-wide cursor-pointer">
           <i data-lucide="check-circle" class="w-5 h-5"></i>
           <span>RECEBER & ZERAR MESA</span>
         </button>
       </div>
 
-    </div>
-  </div>
-
-  <!-- ============================================================== -->
-  <!-- MODAL: CONFIGURAÇÃO DE TAXAS DA MAQUININHA DE CARTÃO           -->
-  <!-- ============================================================== -->
-  <div id="modal-taxas-maquininha" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 max-w-xs w-full space-y-3.5 shadow-2xl">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <div>
-          <h3 class="font-black text-sm text-slate-900">Taxas da Maquininha</h3>
-          <p class="text-[10px] text-slate-400">Configure as taxas cobradas pelo seu adquirente</p>
-        </div>
-        <button onclick="fecharModalTaxas()" class="text-slate-400 hover:text-slate-700 p-1 font-bold text-sm">✕</button>
-      </div>
-
-      <form onsubmit="event.preventDefault(); salvarConfigTaxasGarcom();" class="space-y-2.5 text-xs">
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Taxa Débito (%)</label>
-          <input type="number" step="0.01" id="cfg-taxa-debito" value="1.99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Taxa Crédito à Vista (1x) (%)</label>
-          <input type="number" step="0.01" id="cfg-taxa-credito-vista" value="3.49" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
-        </div>
-
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">Taxa Crédito Parcelado (2x a 6x) (%)</label>
-          <input type="number" step="0.01" id="cfg-taxa-credito-parc" value="4.99" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-forest-500">
-        </div>
-
-        <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200/70 space-y-1">
-          <label class="flex items-start gap-2 cursor-pointer">
-            <input type="checkbox" id="cfg-repassar-taxa" class="mt-0.5 rounded text-amber-600 focus:ring-amber-500">
-            <span class="text-[11px] font-extrabold text-amber-900 leading-tight">
-              Repassar taxas/juros da maquininha para o cliente
-            </span>
-          </label>
-          <p class="text-[10px] text-amber-700 font-medium">
-            Se marcado, o acréscimo da taxa da maquininha será somado no valor final pago pelo cliente.
-          </p>
-        </div>
-
-        <button type="submit" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2.5 rounded-xl shadow-xs transition">
-          Salvar Configurações
-        </button>
-      </form>
     </div>
   </div>
 
@@ -570,11 +546,11 @@
       if (nomeLabel) nomeLabel.textContent = nome;
 
       carregarEstadoMesasLocal();
-      carregarConfigTaxasLocal();
 
       carregarCardapioApi();
       sincronizarMesasApi();
       sincronizarTaxasApi();
+      verificarPedidosProntosCozinha();
 
       renderProdutos();
       renderGridMesas();
@@ -582,8 +558,9 @@
       atualizarBarraComanda();
       lucide.createIcons();
 
-      // Sincronização contínua com Balcão / Outros Garçons a cada 3 segundos
+      // Sincronização contínua com Balcão e Cozinha a cada 3 segundos
       setInterval(sincronizarMesasApi, 3000);
+      setInterval(verificarPedidosProntosCozinha, 3000);
     }
 
     function carregarEstadoMesasLocal() {
@@ -722,77 +699,100 @@
 
       lucide.createIcons();
     }
-    function carregarConfigTaxasLocal() {
-      try {
-        const salvo = localStorage.getItem('nalim_config_taxas');
-        if (salvo) configTaxasCartao = JSON.parse(salvo);
-      } catch (e) {}
+    let pedidosProntosCozinha = [];
 
-      const inpDeb = document.getElementById('cfg-taxa-debito');
-      const inpVista = document.getElementById('cfg-taxa-credito-vista');
-      const inpParc = document.getElementById('cfg-taxa-credito-parc');
-      const chkRepassar = document.getElementById('cfg-repassar-taxa');
+    async function verificarPedidosProntosCozinha() {
+      const banner = document.getElementById('banner-pedidos-prontos');
+      const detalhe = document.getElementById('banner-pedidos-prontos-detalhe');
+      if (!banner) return;
 
-      if (inpDeb) inpDeb.value = configTaxasCartao.taxa_debito || 1.99;
-      if (inpVista) inpVista.value = configTaxasCartao.taxa_credito_vista || 3.49;
-      if (inpParc) inpParc.value = configTaxasCartao.taxa_credito_parcelado || 4.99;
-      if (chkRepassar) chkRepassar.checked = !!configTaxasCartao.repassar_taxa_cartao;
-    }
+      let prontos = [];
 
-    async function sincronizarTaxasApi() {
+      // 1. Tenta API backend em tempo real
       try {
         const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-        const res = await fetch(`${API_BASE}/api/operacional/config-taxas`, { headers });
+        const res = await fetch(`${API_BASE}/api/operacional/kds/realtime`, { headers });
         if (res.ok) {
           const data = await res.json();
-          configTaxasCartao.taxa_debito = data.taxa_debito ?? 1.99;
-          configTaxasCartao.taxa_credito_vista = data.taxa_credito_vista ?? 3.49;
-          configTaxasCartao.taxa_credito_parcelado = data.taxa_credito_parcelado ?? 4.99;
-          configTaxasCartao.repassar_taxa_cartao = !!data.repassar_taxa_cartao;
-          localStorage.setItem('nalim_config_taxas', JSON.stringify(configTaxasCartao));
-          carregarConfigTaxasLocal();
+          if (data.tickets && Array.isArray(data.tickets)) {
+            prontos = data.tickets.filter(t => t.status === 'Pronto');
+          }
         }
       } catch (e) {}
-    }
 
-    function abrirModalTaxas() {
-      carregarConfigTaxasLocal();
-      document.getElementById('modal-taxas-maquininha').classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    function fecharModalTaxas() {
-      document.getElementById('modal-taxas-maquininha').classList.add('hidden');
-    }
-
-    async function salvarConfigTaxasGarcom() {
-      const taxaDeb = parseFloat(document.getElementById('cfg-taxa-debito').value) || 1.99;
-      const taxaVista = parseFloat(document.getElementById('cfg-taxa-credito-vista').value) || 3.49;
-      const taxaParc = parseFloat(document.getElementById('cfg-taxa-credito-parc').value) || 4.99;
-      const repassar = document.getElementById('cfg-repassar-taxa').checked;
-
-      configTaxasCartao = {
-        taxa_debito: taxaDeb,
-        taxa_credito_vista: taxaVista,
-        taxa_credito_parcelado: taxaParc,
-        repassar_taxa_cartao: repassar
-      };
-
-      localStorage.setItem('nalim_config_taxas', JSON.stringify(configTaxasCartao));
-
+      // 2. Fallback / merge com localStorage
       try {
-        const headers = { 'Content-Type': 'application/json' };
-        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-        await fetch(`${API_BASE}/api/operacional/config-taxas`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(configTaxasCartao)
+        const localKds = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        const prontosLocal = localKds.filter(t => t.status === 'Pronto');
+        prontosLocal.forEach(pl => {
+          if (!prontos.some(p => p.id === pl.id)) prontos.push(pl);
         });
       } catch (e) {}
 
-      fecharModalTaxas();
-      recalcularTotalExtrato();
-      alert('✓ Configurações de taxas da maquininha salvas com sucesso!');
+      pedidosProntosCozinha = prontos;
+
+      if (prontos.length > 0) {
+        const primeiro = prontos[0];
+        banner.classList.remove('hidden');
+        detalhe.textContent = `${primeiro.identificacao} • Ticket #${primeiro.numero_comanda || primeiro.id}${prontos.length > 1 ? ` (+${prontos.length - 1} prontos na cozinha)` : ''}`;
+      } else {
+        banner.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    async function marcarPrimeiroPedidoProntoServido() {
+      if (pedidosProntosCozinha.length === 0) return;
+      const ticket = pedidosProntosCozinha[0];
+      const ticketId = ticket.id;
+
+      // 1. Atualiza API Python
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+        await fetch(`${API_BASE}/api/operacional/kds/${ticketId}/status`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ status_kds: 'Entregue' })
+        });
+      } catch (e) {}
+
+      // 2. Atualiza localStorage do KDS
+      try {
+        let localKds = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        localKds = localKds.filter(t => t.id !== ticketId);
+        localStorage.setItem('nalim_kds_orders', JSON.stringify(localKds));
+
+        let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
+        if (!finalizados.includes(ticketId)) finalizados.push(ticketId);
+        localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
+      } catch (e) {}
+
+      pedidosProntosCozinha = pedidosProntosCozinha.filter(t => t.id !== ticketId);
+      verificarPedidosProntosCozinha();
+
+      alert(`✓ Pedido #${ticket.numero_comanda || ticketId} da ${ticket.identificacao} marcado como SERVIDO na mesa!`);
+    }
+
+    function calcularTrocoGarcom() {
+      const mesa = mesasConsumoState[mesaAtiva] || { total: 0 };
+      const total = parseFloat(document.getElementById('extrato-total-final')?.textContent.replace('R$', '').replace(',', '.').trim()) || mesa.total;
+      const valorEntregue = parseFloat(document.getElementById('input-dinheiro-cliente')?.value) || 0;
+      const display = document.getElementById('display-troco-garcom');
+      if (!display) return;
+
+      if (valorEntregue <= 0) {
+        display.textContent = 'Troco: R$ 0,00';
+        display.className = 'bg-slate-100 text-slate-600 px-3 py-2 rounded-lg font-black text-xs min-w-[110px] text-center';
+      } else if (valorEntregue < total) {
+        const falta = total - valorEntregue;
+        display.textContent = `Falta: R$ ${falta.toFixed(2)}`;
+        display.className = 'bg-rose-100 text-rose-800 px-3 py-2 rounded-lg font-black text-xs min-w-[110px] text-center';
+      } else {
+        const troco = valorEntregue - total;
+        display.textContent = `Troco: R$ ${troco.toFixed(2)}`;
+        display.className = 'bg-emerald-100 text-emerald-900 px-3 py-2 rounded-lg font-black text-xs min-w-[110px] text-center';
+      }
     }
 
     function abrirModalExtratoMesa() {
@@ -840,9 +840,9 @@
       formaPagtoMesa = metodo;
       document.querySelectorAll('.pay-mesa-btn').forEach(b => {
         if (b.dataset.method === metodo) {
-          b.className = 'pay-mesa-btn py-2 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-black';
+          b.className = 'pay-mesa-btn py-2.5 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center font-black transition active:scale-95 shadow-2xs';
         } else {
-          b.className = 'pay-mesa-btn py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold';
+          b.className = 'pay-mesa-btn py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center font-bold transition hover:bg-slate-50';
         }
       });
 
@@ -851,6 +851,16 @@
         seletorCred.classList.remove('hidden');
       } else {
         seletorCred.classList.add('hidden');
+      }
+
+      const campoTroco = document.getElementById('campo-troco-garcom');
+      if (campoTroco) {
+        if (metodo === 'Dinheiro') {
+          campoTroco.classList.remove('hidden');
+          calcularTrocoGarcom();
+        } else {
+          campoTroco.classList.add('hidden');
+        }
       }
 
       recalcularTotalExtrato();

@@ -269,8 +269,8 @@
           <span>SAUDÁVEL (87.5/100)</span>
         </div>
 
-        <!-- Botão Taxas da Maquininha -->
-        <button onclick="abrirModalTaxasAdmin()" class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs" title="Configurar Taxas e Juros da Maquininha de Cartão">
+        <!-- Botão Taxas da Maquininha (Visível apenas para Gerente e Dono) -->
+        <button id="btn-taxas-maquininha-header" onclick="abrirModalTaxasAdmin()" class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-100 px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-2xs" title="Configurar Taxas e Juros da Maquininha de Cartão">
           <i data-lucide="percent" class="w-3.5 h-3.5 text-forest-600"></i>
           <span class="hidden md:inline">Taxas Maquininha</span>
         </button>
@@ -385,8 +385,6 @@
                     <select id="pdv-canal-select" onchange="mudarCanalPdv(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-bold text-slate-800">
                       <option value="Balcão" selected>🏪 Balcão / Retirada</option>
                       <option value="Salão">🍽️ Salão / Mesa</option>
-                      <option value="iFood">🛵 iFood Delivery (23%)</option>
-                      <option value="99Food">🟡 99Food Delivery (18%)</option>
                     </select>
                   </div>
                   <div>
@@ -1073,11 +1071,14 @@
                   <i data-lucide="wallet" class="w-4 h-4"></i>
                 </span>
                 <div>
-                  <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">PREVISÃO DE CAIXA (PRÓXIMOS 10 DIAS)</h4>
+                  <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">PREVISÃO DE CAIXA (PRÓXIMOS 15 DIAS)</h4>
                   <p class="text-[11px] text-slate-500">Lucro DRE vs. Dinheiro em Conta (Liquidação vs. Boletos)</p>
                 </div>
               </div>
-              <span class="text-[10px] font-extrabold bg-purple-100 text-purple-900 px-2 py-0.5 rounded-full">D+0 a D+30</span>
+              <button type="button" onclick="abrirModalContasPagar()" class="text-[10px] font-black bg-purple-100 hover:bg-purple-200 text-purple-900 px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Gerenciar Boletos e Saldo em Caixa">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                <span>⚙️ Agendar Contas</span>
+              </button>
             </div>
 
             <div class="space-y-1.5 overflow-y-auto max-h-64 custom-scroll pr-1" id="caixa-previsao-lista">
@@ -2333,7 +2334,7 @@
       ];
 
       let orderIdSeq = 200;
-      const canais = ['Salão', 'Balcão', 'iFood', '99Food'];
+      const canais = ['Salão', 'Balcão', 'Cardápio Digital', 'iFood', '99Food'];
       const pagtos = ['PIX', 'Cartão Crédito', 'Cartão Débito', 'Dinheiro'];
 
       outDias.forEach(od => {
@@ -2345,18 +2346,22 @@
           const pagto = pagtos[i % pagtos.length];
           const hora = `${String(12 + (i % 10)).padStart(2, '0')}:${String((i * 13) % 60).padStart(2, '0')}`;
           
-          let totTicket = isLast ? (od.meta - diaTotal) : (canal === 'iFood' ? 44.00 : (canal === '99Food' ? 40.00 : 38.00));
+          let totTicket = isLast ? (od.meta - diaTotal) : (canal === 'iFood' ? 44.00 : (canal === '99Food' ? 40.00 : (canal === 'Cardápio Digital' ? 36.00 : 38.00)));
           if (totTicket <= 10) totTicket = 38.00;
           diaTotal += totTicket;
 
           const cmvTicket = Math.round(totTicket * 0.27 * 100) / 100;
-          const taxaPct = canal === 'iFood' ? 0.23 : (canal === '99Food' ? 0.18 : 0.02);
+          const taxaPct = canal === 'iFood' ? 0.23 : (canal === '99Food' ? 0.18 : (canal === 'Cardápio Digital' ? 0.015 : 0.02));
           const taxaTicket = totTicket * taxaPct;
           const lucroTicket = totTicket - cmvTicket - taxaTicket;
 
           const identFinal = canal === 'iFood'
             ? `Pedido iFood #${4000 + orderIdSeq}`
-            : (canal === '99Food' ? `Pedido 99Food #${5000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada'));
+            : (canal === '99Food'
+                ? `Pedido 99Food #${5000 + orderIdSeq}`
+                : (canal === 'Cardápio Digital'
+                    ? `Cardápio Digital #${1000 + orderIdSeq} (WhatsApp)`
+                    : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada')));
 
           let itemDesc = '1x Combo X-Burguer Completo (Reajustado)';
           let itemCod = 'PROD004';
@@ -2369,6 +2374,10 @@
             itemDesc = '1x X-Burguer Tradicional 99Food | 1x Batata Rústica';
             itemCod = 'PROD001';
             itemNome = 'X-Burguer Tradicional';
+          } else if (canal === 'Cardápio Digital') {
+            itemDesc = '1x X-Bacon Especial (Cardápio Digital) | 1x Refrigerante Lata';
+            itemCod = 'PROD002';
+            itemNome = 'X-Bacon Especial';
           }
 
           peds.push({
@@ -2408,19 +2417,19 @@
           const pagto = pagtos[i % pagtos.length];
           const hora = `${String(12 + (i % 10)).padStart(2, '0')}:${String((i * 13) % 60).padStart(2, '0')}`;
           
-          let totTicket = isLast ? (sd.meta - diaTotal) : (canal === 'iFood' ? 42.00 : 35.00);
+          let totTicket = isLast ? (sd.meta - diaTotal) : (canal === 'iFood' ? 42.00 : (canal === '99Food' ? 38.00 : 35.00));
           if (totTicket <= 10) totTicket = 35.00;
           diaTotal += totTicket;
 
           const cmvTicket = Math.round(totTicket * 0.28 * 100) / 100;
-          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : totTicket * 0.02;
+          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : (canal === '99Food' ? totTicket * 0.18 : (canal === 'Cardápio Digital' ? totTicket * 0.015 : totTicket * 0.02));
           const lucroTicket = totTicket - cmvTicket - taxaTicket;
 
           peds.push({
             id: orderIdSeq,
             dataHora: `2026-09-${sd.dia} ${hora}`,
             dataIso: `2026-09-${sd.dia}`,
-            identificacao: canal === 'iFood' ? `Pedido iFood #${3000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada'),
+            identificacao: canal === 'iFood' ? `Pedido iFood #${3000 + orderIdSeq}` : (canal === 'Cardápio Digital' ? `Cardápio Digital #${1500 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((i % 12) + 1).padStart(2, '0')}` : 'Balcão / Retirada')),
             canal: canal,
             pagto: pagto,
             total: Math.round(totTicket * 100) / 100,
@@ -2453,14 +2462,14 @@
           diaTotal += totTicket;
 
           const cmvTicket = Math.round(totTicket * 0.26 * 100) / 100;
-          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : totTicket * 0.02;
+          const taxaTicket = canal === 'iFood' ? totTicket * 0.23 : (canal === '99Food' ? totTicket * 0.18 : (canal === 'Cardápio Digital' ? totTicket * 0.015 : totTicket * 0.02));
           const lucroTicket = totTicket - cmvTicket - taxaTicket;
 
           peds.push({
             id: orderIdSeq,
             dataHora: `2026-08-${diaNum} ${hora}`,
             dataIso: `2026-08-${diaNum}`,
-            identificacao: canal === 'iFood' ? `Pedido iFood #${2000 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((k % 10) + 1).padStart(2, '0')}` : 'Balcão / Retirada'),
+            identificacao: canal === 'iFood' ? `Pedido iFood #${2000 + orderIdSeq}` : (canal === 'Cardápio Digital' ? `Cardápio Digital #${800 + orderIdSeq}` : (canal === 'Salão' ? `Mesa ${String((k % 10) + 1).padStart(2, '0')}` : 'Balcão / Retirada')),
             canal: canal,
             pagto: pagto,
             total: Math.round(totTicket * 100) / 100,
@@ -2699,11 +2708,16 @@
         switchView('produtos');
       } else {
         // DONO (ACESSO COMPLETO)
-        if (groupOp) groupOp.style.display = 'block';
-        if (groupAdm) groupAdm.style.display = 'block';
         if (groupGer) groupGer.style.display = 'block';
         switchView('dashboard');
       }
+
+      // Taxas da Maquininha: visível apenas para Gerente e Dono (oculto para operador)
+      const btnTaxasHeader = document.getElementById('btn-taxas-maquininha-header');
+      if (btnTaxasHeader) {
+        btnTaxasHeader.style.display = (role === 'operador') ? 'none' : 'flex';
+      }
+
       if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
@@ -3574,7 +3588,10 @@
 
       store.kdsOrders.forEach((ord, index) => {
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-2xl border-2 border-amber-300 p-4 shadow-xs flex flex-col justify-between';
+        const isPronto = (ord.status === 'Pronto');
+        card.className = isPronto 
+          ? 'bg-emerald-50/40 rounded-2xl border-2 border-emerald-400 p-4 shadow-sm flex flex-col justify-between transition'
+          : 'bg-white rounded-2xl border-2 border-amber-300 p-4 shadow-xs flex flex-col justify-between transition';
 
         let itemsHtml = '';
         ord.items.forEach(it => {
@@ -3600,9 +3617,15 @@
                 <button type="button" onclick="imprimirComandaKds(${ord.id})" class="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition" title="Reimprimir Cupom Térmico (80mm)">
                   <i data-lucide="printer" class="w-4 h-4"></i>
                 </button>
-                <span class="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
-                  ⏱️ ${ord.tempoDecorrido}
-                </span>
+                ${isPronto ? `
+                  <span class="text-[10px] font-black bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full animate-pulse border border-emerald-300">
+                    🔔 PRONTO / CHAMANDO
+                  </span>
+                ` : `
+                  <span class="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
+                    ⏱️ ${ord.tempoDecorrido}
+                  </span>
+                `}
               </div>
             </div>
 
@@ -3611,15 +3634,47 @@
             </div>
           </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-100">
-            <button onclick="concluirKdsTicket(${ord.id})" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs">
-              <i data-lucide="check" class="w-4 h-4"></i> Pronto / Liberar p/ Garçom
-            </button>
+          <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+            ${isPronto ? `
+              <button onclick="concluirKdsTicket(${ord.id})" class="w-full bg-slate-900 hover:bg-black text-white font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer">
+                <i data-lucide="check-check" class="w-4 h-4 text-emerald-400"></i>
+                <span>✓ Concluir / Pedido Entregue</span>
+              </button>
+            ` : `
+              <button onclick="marcarKdsPronto(${ord.id})" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer">
+                <span>🔔 Pronto / Chamar Garçom</span>
+              </button>
+            `}
           </div>
         `;
         container.appendChild(card);
       });
       lucide.createIcons();
+    }
+
+    function marcarKdsPronto(ticketId) {
+      const ord = store.kdsOrders.find(o => o.id === ticketId);
+      if (ord) ord.status = 'Pronto';
+
+      try {
+        let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        const idx = ords.findIndex(o => o.id === ticketId);
+        if (idx !== -1) {
+          ords[idx].status = 'Pronto';
+          localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
+        }
+      } catch (e) {}
+
+      const token = localStorage.getItem('nalim_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      fetch(`/api/operacional/kds/${ticketId}/status`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ status_kds: 'Pronto' })
+      }).catch(() => {});
+
+      renderKds();
     }
 
     function concluirKdsTicket(ticketId) {
@@ -3667,8 +3722,13 @@
             let mudou = false;
             data.tickets.forEach(tk => {
               if (finalizados.includes(tk.id)) return;
-              const jaExiste = store.kdsOrders.some(o => o.id === tk.id || (o.identificacao === tk.identificacao && o.dataHora === tk.data_hora));
-              if (!jaExiste) {
+              const existente = store.kdsOrders.find(o => o.id === tk.id);
+              if (existente) {
+                if (existente.status !== tk.status) {
+                  existente.status = tk.status;
+                  mudou = true;
+                }
+              } else {
                 store.kdsOrders.unshift({
                   id: tk.id,
                   dataHora: tk.data_hora,
@@ -3695,8 +3755,13 @@
         let mudouLocal = false;
         localOrders.forEach(lo => {
           if (finalizados.includes(lo.id)) return;
-          const jaExiste = store.kdsOrders.some(o => o.id === lo.id || (o.identificacao === lo.identificacao && o.dataHora === lo.dataHora));
-          if (!jaExiste) {
+          const existente = store.kdsOrders.find(o => o.id === lo.id);
+          if (existente) {
+            if (existente.status !== lo.status) {
+              existente.status = lo.status;
+              mudouLocal = true;
+            }
+          } else {
             store.kdsOrders.unshift(lo);
             mudouLocal = true;
           }
@@ -5211,24 +5276,28 @@
     }
 
     /**
-     * FEATURE 2: Agrupamento por Canal de Venda
+     * FEATURE 2: Agrupamento por Canal de Venda (Cardápio Digital / Próprio vs iFood vs 99Food vs Balcão)
      */
     function calcularDesmembramentoCanais(pedidosDoMes) {
       const canaisMap = {
         'Salão & Balcão': { canal: 'Salão & Balcão', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.02 },
-        'WhatsApp / Próprio': { canal: 'WhatsApp / Próprio', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.015 },
+        'Cardápio Digital / Próprio': { canal: 'Cardápio Digital / Próprio', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.015 },
         'iFood': { canal: 'iFood Marketplace', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.23 },
         '99Food': { canal: '99Food Marketplace', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.18 }
       };
 
       pedidosDoMes.forEach(p => {
         let ch = canaisMap['Salão & Balcão'];
-        if (p.canal === 'iFood') ch = canaisMap['iFood'];
-        else if (p.canal === '99Food') ch = canaisMap['99Food'];
-        else if (p.canal === 'Delivery Próprio' || p.canal === 'WhatsApp Próprio') ch = canaisMap['WhatsApp / Próprio'];
-        else ch = canaisMap['Salão & Balcão'];
+        const cLower = (p.canal || '').toLowerCase();
+        if (cLower.includes('ifood')) ch = canaisMap['iFood'];
+        else if (cLower.includes('99')) ch = canaisMap['99Food'];
+        else if (cLower.includes('cardapio') || cLower.includes('cardápio') || cLower.includes('proprio') || cLower.includes('próprio') || cLower.includes('whatsapp') || cLower.includes('delivery')) {
+          ch = canaisMap['Cardápio Digital / Próprio'];
+        } else {
+          ch = canaisMap['Salão & Balcão'];
+        }
 
-        const taxa = p.canal === 'iFood' ? p.total * 0.23 : (p.canal === '99Food' ? p.total * 0.18 : p.total * 0.02);
+        const taxa = cLower.includes('ifood') ? p.total * 0.23 : (cLower.includes('99') ? p.total * 0.18 : (cLower.includes('cardapio') || cLower.includes('cardápio') ? p.total * 0.015 : p.total * 0.02));
         ch.pedidosCount++;
         ch.faturamentoBruto += p.total;
         ch.cmvTotal += p.cmv;
@@ -5260,7 +5329,7 @@
 
       container.innerHTML = canais.map(c => {
         const pctFat = totalFatGeral > 0 ? Math.round((c.faturamentoBruto / totalFatGeral) * 100) : 0;
-        const corBarra = c.canal.includes('iFood') ? 'bg-rose-500' : (c.canal.includes('99') ? 'bg-amber-500' : 'bg-emerald-600');
+        const corBarra = c.canal.includes('iFood') ? 'bg-rose-500' : (c.canal.includes('99') ? 'bg-amber-500' : (c.canal.includes('Cardápio') ? 'bg-forest-600' : 'bg-blue-600'));
         
         return `
           <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/40 space-y-2 text-xs">
@@ -5298,56 +5367,234 @@
 
       if (insight) {
         const ifood = canais.find(c => c.canal.includes('iFood'));
+        const proprio = canais.find(c => c.canal.includes('Cardápio') || c.canal.includes('Próprio'));
         const balcao = canais.find(c => c.canal.includes('Salão'));
-        if (ifood && balcao && ifood.faturamentoBruto > 0) {
-          const difMargem = balcao.margemLiquidaRealPct - ifood.margemLiquidaRealPct;
-          insight.innerHTML = `O canal próprio entrega <strong>${balcao.margemLiquidaRealPct}%</strong> de margem real contra apenas <strong>${ifood.margemLiquidaRealPct}%</strong> do iFood (diferença de <strong>+${difMargem} pontos percentuais</strong>). Cada R$ 1.000 que migra do iFood para seu balcão/WhatsApp adiciona <strong>+R$ ${difMargem * 10}</strong> líquidos no seu bolso.`;
+        if (ifood && (proprio?.faturamentoBruto > 0 || balcao?.faturamentoBruto > 0)) {
+          const margemMelhor = (proprio?.faturamentoBruto > 0) ? proprio.margemLiquidaRealPct : balcao.margemLiquidaRealPct;
+          const difMargem = margemMelhor - ifood.margemLiquidaRealPct;
+          insight.innerHTML = `O canal direto <strong>Cardápio Digital / Próprio</strong> entrega <strong>${margemMelhor}%</strong> de margem líquida real contra apenas <strong>${ifood.margemLiquidaRealPct}%</strong> do iFood (diferença de <strong>+${difMargem} pontos percentuais</strong>). Cada R$ 1.000 que migra do aplicativo para o seu canal direto adiciona <strong>+R$ ${Math.max(0, difMargem * 10)}</strong> líquidos no seu caixa!`;
         } else {
-          insight.innerHTML = `Concentre ações de fidelidade e QR Codes nas embalagens para transformar clientes de aplicativo em compradores diretos.`;
+          insight.innerHTML = `Concentre ações de fidelidade e QR Codes nas embalagens para transformar clientes de aplicativo em compradores diretos pelo seu Cardápio Digital.`;
         }
       }
     }
 
     /**
-     * FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (Próximos 10 dias)
+     * FEATURE 4 & MELHORIA 9: Gestão de Contas a Pagar & Previsão de Caixa (15 Dias)
+     */
+    const CONTAS_PAGAR_DEFAULT = [
+      { id: 1, descricao: 'Pró-Labore Sócios', valor: 2500.00, dataVencimento: '2026-10-05', categoria: 'Pessoal', recorrente: true },
+      { id: 2, descricao: 'Aluguel Ponto Comercial', valor: 1700.00, dataVencimento: '2026-10-10', categoria: 'Ocupação', recorrente: true },
+      { id: 3, descricao: 'Energia Elétrica (Enel/Light)', valor: 750.00, dataVencimento: '2026-10-12', categoria: 'Utilidades', recorrente: true },
+      { id: 4, descricao: 'Distribuidora Carnes & Queijos', valor: 1400.00, dataVencimento: '2026-10-15', categoria: 'Insumos', recorrente: false },
+      { id: 5, descricao: 'DAS Simples Nacional / MEI', valor: 480.00, dataVencimento: '2026-10-20', categoria: 'Impostos', recorrente: true }
+    ];
+
+    function carregarContasPagar() {
+      try {
+        const salvas = localStorage.getItem('nalim_contas_pagar');
+        if (salvas) return JSON.parse(salvas);
+      } catch (e) {}
+      localStorage.setItem('nalim_contas_pagar', JSON.stringify(CONTAS_PAGAR_DEFAULT));
+      return CONTAS_PAGAR_DEFAULT;
+    }
+
+    function salvarContasPagar(contas) {
+      try {
+        localStorage.setItem('nalim_contas_pagar', JSON.stringify(contas));
+      } catch (e) {}
+    }
+
+    function carregarSaldoCaixa() {
+      try {
+        const val = localStorage.getItem('nalim_saldo_caixa');
+        if (val !== null) return parseFloat(val) || 0;
+      } catch (e) {}
+      return 1850.00;
+    }
+
+    function salvarSaldoCaixa() {
+      const input = document.getElementById('input-saldo-inicial-caixa');
+      if (!input) return;
+      const novoSaldo = parseFloat(input.value) || 0;
+      localStorage.setItem('nalim_saldo_caixa', novoSaldo.toString());
+      renderDashboard();
+      alert(`✓ Saldo em caixa atualizado para ${formatarMoeda(novoSaldo)}!`);
+    }
+
+    function abrirModalContasPagar() {
+      const modal = document.getElementById('modal-contas-pagar');
+      if (!modal) return;
+      const inputSaldo = document.getElementById('input-saldo-inicial-caixa');
+      if (inputSaldo) inputSaldo.value = carregarSaldoCaixa().toFixed(2);
+      
+      const inputData = document.getElementById('conta-pagar-data');
+      if (inputData && !inputData.value) {
+        inputData.value = new Date().toISOString().split('T')[0];
+      }
+
+      renderContasPagarLista();
+      modal.classList.remove('hidden');
+    }
+
+    function fecharModalContasPagar() {
+      const modal = document.getElementById('modal-contas-pagar');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function adicionarContaPagar(event) {
+      event.preventDefault();
+      const desc = document.getElementById('conta-pagar-desc')?.value.trim();
+      const valor = parseFloat(document.getElementById('conta-pagar-valor')?.value) || 0;
+      const dataVenc = document.getElementById('conta-pagar-data')?.value;
+      const cat = document.getElementById('conta-pagar-cat')?.value || 'Insumos';
+      const recorrente = document.getElementById('conta-pagar-recorrente')?.checked || false;
+
+      if (!desc || valor <= 0 || !dataVenc) {
+        alert('Preencha a descrição, valor válido e a data de vencimento da conta.');
+        return;
+      }
+
+      const contas = carregarContasPagar();
+      contas.push({
+        id: Date.now(),
+        descricao: desc,
+        valor: valor,
+        dataVencimento: dataVenc,
+        categoria: cat,
+        recorrente: recorrente
+      });
+
+      salvarContasPagar(contas);
+      renderContasPagarLista();
+      renderDashboard();
+
+      // Limpa formulário
+      document.getElementById('conta-pagar-desc').value = '';
+      document.getElementById('conta-pagar-valor').value = '';
+      alert(`✓ Conta "${desc}" de ${formatarMoeda(valor)} agendada com sucesso!`);
+    }
+
+    function removerContaPagar(id) {
+      let contas = carregarContasPagar();
+      contas = contas.filter(c => c.id !== id);
+      salvarContasPagar(contas);
+      renderContasPagarLista();
+      renderDashboard();
+    }
+
+    function renderContasPagarLista() {
+      const container = document.getElementById('contas-pagar-lista');
+      const totalEl = document.getElementById('contas-pagar-total-agendado');
+      if (!container) return;
+
+      const contas = carregarContasPagar();
+      const total = contas.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0);
+      if (totalEl) totalEl.textContent = formatarMoeda(total);
+
+      if (contas.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 p-4 text-center">Nenhuma conta agendada. Adicione os boletos e vencimentos acima.</p>`;
+        return;
+      }
+
+      // Ordena por data de vencimento
+      contas.sort((a, b) => (a.dataVencimento || '').localeCompare(b.dataVencimento || ''));
+
+      container.innerHTML = contas.map(c => {
+        const partesData = (c.dataVencimento || '').split('-');
+        const dataFmt = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : c.dataVencimento;
+
+        return `
+          <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white shadow-2xs hover:border-purple-300 transition text-xs">
+            <div class="space-y-0.5">
+              <div class="flex items-center gap-2">
+                <strong class="text-slate-900 font-bold">${c.descricao}</strong>
+                ${c.recorrente ? '<span class="text-[9px] bg-purple-100 text-purple-800 px-1.5 py-0.2 rounded font-extrabold uppercase">Recorrente Mensal</span>' : ''}
+              </div>
+              <div class="flex items-center gap-2 text-[10px] text-slate-400">
+                <span>Vencimento: <strong class="text-slate-700">${dataFmt}</strong></span>
+                <span>•</span>
+                <span>${c.categoria || 'Geral'}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-black text-rose-600 text-xs">- ${formatarMoeda(c.valor)}</span>
+              <button type="button" onclick="removerContaPagar(${c.id})" class="text-slate-400 hover:text-rose-600 p-1 rounded-lg transition cursor-pointer" title="Remover conta">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    /**
+     * FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (Próximos 15 dias)
      */
     function renderPrevisaoCaixa(pedidosDoMes, data) {
       const container = document.getElementById('caixa-previsao-lista');
       const alerta = document.getElementById('caixa-alerta-liquidez');
       if (!container) return;
 
+      const contas = carregarContasPagar();
+      let saldoAcumulado = carregarSaldoCaixa();
+
       const diasProjecao = [];
       const dataBase = new Date(2026, 9, 4); // 04 de Outubro de 2026
-      let saldoAcumulado = 1450.00;
-
       const diasSemanaNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 15; i++) {
         const d = new Date(dataBase);
         d.setDate(dataBase.getDate() + i);
         const diaNum = d.getDate();
+        const mesNum = d.getMonth() + 1;
+        const anoNum = d.getFullYear();
         const diaSemanaStr = diasSemanaNomes[d.getDay()];
-        const dataIso = `2026-10-${String(diaNum).padStart(2, '0')}`;
+        const diaFormatado = `${String(diaNum).padStart(2, '0')}/${String(mesNum).padStart(2, '0')}`;
+        const dataIso = `${anoNum}-${String(mesNum).padStart(2, '0')}-${String(diaNum).padStart(2, '0')}`;
 
+        // 1. Entradas previstas (Liquidações de Cartões D+1/D+30, PIX na hora e Repasse semanal Quarta-feira)
         let entradas = 0;
+        if (d.getDay() === 5 || d.getDay() === 6) entradas = 960.00; // Sexta e Sábado
+        else if (d.getDay() === 0) entradas = 780.00; // Domingo
+        else if (d.getDay() === 3) entradas = 1250.00; // Quarta (Repasse adquirentes / Marketplace)
+        else entradas = 510.00; // Dias de semana normais
+
+        // Se houver pedidos reais do dia registrado no store:
+        const pedidosDia = (store.pedidos || []).filter(p => p.dataIso === dataIso);
+        if (pedidosDia.length > 0) {
+          const somaVendas = pedidosDia.reduce((a, b) => a + (b.total || 0), 0);
+          entradas = Math.max(entradas, somaVendas);
+        }
+
+        // 2. Saídas previstas das Contas a Pagar / Boletos
         let saidas = 0;
-        let descSaida = '';
+        let nomesSaidas = [];
 
-        if (d.getDay() === 5 || d.getDay() === 6) entradas = 920.00;
-        else if (d.getDay() === 0) entradas = 750.00;
-        else if (d.getDay() === 3) entradas = 1100.00; // Repasse iFood cai na quarta-feira!
-        else entradas = 480.00;
+        contas.forEach(c => {
+          if (!c.dataVencimento) return;
+          let venceHoje = false;
+          if (c.dataVencimento === dataIso) {
+            venceHoje = true;
+          } else if (c.recorrente) {
+            const diaVenc = parseInt(c.dataVencimento.split('-')[2] || c.dataVencimento.split('/')[0], 10);
+            if (diaVenc === diaNum) venceHoje = true;
+          }
 
-        // Vencimentos de custos fixos / contas programadas
-        if (diaNum === 5) { saidas += 2500.00; descSaida = 'Pró-Labore Sócios'; }
-        if (diaNum === 10) { saidas += 1700.00; descSaida = 'Aluguel Ponto'; }
-        if (diaNum === 12) { saidas += 750.00; descSaida = 'Energia Elétrica'; }
+          if (venceHoje) {
+            const v = parseFloat(c.valor) || 0;
+            saidas += v;
+            nomesSaidas.push(`${c.descricao} (R$ ${Math.round(v)})`);
+          }
+        });
 
+        const descSaida = nomesSaidas.join(' • ');
         saldoAcumulado = saldoAcumulado + entradas - saidas;
 
         diasProjecao.push({
           dataIso,
-          diaFormatado: `${String(diaNum).padStart(2, '0')}/10`,
+          diaFormatado,
           diaSemana: diaSemanaStr,
           entradas,
           saidas,
@@ -5365,14 +5612,14 @@
           diaCritico = dp;
         }
 
-        const saldoCor = dp.saldoProjetado >= 0 ? 'text-slate-900' : 'text-rose-600 font-black';
+        const saldoCor = dp.saldoProjetado >= 0 ? 'text-slate-900 font-black' : 'text-rose-600 font-black';
         const cardBg = dp.saldoProjetado >= 0 ? 'bg-slate-50/50 border-slate-100' : 'bg-rose-50 border-rose-200';
 
         return `
           <div class="flex items-center justify-between p-2 rounded-lg border ${cardBg} text-xs">
             <div class="flex items-center gap-2">
               <span class="font-bold text-slate-800 text-[11px]">${dp.diaFormatado} (${dp.diaSemana})</span>
-              ${dp.descSaida ? `<span class="text-[9px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-bold">${dp.descSaida}</span>` : ''}
+              ${dp.descSaida ? `<span class="text-[9px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-bold" title="${dp.descSaida}">${dp.descSaida.length > 28 ? dp.descSaida.substring(0, 28) + '...' : dp.descSaida}</span>` : ''}
             </div>
             <div class="flex items-center gap-3 text-right">
               <span class="text-[10px] text-emerald-700 font-bold">+R$ ${Math.round(dp.entradas)}</span>
@@ -5389,16 +5636,80 @@
           alerta.innerHTML = `
             <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"></i>
             <div>
-              <span class="block font-black text-rose-900">Alerta de Liquidez em ${diaCritico.diaFormatado}:</span>
-              <span class="font-normal text-rose-800">Saldo projetado negativo em <strong>-R$ ${formatarNumero(Math.abs(diaCritico.saldoProjetado))}</strong> no vencimento de <strong>${diaCritico.descSaida}</strong>. Ação: Antecipe recebíveis de cartão ou negocie postergação de 3 dias para não usar cheque especial.</span>
+              <span class="block font-black text-rose-900">Alerta de Liquidez em ${diaCritico.diaFormatado} (${diaCritico.diaSemana}):</span>
+              <span class="font-normal text-rose-800">Saldo projetado negativo em <strong>-R$ ${formatarNumero(Math.abs(diaCritico.saldoProjetado))}</strong> com o vencimento de <strong>${diaCritico.descSaida}</strong>. Ação: Antecipe recebíveis de cartão da semana ou negocie prorrogação de 3 dias no boleto para evitar juros e cheque especial.</span>
             </div>
           `;
         } else {
           alerta.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-center gap-2';
           alerta.innerHTML = `
             <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
-            <span>Liquidez Saudável: Todas as saídas dos próximos 10 dias estão cobertas pelas entradas previstas.</span>
+            <span>Liquidez Saudável: Todas as saídas e boletos dos próximos 15 dias estão cobertos pelas entradas previstas em conta.</span>
           `;
+        }
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    /**
+     * Sincronização em Tempo Real com Pedidos do Backend e do Cardápio Digital
+     */
+    async function sincronizarPedidosApi() {
+      let pedidosReais = [];
+      try {
+        const localReais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
+        if (Array.isArray(localReais)) {
+          pedidosReais = pedidosReais.concat(localReais);
+        }
+      } catch (e) {}
+
+      try {
+        const token = localStorage.getItem('nalim_token') || authToken;
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const res = await fetch('/api/operacional/pedidos', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          const lista = Array.isArray(data) ? data : (Array.isArray(data.pedidos) ? data.pedidos : []);
+          lista.forEach(dbPed => {
+            const jaNaLista = pedidosReais.some(r => r.id === dbPed.id || (r.numero_comanda && r.numero_comanda === dbPed.numero_comanda));
+            if (!jaNaLista) {
+              pedidosReais.push({
+                id: dbPed.id,
+                numero_comanda: dbPed.numero_comanda,
+                dataHora: dbPed.data_hora || `${new Date().toISOString().split('T')[0]} 12:00`,
+                dataIso: dbPed.data_iso || (dbPed.data_hora ? dbPed.data_hora.split(' ')[0] : new Date().toISOString().split('T')[0]),
+                identificacao: dbPed.identificacao || `Comanda #${dbPed.numero_comanda || dbPed.id}`,
+                canal: dbPed.canal || 'Cardápio Digital',
+                pagto: dbPed.forma_pagto || 'PIX',
+                total: dbPed.valor_bruto || 0,
+                cmv: dbPed.cmv_total || ((dbPed.valor_bruto || 0) * 0.28),
+                lucro: dbPed.lucro_liquido || ((dbPed.valor_bruto || 0) - (dbPed.cmv_total || ((dbPed.valor_bruto || 0) * 0.28)) - (dbPed.taxa_canal || 0)),
+                itens: (dbPed.itens || []).map(it => `${it.quantidade}x ${it.nome}`).join(' | '),
+                itensDetalhados: (dbPed.itens || []).map(it => ({
+                  produtoCodigo: 'PROD_DIGITAL',
+                  nome: it.nome,
+                  qtd: it.quantidade,
+                  precoUnit: it.preco_unitario || 0,
+                  cmvUnit: it.cmv_unitario || ((it.preco_unitario || 0) * 0.28)
+                }))
+              });
+            }
+          });
+        }
+      } catch (err) {}
+
+      if (pedidosReais.length > 0) {
+        let mudou = false;
+        pedidosReais.forEach(pr => {
+          const jaExiste = store.pedidos.some(p => p.id === pr.id || (p.identificacao && pr.identificacao && p.identificacao === pr.identificacao));
+          if (!jaExiste) {
+            store.pedidos.unshift(pr);
+            mudou = true;
+          }
+        });
+        if (mudou) {
+          renderDashboard();
+          renderHistoricoPedidos();
         }
       }
     }
@@ -6257,6 +6568,8 @@ _Painel Estratégico NALIM Food Service_`;
       setInterval(sincronizarKdsRealtime, 3000);
       sincronizarMesasPdv();
       setInterval(sincronizarMesasPdv, 3000);
+      sincronizarPedidosApi();
+      setInterval(sincronizarPedidosApi, 4000);
       carregarConfigTaxasAdmin();
       lucide.createIcons();
     });
@@ -6537,6 +6850,109 @@ _Painel Estratégico NALIM Food Service_`;
             <span>RECEBER & ZERAR</span>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GESTÃO DE CONTAS A PAGAR & SALDO DE CAIXA (FEATURE 4 & MELHORIA 9) -->
+  <div id="modal-contas-pagar" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4 max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <span class="p-2 rounded-xl bg-purple-100 text-purple-800">
+            <i data-lucide="wallet" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-base">Gestão de Caixa & Contas a Pagar</h3>
+            <p class="text-xs text-slate-400">Agende vencimentos, boletos e despesas para alimentar a Previsão de Liquidez de 15 Dias</p>
+          </div>
+        </div>
+        <button type="button" onclick="fecharModalContasPagar()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Saldo Atual em Caixa/Conta -->
+      <div class="bg-purple-50/70 border border-purple-200 rounded-2xl p-4 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div>
+          <span class="text-[11px] font-black uppercase text-purple-900 tracking-wider block">Saldo Disponível em Conta / Caixa Hoje</span>
+          <span class="text-xs text-purple-700">Ponto de partida para a projeção de liquidez dos próximos 15 dias.</span>
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="relative flex-1 sm:w-40">
+            <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">R$</span>
+            <input type="number" step="0.01" id="input-saldo-inicial-caixa" value="1850.00" class="w-full bg-white border border-purple-300 rounded-xl pl-9 pr-3 py-2 text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500">
+          </div>
+          <button type="button" onclick="salvarSaldoCaixa()" class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-black rounded-xl transition shadow-2xs shrink-0 cursor-pointer">
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulário de Nova Conta a Pagar -->
+      <form onsubmit="adicionarContaPagar(event)" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shrink-0 text-xs">
+        <h4 class="font-black text-slate-900 text-xs uppercase flex items-center gap-1.5">
+          <i data-lucide="calendar-plus" class="w-4 h-4 text-purple-700"></i>
+          <span>Agendar Novo Vencimento / Boleto</span>
+        </h4>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-6">
+            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Descrição da Conta / Fornecedor</label>
+            <input type="text" id="conta-pagar-desc" placeholder="Ex: Aluguel Ponto, Fornecedor Carnes, DAS MEI" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Valor (R$)</label>
+            <input type="number" step="0.01" id="conta-pagar-valor" placeholder="0,00" min="0.01" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-black text-slate-900 focus:ring-2 focus:ring-purple-500">
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Data Vencimento</label>
+            <input type="date" id="conta-pagar-data" required class="w-full bg-white border border-slate-300 rounded-xl p-2 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+          <div class="flex items-center gap-4 w-full sm:w-auto">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Categoria</label>
+              <select id="conta-pagar-cat" class="bg-white border border-slate-300 rounded-xl p-2 text-xs font-bold text-slate-800">
+                <option value="Insumos">Insumos / Mercadorias</option>
+                <option value="Ocupação">Ocupação / Aluguel</option>
+                <option value="Pessoal">Pessoal / Pró-Labore</option>
+                <option value="Utilidades">Utilidades (Luz / Água / Gás)</option>
+                <option value="Impostos">Impostos & Taxas</option>
+                <option value="Outros">Outras Despesas</option>
+              </select>
+            </div>
+            <label class="flex items-center gap-1.5 cursor-pointer mt-4">
+              <input type="checkbox" id="conta-pagar-recorrente" checked class="rounded text-purple-600 focus:ring-purple-500">
+              <span class="text-[11px] font-bold text-slate-700">Recorrente Mensal</span>
+            </label>
+          </div>
+          <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer mt-2 sm:mt-0">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Agendar Conta</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Lista de Contas Cadastradas -->
+      <div class="space-y-2 flex-1 overflow-hidden flex flex-col">
+        <div class="flex justify-between items-center shrink-0">
+          <span class="text-xs font-black text-slate-800 uppercase tracking-wider">Vencimentos Programados</span>
+          <div class="text-xs font-bold text-slate-500">
+            Total Programado: <strong class="text-rose-600 font-black text-sm" id="contas-pagar-total-agendado">R$ 0,00</strong>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1" id="contas-pagar-lista">
+          <!-- Renderizado dinamicamente -->
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex justify-end shrink-0">
+        <button type="button" onclick="fecharModalContasPagar()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+          Concluir & Atualizar Previsão
+        </button>
       </div>
     </div>
   </div>

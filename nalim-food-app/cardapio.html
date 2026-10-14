@@ -126,14 +126,15 @@
         <span>30 - 50 min</span>
       </div>
       <div class="h-3 w-px bg-slate-200"></div>
+      <div class="h-3 w-px bg-slate-200"></div>
       <div class="flex items-center gap-1.5">
         <i data-lucide="bike" class="w-3.5 h-3.5 text-brand-600"></i>
-        <span id="banner-taxa-entrega">Taxa: R$ 5,00</span>
+        <span id="banner-taxa-entrega">Taxa de Entrega: R$ 5,00</span>
       </div>
       <div class="h-3 w-px bg-slate-200"></div>
-      <div class="flex items-center gap-1 text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full font-extrabold text-[10px]">
-        <i data-lucide="gift" class="w-3 h-3 text-emerald-700"></i>
-        <span>Grátis acima de R$ 60</span>
+      <div class="flex items-center gap-1 text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full font-extrabold text-[10px]">
+        <i data-lucide="store" class="w-3 h-3 text-brand-600"></i>
+        <span>Retirada Balcão: Grátis</span>
       </div>
     </div>
 
@@ -551,15 +552,9 @@
           <label class="font-bold text-slate-700 block mb-1">Nome do Estabelecimento:</label>
           <input type="text" id="cfg-nome" placeholder="Ex: NALIM Burger & Cozinha" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
         </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="font-bold text-slate-700 block mb-1">Taxa de Entrega (R$):</label>
-            <input type="number" step="0.5" id="cfg-taxa" placeholder="5.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
-          </div>
-          <div>
-            <label class="font-bold text-slate-700 block mb-1">Grátis a partir de (R$):</label>
-            <input type="number" step="1" id="cfg-frete-gratis" placeholder="60.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
-          </div>
+        <div>
+          <label class="font-bold text-slate-700 block mb-1">Taxa de Entrega Fixa (R$):</label>
+          <input type="number" step="0.5" id="cfg-taxa" placeholder="5.00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800">
         </div>
       </div>
       <div class="flex items-center gap-2 pt-2">
@@ -583,8 +578,7 @@
     let lojaConfig = {
       whatsapp: localStorage.getItem('nalim_whatsapp_delivery') || '5511999999999',
       nome: localStorage.getItem('nalim_empresa_nome') || 'NALIM Burger & Cozinha',
-      taxaEntrega: parseFloat(localStorage.getItem('nalim_taxa_entrega') || '5.00'),
-      freteGratisApartirDe: parseFloat(localStorage.getItem('nalim_frete_gratis') || '60.00')
+      taxaEntrega: parseFloat(localStorage.getItem('nalim_taxa_entrega') || '5.00')
     };
 
     // Produtos Padrão Deliciosos e Testados
@@ -698,7 +692,6 @@
       document.getElementById('cfg-whatsapp').value = lojaConfig.whatsapp;
       document.getElementById('cfg-nome').value = lojaConfig.nome;
       document.getElementById('cfg-taxa').value = lojaConfig.taxaEntrega;
-      document.getElementById('cfg-frete-gratis').value = lojaConfig.freteGratisApartirDe;
     }
 
     async function carregarProdutos() {
@@ -1104,7 +1097,37 @@
         formEnd.classList.add('hidden');
       }
 
+      atualizarRotulosPagamento();
       atualizarValoresCheckout();
+    }
+
+    function atualizarRotulosPagamento() {
+      const seletor = document.getElementById('seletor-pagamento');
+      if (!seletor) return;
+
+      const isRetirada = (tipoEntrega === 'retirada');
+      seletor.innerHTML = `
+        <label class="border-2 border-brand-600 bg-brand-50 text-brand-800 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center">
+          <input type="radio" name="forma_pagto" value="PIX" class="sr-only" checked onchange="atualizarEstiloPagamento()">
+          <i data-lucide="qr-code" class="w-4 h-4 mb-1 text-emerald-600"></i>
+          <span>PIX</span>
+          <span class="text-[9px] text-emerald-700 font-normal">Pagar agora</span>
+        </label>
+        <label class="border-2 border-slate-200 bg-white text-slate-600 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center hover:bg-slate-50">
+          <input type="radio" name="forma_pagto" value="${isRetirada ? 'Cartão no Balcão' : 'Cartão (Entrega)'}" class="sr-only" onchange="atualizarEstiloPagamento()">
+          <i data-lucide="credit-card" class="w-4 h-4 mb-1 text-slate-500"></i>
+          <span>Cartão</span>
+          <span class="text-[9px] text-slate-400 font-normal">${isRetirada ? 'No balcão' : 'Na entrega'}</span>
+        </label>
+        <label class="border-2 border-slate-200 bg-white text-slate-600 rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col items-center hover:bg-slate-50">
+          <input type="radio" name="forma_pagto" value="${isRetirada ? 'Dinheiro no Balcão' : 'Dinheiro'}" class="sr-only" onchange="atualizarEstiloPagamento()">
+          <i data-lucide="banknote" class="w-4 h-4 mb-1 text-slate-500"></i>
+          <span>Dinheiro</span>
+          <span class="text-[9px] text-slate-400 font-normal">${isRetirada ? 'No balcão' : 'Com troco'}</span>
+        </label>
+      `;
+      lucide.createIcons();
+      atualizarEstiloPagamento();
     }
 
     function atualizarValoresCheckout() {
@@ -1112,19 +1135,14 @@
       let taxa = 0;
 
       if (tipoEntrega === 'delivery') {
-        if (subtotal >= lojaConfig.freteGratisApartirDe) {
-          taxa = 0;
-          document.getElementById('badge-taxa-checkout').textContent = 'GRÁTIS! 🎁';
-        } else {
-          taxa = lojaConfig.taxaEntrega;
-          document.getElementById('badge-taxa-checkout').textContent = `Taxa ${formatarMoeda(taxa)}`;
-        }
+        taxa = lojaConfig.taxaEntrega;
+        document.getElementById('badge-taxa-checkout').textContent = `Taxa ${formatarMoeda(taxa)}`;
       }
 
       const total = subtotal + taxa;
 
       document.getElementById('resumo-subtotal').textContent = formatarMoeda(subtotal);
-      document.getElementById('resumo-taxa').textContent = taxa === 0 ? 'GRÁTIS' : formatarMoeda(taxa);
+      document.getElementById('resumo-taxa').textContent = taxa === 0 ? 'R$ 0,00 (Retirada)' : formatarMoeda(taxa);
       document.getElementById('resumo-total').textContent = formatarMoeda(total);
     }
 
@@ -1139,14 +1157,14 @@
         }
       });
 
-      const selected = document.querySelector('input[name="forma_pagto"]:checked').value;
+      const selected = document.querySelector('input[name="forma_pagto"]:checked')?.value || 'PIX';
       const campoTroco = document.getElementById('campo-troco');
-      if (selected === 'Dinheiro') campoTroco.classList.remove('hidden');
+      if (selected.includes('Dinheiro')) campoTroco.classList.remove('hidden');
       else campoTroco.classList.add('hidden');
     }
 
     // ==============================================================
-    // ENVIO DO PEDIDO PARA O WHATSAPP E INTEGRAÇÃO KDS
+    // ENVIO DO PEDIDO PARA O WHATSAPP E INTEGRAÇÃO KDS REAL
     // ==============================================================
     async function finalizarPedidoWhatsApp() {
       if (sacola.length === 0) {
@@ -1185,21 +1203,108 @@
         }
       }
 
-      const formaPagto = document.querySelector('input[name="forma_pagto"]:checked').value;
-      const troco = formaPagto === 'Dinheiro' ? document.getElementById('troco-para').value.trim() : '';
+      const formaPagto = document.querySelector('input[name="forma_pagto"]:checked')?.value || 'PIX';
+      const troco = formaPagto.includes('Dinheiro') ? document.getElementById('troco-para').value.trim() : '';
 
       const subtotal = sacola.reduce((acc, it) => acc + (it.precoUnit * it.qtd), 0);
-      let taxa = 0;
-      if (tipoEntrega === 'delivery') {
-        taxa = subtotal >= lojaConfig.freteGratisApartirDe ? 0 : lojaConfig.taxaEntrega;
-      }
+      const taxa = (tipoEntrega === 'delivery') ? lojaConfig.taxaEntrega : 0;
       const totalGeral = subtotal + taxa;
 
-      // Gera número sequencial de comanda
-      const numComanda = Math.floor(100 + Math.random() * 900);
       const agoraHora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // 1. FORMATAR MENSAGEM DO WHATSAPP
+      // Desabilita botão temporariamente para evitar cliques duplos
+      const btnEnviar = document.getElementById('btn-enviar-pedido');
+      btnEnviar.disabled = true;
+      btnEnviar.innerHTML = `<span class="animate-pulse">GERANDO COMANDA NA COZINHA...</span>`;
+
+      // 1. OBTÉM NÚMERO SEQUENCIAL REAL VIA API BACKEND OU SEQUENCIAL PERSISTENTE
+      let numComanda = null;
+      let pedidoId = null;
+
+      try {
+        const payloadApi = {
+          identificacao: `${tipoEntrega === 'delivery' ? 'Delivery' : 'Retirada'} (${nomeCliente} - ${whatsappCliente})`,
+          canal: 'Cardápio Digital',
+          forma_pagto: formaPagto,
+          endereco: tipoEntrega === 'delivery' ? `${rua}, ${numero} - ${bairro}` : 'Retirada no Balcão',
+          itens: sacola.map(it => ({
+            produto_codigo: it.produtoCodigo,
+            nome: it.nome,
+            quantidade: it.qtd,
+            modificacoes: it.modificacoes || 'Padrão da Casa',
+            preco_unitario: it.precoUnit
+          }))
+        };
+
+        const res = await fetch(`${API_BASE}/api/operacional/public/pedidos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadApi)
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.numero_comanda) {
+            numComanda = data.numero_comanda;
+            pedidoId = data.pedido_id;
+          }
+        }
+      } catch (e) {
+        console.warn('Backend indisponível, usando numeração sequencial local:', e);
+      }
+
+      // Se offline ou não retornou número da API, utiliza numeração sequencial local garantida (sem Math.random)
+      if (!numComanda) {
+        let seqAtual = parseInt(localStorage.getItem('nalim_comanda_seq') || '105', 10);
+        seqAtual++;
+        localStorage.setItem('nalim_comanda_seq', seqAtual.toString());
+        numComanda = seqAtual;
+      }
+
+      // 2. SINCRONIZAÇÃO COM A COZINHA (KDS) & LOCAL STORAGE
+      try {
+        let kdsOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        kdsOrders.unshift({
+          id: numComanda,
+          dataHora: agoraHora,
+          identificacao: `${tipoEntrega === 'delivery' ? 'Delivery' : 'Retirada Balcão'} #${numComanda} (${nomeCliente})`,
+          canal: 'Cardápio Digital',
+          status: 'Na Chapa',
+          tempoDecorrido: 'Agora',
+          items: sacola.map(it => ({
+            nome: it.nome,
+            qtd: it.qtd,
+            modificacoes: it.modificacoes
+          }))
+        });
+        localStorage.setItem('nalim_kds_orders', JSON.stringify(kdsOrders));
+
+        // Guarda no histórico de pedidos reais para ser puxado no dashboard do dono
+        let pedidosReais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
+        pedidosReais.unshift({
+          id: pedidoId || numComanda,
+          numero_comanda: numComanda,
+          dataHora: `${new Date().toISOString().split('T')[0]} ${agoraHora}`,
+          dataIso: new Date().toISOString().split('T')[0],
+          identificacao: `${tipoEntrega === 'delivery' ? 'Delivery' : 'Retirada'} #${numComanda} (${nomeCliente})`,
+          canal: 'Cardápio Digital',
+          pagto: formaPagto,
+          total: totalGeral,
+          cmv: subtotal * 0.28,
+          lucro: totalGeral - (subtotal * 0.28) - (totalGeral * 0.015),
+          itens: sacola.map(it => `${it.qtd}x ${it.nome}`).join(' | '),
+          itensDetalhados: sacola.map(it => ({
+            produtoCodigo: it.produtoCodigo,
+            nome: it.nome,
+            qtd: it.qtd,
+            precoUnit: it.precoUnit,
+            cmvUnit: it.precoUnit * 0.28
+          }))
+        });
+        localStorage.setItem('nalim_pedidos_reais', JSON.stringify(pedidosReais));
+      } catch (err) {}
+
+      // 3. FORMATAR MENSAGEM DO WHATSAPP
       let itensFormatados = '';
       sacola.forEach(it => {
         itensFormatados += `\n• *${it.qtd}x ${it.nome}*`;
@@ -1211,20 +1316,20 @@
 
       let enderecoTexto = '';
       if (tipoEntrega === 'delivery') {
-        enderecoTexto = `🛵 *TIPO:* Delivery (Entrega)
+        enderecoTexto = `🛵 *TIPO:* Delivery (Entrega em Domicílio)
 📍 *Endereço:* ${rua}, Nº ${numero} - ${bairro}
 ${complemento ? `🏢 *Complemento:* ${complemento}\n` : ''}${referencia ? `📌 *Ponto de Ref:* ${referencia}\n` : ''}`;
       } else {
-        enderecoTexto = `🏬 *TIPO:* Retirada no Balcão (Balcão do Restaurante)\n`;
+        enderecoTexto = `🏬 *TIPO:* Retirada no Balcão (Cliente vai retirar na loja)\n`;
       }
 
       let infoPagto = `💳 *Forma de Pagamento:* ${formaPagto}`;
-      if (formaPagto === 'Dinheiro' && troco) {
+      if (formaPagto.includes('Dinheiro') && troco) {
         infoPagto += ` (Troco para: ${troco})`;
       }
 
       const msgWhatsApp = `🍔 *NOVO PEDIDO ONLINE — ${lojaConfig.nome.toUpperCase()}*
-*Pedido #${numComanda}* • *${agoraHora}*
+*Comanda #${numComanda}* • *${agoraHora}*
 ----------------------------------------
 👤 *Cliente:* ${nomeCliente}
 📱 *WhatsApp:* ${whatsappCliente}
@@ -1234,66 +1339,29 @@ ${enderecoTexto}----------------------------------------
 ----------------------------------------
 💵 *RESUMO FINANCEIRO:*
 • Subtotal: ${formatarMoeda(subtotal)}
-• Taxa de Entrega: ${taxa === 0 ? 'GRÁTIS' : formatarMoeda(taxa)}
+• Taxa de Entrega: ${taxa === 0 ? 'R$ 0,00 (Retirada)' : formatarMoeda(taxa)}
 💰 *TOTAL: ${formatarMoeda(totalGeral)}*
 
 ${infoPagto}
 ----------------------------------------
-_Pedido gerado pelo Cardápio Digital NALIM_`;
+_Pedido integrado ao sistema NALIM Food Service_`;
 
-      // 2. SINCRONIZAÇÃO COM A COZINHA (KDS) & BANCO DE DADOS
-      // Salva em localStorage no padrão do NALIM KDS
-      try {
-        let kdsOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        kdsOrders.unshift({
-          id: numComanda,
-          dataHora: agoraHora,
-          identificacao: `${tipoEntrega === 'delivery' ? 'Delivery' : 'Retirada'} #${numComanda} (${nomeCliente})`,
-          canal: 'Delivery Próprio',
-          status: 'Na Chapa',
-          tempoDecorrido: 'Agora',
-          items: sacola.map(it => ({
-            nome: it.nome,
-            qtd: it.qtd,
-            modificacoes: it.modificacoes
-          }))
-        });
-        localStorage.setItem('nalim_kds_orders', JSON.stringify(kdsOrders));
-      } catch (err) {}
-
-      // Tenta enviar para a API Python se o servidor estiver rodando
-      try {
-        fetch(`${API_BASE}/api/operacional/public/pedidos`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            identificacao: `${tipoEntrega === 'delivery' ? 'Delivery' : 'Retirada'} #${numComanda} (${nomeCliente} - ${whatsappCliente})`,
-            canal: 'Delivery Próprio',
-            forma_pagto: formaPagto,
-            endereco: tipoEntrega === 'delivery' ? `${rua}, ${numero} - ${bairro}` : 'Retirada Balcão',
-            itens: sacola.map(it => ({
-              produto_codigo: it.produtoCodigo,
-              quantidade: it.qtd,
-              modificacoes: it.modificacoes,
-              preco_unitario: it.precoUnit
-            }))
-          })
-        }).catch(() => {});
-      } catch (e) {}
-
-      // 3. ABRIR O WHATSAPP DO RESTAURANTE
+      // 4. ABRIR O WHATSAPP DO RESTAURANTE
       const urlWhats = `https://api.whatsapp.com/send?phone=${lojaConfig.whatsapp}&text=${encodeURIComponent(msgWhatsApp)}`;
       window.open(urlWhats, '_blank');
 
-      // 4. FEEDBACK DE SUCESSO & LIMPEZA DA SACOLA
+      // 5. FEEDBACK DE SUCESSO & LIMPEZA DA SACOLA
       fecharDrawerSacola();
       sacola = [];
       atualizarSacolaUI();
 
+      btnEnviar.disabled = false;
+      btnEnviar.innerHTML = `<i data-lucide="message-circle" class="w-5 h-5"></i><span>ENVIAR PEDIDO NO WHATSAPP</span>`;
+
       document.getElementById('sucesso-numero-comanda').textContent = `Comanda #${numComanda}`;
       document.getElementById('sucesso-tempo-estimado').textContent = tipoEntrega === 'delivery' ? 
         'Tempo estimado de entrega: 30 a 50 minutos' : 
-        'Tempo estimado para retirada: 15 a 25 minutos';
+        'Tempo estimado para retirada no balcão: 15 a 25 minutos';
       document.getElementById('modal-sucesso').classList.remove('hidden');
       lucide.createIcons();
     }
@@ -1315,7 +1383,6 @@ _Pedido gerado pelo Cardápio Digital NALIM_`;
       const zap = document.getElementById('cfg-whatsapp').value.replace(/\D/g, '');
       const nome = document.getElementById('cfg-nome').value.trim();
       const taxa = parseFloat(document.getElementById('cfg-taxa').value) || 5.00;
-      const gratis = parseFloat(document.getElementById('cfg-frete-gratis').value) || 60.00;
 
       if (zap) {
         lojaConfig.whatsapp = zap;
@@ -1328,12 +1395,8 @@ _Pedido gerado pelo Cardápio Digital NALIM_`;
       lojaConfig.taxaEntrega = taxa;
       localStorage.setItem('nalim_taxa_entrega', taxa.toString());
 
-      lojaConfig.freteGratisApartirDe = gratis;
-      localStorage.setItem('nalim_frete_gratis', gratis.toString());
-
-      carregarConfiguracoes();
       fecharModalConfig();
-      alert('Configurações do cardápio salvas com sucesso!');
+      alert('✓ Configurações do cardápio salvas com sucesso!');
     }
 
     // Utilitários de Formatação
