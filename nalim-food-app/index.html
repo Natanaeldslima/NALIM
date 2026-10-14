@@ -288,6 +288,23 @@
     <!-- CONTAINER DE CONTEÚDO DINÂMICO -->
     <main class="p-4 sm:p-6 space-y-6">
 
+      <!-- BANNER GLOBAL DE AVISO: PEDIDOS PRONTOS NA COZINHA (VISÍVEL EM TODAS AS ABAS) -->
+      <div id="banner-pedidos-prontos-balcao" class="hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 p-4 rounded-2xl shadow-xl border-2 border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse sticky top-2 z-30">
+        <div class="flex items-center gap-3">
+          <span class="w-11 h-11 rounded-2xl bg-slate-950 text-amber-300 flex items-center justify-center text-xl font-black shrink-0 shadow-md">
+            🔔
+          </span>
+          <div>
+            <span class="block text-xs font-black uppercase tracking-wider text-slate-950">PEDIDO PRONTO NA COZINHA!</span>
+            <span id="banner-pedidos-prontos-balcao-detalhe" class="text-sm font-black text-amber-950 block">Pedido #105 — Balcão / Retirada</span>
+          </div>
+        </div>
+        <button type="button" onclick="marcarPedidoProntoBalcaoEntregue()" class="bg-slate-950 hover:bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer shrink-0">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+          <span>✓ Marcar como Entregue / Concluir</span>
+        </button>
+      </div>
+
       <!-- ========================================================== -->
       <!-- [1. OPERACIONAL] CARDÁPIO / PDV                            -->
       <!-- ========================================================== -->
@@ -324,23 +341,6 @@
               💻 PDV
             </span>
           </div>
-        </div>
-
-        <!-- BANNER DE AVISO: PEDIDOS DO BALCÃO PRONTOS PARA RETIRADA -->
-        <div id="banner-pedidos-prontos-balcao" class="hidden bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 p-3.5 rounded-2xl shadow-lg border border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse">
-          <div class="flex items-center gap-3">
-            <span class="w-10 h-10 rounded-xl bg-slate-950 text-amber-400 flex items-center justify-center text-lg font-black shrink-0 shadow-md">
-              🔔
-            </span>
-            <div>
-              <span class="block text-xs font-black uppercase tracking-wider text-slate-950">PEDIDO DO BALCÃO PRONTO NA COZINHA!</span>
-              <span id="banner-pedidos-prontos-balcao-detalhe" class="text-xs font-bold text-amber-950 block">Pedido #105 — Balcão / Retirada</span>
-            </div>
-          </div>
-          <button type="button" onclick="marcarPedidoProntoBalcaoEntregue()" class="bg-slate-950 hover:bg-black text-white px-4 py-2 rounded-xl text-xs font-black shadow-md transition active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0">
-            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-            <span>✓ Entregue ao Cliente / Concluir</span>
-          </button>
         </div>
 
         <!-- Grade Cardápio + Comanda Lateral -->
@@ -2065,7 +2065,7 @@
   <!-- JAVASCRIPT: LÓGICA E PERMISSÕES DINÂMICAS                      -->
   <!-- ============================================================== -->
   <script>
-    const API_BASE = window.location.origin;
+    const API_BASE = (window.location.protocol === 'file:' || window.location.port === '5500' || window.location.port === '3000' || window.location.port === '5173') ? 'http://127.0.0.1:8000' : window.location.origin;
     let authToken = localStorage.getItem('nalim_token') || null;
 
     function safeLucide() {
@@ -3501,7 +3501,28 @@
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // SE FOR MESA / SALÃO: Lança direto na comanda acumulada da Mesa no Backend
+      let ticketIdBackend = null;
       if (canal === 'Salão' && mesaAlvo) {
+        if (!mesasPdvState[mesaAlvo]) {
+          mesasPdvState[mesaAlvo] = { status: 'LIVRE', total: 0.0, itens: [], abertaEm: null };
+        }
+        mesasPdvState[mesaAlvo].status = 'OCUPADA';
+        mesasPdvState[mesaAlvo].total = (mesasPdvState[mesaAlvo].total || 0) + subtotal;
+        const novosItensMesa = store.currentOrder.items.map(it => ({
+          produto_codigo: it.produtoCodigo,
+          nome: it.nome,
+          quantidade: it.qtd,
+          preco_unitario: it.precoUnit,
+          total: it.precoUnit * it.qtd,
+          modificacoes: it.modificacoes || null,
+          hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+        mesasPdvState[mesaAlvo].itens = (mesasPdvState[mesaAlvo].itens || []).concat(novosItensMesa);
+        if (!mesasPdvState[mesaAlvo].abertaEm) mesasPdvState[mesaAlvo].abertaEm = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        salvarMesasPdvLocal();
+        atualizarSelectMesasPdv();
+
         try {
           const res = await fetch(`${API_BASE}/api/operacional/mesas/${encodeURIComponent(mesaAlvo)}/adicionar-itens`, {
             method: 'POST',
@@ -3511,6 +3532,7 @@
           if (res.ok) {
             const data = await res.json();
             if (data.numero_comanda) ticketNumeroFinal = data.numero_comanda;
+            if (data.pedido_kds_id) ticketIdBackend = data.pedido_kds_id;
             console.log('[NALIM MESAS] Itens adicionados com sucesso à', mesaAlvo, data);
           }
         } catch (err) {
@@ -3536,6 +3558,7 @@
           if (res.ok) {
             const data = await res.json();
             if (data.numero_comanda) ticketNumeroFinal = data.numero_comanda;
+            if (data.id) ticketIdBackend = data.id;
           }
         } catch (err) {
           console.warn('[NALIM PEDIDO] Erro ao registrar pedido regular:', err);
@@ -3547,7 +3570,8 @@
 
       // 1.5 Envia IMEDIATAMENTE para a Cozinha (KDS) em tempo real
       const novoTicketKds = {
-        id: ticketNumeroFinal,
+        id: ticketIdBackend || ticketNumeroFinal,
+        numero_comanda: ticketNumeroFinal,
         dataHora: agoraHora,
         identificacao: identificacaoFinal,
         solicitante: 'Balcão',
@@ -3566,10 +3590,14 @@
         })
       };
 
-      store.kdsOrders.unshift(novoTicketKds);
+      const jaTemKds = store.kdsOrders.some(o => o.id === novoTicketKds.id || (o.numero_comanda && o.numero_comanda === novoTicketKds.numero_comanda));
+      if (!jaTemKds) {
+        store.kdsOrders.unshift(novoTicketKds);
+      }
 
       try {
         let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        ords = ords.filter(o => o.id !== novoTicketKds.id && o.numero_comanda !== novoTicketKds.numero_comanda);
         ords.unshift(novoTicketKds);
         localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
       } catch (e) {}
@@ -3827,21 +3855,23 @@
     }
 
     function marcarKdsPronto(ticketId) {
-      const ord = store.kdsOrders.find(o => o.id === ticketId);
-      const identTicket = ord ? ord.identificacao : `Pedido #${ticketId}`;
+      const ord = store.kdsOrders.find(o => o.id === ticketId || (o.numero_comanda && o.numero_comanda === ticketId));
+      const ticketIdReal = ord ? ord.id : ticketId;
+      const numComandaReal = ord ? (ord.numero_comanda || ticketIdReal) : ticketId;
+      const identTicket = ord ? ord.identificacao : `Pedido #${numComandaReal}`;
       const solicitanteTicket = ord ? (ord.solicitante || (ord.canal === 'Balcão' ? 'Balcão' : 'Garçom')) : 'Balcão';
       const canalTicket = ord ? (ord.canal || 'Balcão') : 'Balcão';
 
       // 1. Grava na fila direta de pedidos prontos para alertar quem solicitou
       try {
         let prontos = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
-        if (!prontos.some(p => p.id === ticketId)) {
+        if (!prontos.some(p => p.id === ticketIdReal || p.numero_comanda === numComandaReal)) {
           prontos.unshift({
-            id: ticketId,
+            id: ticketIdReal,
+            numero_comanda: numComandaReal,
             identificacao: identTicket,
             solicitante: solicitanteTicket,
             canal: canalTicket,
-            numero_comanda: ticketId,
             hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           });
           localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(prontos));
@@ -3849,26 +3879,25 @@
       } catch (e) {}
 
       // 2. Remove da fila de preparo da cozinha (CONCLUÍDO COM 1 CLIQUE ÚNICO)
-      store.kdsOrders = store.kdsOrders.filter(o => o.id !== ticketId);
+      store.kdsOrders = store.kdsOrders.filter(o => o.id !== ticketIdReal && o.id !== numComandaReal && o.numero_comanda !== numComandaReal);
 
       // 3. Atualiza localStorage do KDS e grava na lista de finalizados para NUNCA voltar ao atualizar
       try {
         let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        ords = ords.filter(o => o.id !== ticketId);
+        ords = ords.filter(o => o.id !== ticketIdReal && o.id !== numComandaReal && o.numero_comanda !== numComandaReal);
         localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
 
         let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
-        if (!finalizados.includes(ticketId)) {
-          finalizados.push(ticketId);
-          localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
-        }
+        if (!finalizados.includes(ticketIdReal)) finalizados.push(ticketIdReal);
+        if (!finalizados.includes(numComandaReal)) finalizados.push(numComandaReal);
+        localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
       } catch (e) {}
 
       // 4. Envia para o backend API
       const token = localStorage.getItem('nalim_token') || authToken;
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      fetch(`${API_BASE}/api/operacional/kds/${ticketId}/status`, {
+      fetch(`${API_BASE}/api/operacional/kds/${ticketIdReal}/status`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ status_kds: 'Pronto' })
@@ -3897,9 +3926,11 @@
           if (data.tickets && Array.isArray(data.tickets)) {
             let mudou = false;
             data.tickets.forEach(tk => {
-              if (finalizados.includes(tk.id)) return;
-              const existente = store.kdsOrders.find(o => o.id === tk.id);
+              if (finalizados.includes(tk.id) || (tk.numero_comanda && finalizados.includes(tk.numero_comanda))) return;
+              const existente = store.kdsOrders.find(o => o.id === tk.id || (o.numero_comanda && o.numero_comanda === tk.numero_comanda));
               if (existente) {
+                existente.id = tk.id;
+                existente.numero_comanda = tk.numero_comanda;
                 if (existente.status !== tk.status) {
                   existente.status = tk.status;
                   mudou = true;
@@ -3907,6 +3938,7 @@
               } else {
                 store.kdsOrders.unshift({
                   id: tk.id,
+                  numero_comanda: tk.numero_comanda,
                   dataHora: tk.data_hora,
                   identificacao: tk.identificacao,
                   solicitante: tk.solicitante || (tk.canal === 'Balcão' ? 'Balcão' : 'Garçom'),
@@ -3931,8 +3963,8 @@
         const localOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
         let mudouLocal = false;
         localOrders.forEach(lo => {
-          if (finalizados.includes(lo.id)) return;
-          const existente = store.kdsOrders.find(o => o.id === lo.id);
+          if (finalizados.includes(lo.id) || (lo.numero_comanda && finalizados.includes(lo.numero_comanda))) return;
+          const existente = store.kdsOrders.find(o => o.id === lo.id || (o.numero_comanda && o.numero_comanda === lo.numero_comanda));
           if (existente) {
             if (existente.status !== lo.status) {
               existente.status = lo.status;
@@ -3957,7 +3989,9 @@
 
     function tocarAlertaSonoroBalcao() {
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const audioCtx = new AudioCtx();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
@@ -3974,8 +4008,19 @@
 
     function isPedidoParaBalcao(p) {
       if (!p) return false;
-      if (p.solicitante === 'Balcão' || p.canal === 'Balcão') return true;
-      if (typeof p.identificacao === 'string' && p.identificacao.toLowerCase().includes('balcão')) return true;
+      const sol = (p.solicitante || '').toLowerCase();
+      const ident = (typeof p.identificacao === 'string' ? p.identificacao.toLowerCase() : '');
+      const canal = (p.canal || '').toLowerCase();
+
+      // Se foi solicitado explicitamente pelo Balcão, SEMPRE notifica o Balcão
+      if (sol.includes('balcão') || sol.includes('balcao')) return true;
+
+      // Se foi solicitado pelo Garçom, NÃO notifica o Balcão (vai para o Garçom)
+      if (sol.includes('garçom') || sol.includes('garcom') || sol.includes('pedro')) return false;
+
+      // Sem solicitante explícito: canais Balcão, iFood, 99Food ou identificação com 'balcão' ou 'retirada'
+      if (canal.includes('balcão') || canal.includes('balcao') || ident.includes('balcão') || ident.includes('balcao')) return true;
+      if (ident.includes('retirada') || canal.includes('ifood') || canal.includes('99')) return true;
       return false;
     }
 
@@ -4038,11 +4083,12 @@
       if (pedidosProntosBalcao.length === 0) return;
       const ticket = pedidosProntosBalcao[0];
       const ticketId = ticket.id;
+      const numComanda = ticket.numero_comanda || ticketId;
 
       // 1. Remove da fila direta local
       try {
         let filaDireta = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
-        filaDireta = filaDireta.filter(p => p.id !== ticketId);
+        filaDireta = filaDireta.filter(p => p.id !== ticketId && p.id !== numComanda && p.numero_comanda !== numComanda);
         localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(filaDireta));
       } catch (e) {}
 
@@ -4058,9 +4104,17 @@
         });
       } catch (e) {}
 
-      pedidosProntosBalcao = pedidosProntosBalcao.filter(t => t.id !== ticketId);
+      // 3. Adiciona a finalizados
+      try {
+        let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
+        if (!finalizados.includes(ticketId)) finalizados.push(ticketId);
+        if (!finalizados.includes(numComanda)) finalizados.push(numComanda);
+        localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
+      } catch (e) {}
+
+      pedidosProntosBalcao = pedidosProntosBalcao.filter(t => t.id !== ticketId && t.id !== numComanda);
       verificarPedidosProntosBalcao();
-      alert(`✓ Pedido #${ticket.numero_comanda || ticketId} marcado como ENTREGUE ao cliente!`);
+      alert(`✓ Pedido #${numComanda} marcado como ENTREGUE ao cliente!`);
     }
 
     // ================================================================
@@ -6438,19 +6492,63 @@ _Painel Estratégico NALIM Food Service_`;
       }
     }
 
-    // SINCRONIZAÇÃO EM TEMPO REAL: Recebe pedidos novos do Cardápio Digital
+    // SINCRONIZAÇÃO EM TEMPO REAL ENTRE ABAS E APLICATIVOS (BALCÃO, GARÇOM, COZINHA)
     window.addEventListener('storage', (e) => {
       if (e.key === 'nalim_kds_orders' && e.newValue) {
         try {
           const novosPedidos = JSON.parse(e.newValue);
           if (Array.isArray(novosPedidos) && novosPedidos.length > 0) {
             novosPedidos.forEach(np => {
-              const jaExiste = store.kdsOrders.some(p => p.id === np.id);
+              const jaExiste = store.kdsOrders.some(p => p.id === np.id || (p.numero_comanda && p.numero_comanda === np.numero_comanda));
               if (!jaExiste) {
                 store.kdsOrders.unshift(np);
               }
             });
             renderKds();
+          }
+        } catch (err) {}
+      }
+
+      if (e.key === 'nalim_pedidos_prontos') {
+        verificarPedidosProntosBalcao();
+      }
+
+      if (e.key === 'nalim_mesas_consumo' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed && typeof parsed === 'object') {
+            mesasPdvState = parsed;
+            let totalOcupadas = 0;
+            let totalConsumoAberto = 0;
+            listaNomesMesasPdv.forEach(nome => {
+              const m = mesasPdvState[nome] || { status: 'LIVRE', total: 0 };
+              if (m.status === 'OCUPADA' || (m.total && m.total > 0)) {
+                totalOcupadas++;
+                totalConsumoAberto += (m.total || 0);
+              }
+            });
+
+            const badgeCount = document.getElementById('pdv-mesas-ocupadas-count');
+            if (badgeCount) badgeCount.textContent = totalOcupadas;
+            const modOcup = document.getElementById('pdv-modal-ocupadas-count');
+            const modLiv = document.getElementById('pdv-modal-livres-count');
+            const modTot = document.getElementById('pdv-modal-total-aberto');
+            if (modOcup) modOcup.textContent = totalOcupadas;
+            if (modLiv) modLiv.textContent = Math.max(0, listaNomesMesasPdv.length - totalOcupadas);
+            if (modTot) modTot.textContent = `R$ ${totalConsumoAberto.toFixed(2)}`;
+
+            atualizarSelectMesasPdv();
+            if (document.getElementById('pdv-canal-select')?.value === 'Salão') {
+              aoSelecionarMesaPdv(mesaAtivaPdv);
+            }
+            const modalMapa = document.getElementById('modal-mesas-pdv');
+            if (modalMapa && !modalMapa.classList.contains('hidden')) {
+              renderGridMesasPdv();
+            }
+            const modalExtrato = document.getElementById('modal-extrato-mesa-pdv');
+            if (modalExtrato && !modalExtrato.classList.contains('hidden') && mesaExtratoAtiva) {
+              recarregarItensExtratoPdv();
+            }
           }
         } catch (err) {}
       }
@@ -6546,7 +6644,31 @@ _Painel Estratégico NALIM Food Service_`;
     let mesaExtratoAtiva = null;
     let formaPagtoMesaPdv = 'PIX';
 
+    function salvarMesasPdvLocal() {
+      try {
+        localStorage.setItem('nalim_mesas_consumo', JSON.stringify(mesasPdvState));
+      } catch (e) {}
+    }
+
+    function carregarMesasPdvLocal() {
+      try {
+        const salvo = localStorage.getItem('nalim_mesas_consumo');
+        if (salvo) {
+          const parsed = JSON.parse(salvo);
+          if (parsed && typeof parsed === 'object') {
+            Object.keys(parsed).forEach(k => {
+              mesasPdvState[k] = parsed[k];
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
     async function sincronizarMesasPdv() {
+      // 1. Atualização imediata via cache local compartilhado com o Garçom
+      carregarMesasPdvLocal();
+
+      // 2. Consulta API backend
       try {
         const token = localStorage.getItem('nalim_token') || authToken;
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -6554,9 +6676,6 @@ _Painel Estratégico NALIM Food Service_`;
         if (res.ok) {
           const data = await res.json();
           if (data.mesas && Array.isArray(data.mesas)) {
-            let totalOcupadas = 0;
-            let totalConsumoAberto = 0;
-
             data.mesas.forEach(m => {
               mesasPdvState[m.numero] = {
                 status: m.status || 'LIVRE',
@@ -6564,42 +6683,50 @@ _Painel Estratégico NALIM Food Service_`;
                 itens: m.itens || [],
                 abertaEm: m.aberta_em || null
               };
-              if (m.status === 'OCUPADA' || m.consumo_acumulado > 0) {
-                totalOcupadas++;
-                totalConsumoAberto += (m.consumo_acumulado || 0);
-              }
             });
-
-            // Atualiza badge no topo do PDV
-            const badgeCount = document.getElementById('pdv-mesas-ocupadas-count');
-            if (badgeCount) badgeCount.textContent = totalOcupadas;
-
-            // Atualiza cards de resumo no modal se aberto
-            const modOcup = document.getElementById('pdv-modal-ocupadas-count');
-            const modLiv = document.getElementById('pdv-modal-livres-count');
-            const modTot = document.getElementById('pdv-modal-total-aberto');
-            if (modOcup) modOcup.textContent = totalOcupadas;
-            if (modLiv) modLiv.textContent = Math.max(0, listaNomesMesasPdv.length - totalOcupadas);
-            if (modTot) modTot.textContent = `R$ ${totalConsumoAberto.toFixed(2)}`;
-
-            atualizarSelectMesasPdv();
-            if (document.getElementById('pdv-canal-select')?.value === 'Salão') {
-              aoSelecionarMesaPdv(mesaAtivaPdv);
-            }
-
-            const modalMapa = document.getElementById('modal-mesas-pdv');
-            if (modalMapa && !modalMapa.classList.contains('hidden')) {
-              renderGridMesasPdv();
-            }
-
-            const modalExtrato = document.getElementById('modal-extrato-mesa-pdv');
-            if (modalExtrato && !modalExtrato.classList.contains('hidden') && mesaExtratoAtiva) {
-              recarregarItensExtratoPdv();
-            }
+            salvarMesasPdvLocal();
           }
         }
       } catch (e) {
-        console.log('[NALIM MESAS] Erro ao sincronizar mesas:', e);
+        console.log('[NALIM MESAS] Modo offline / sincronização via cache local');
+      }
+
+      let totalOcupadas = 0;
+      let totalConsumoAberto = 0;
+
+      listaNomesMesasPdv.forEach(nome => {
+        const m = mesasPdvState[nome] || { status: 'LIVRE', total: 0 };
+        if (m.status === 'OCUPADA' || (m.total && m.total > 0)) {
+          totalOcupadas++;
+          totalConsumoAberto += (m.total || 0);
+        }
+      });
+
+      // Atualiza badge no topo do PDV
+      const badgeCount = document.getElementById('pdv-mesas-ocupadas-count');
+      if (badgeCount) badgeCount.textContent = totalOcupadas;
+
+      // Atualiza cards de resumo no modal se aberto
+      const modOcup = document.getElementById('pdv-modal-ocupadas-count');
+      const modLiv = document.getElementById('pdv-modal-livres-count');
+      const modTot = document.getElementById('pdv-modal-total-aberto');
+      if (modOcup) modOcup.textContent = totalOcupadas;
+      if (modLiv) modLiv.textContent = Math.max(0, listaNomesMesasPdv.length - totalOcupadas);
+      if (modTot) modTot.textContent = `R$ ${totalConsumoAberto.toFixed(2)}`;
+
+      atualizarSelectMesasPdv();
+      if (document.getElementById('pdv-canal-select')?.value === 'Salão') {
+        aoSelecionarMesaPdv(mesaAtivaPdv);
+      }
+
+      const modalMapa = document.getElementById('modal-mesas-pdv');
+      if (modalMapa && !modalMapa.classList.contains('hidden')) {
+        renderGridMesasPdv();
+      }
+
+      const modalExtrato = document.getElementById('modal-extrato-mesa-pdv');
+      if (modalExtrato && !modalExtrato.classList.contains('hidden') && mesaExtratoAtiva) {
+        recarregarItensExtratoPdv();
       }
     }
 
@@ -6905,6 +7032,7 @@ _Painel Estratégico NALIM Food Service_`;
         itens: [],
         abertaEm: null
       };
+      salvarMesasPdvLocal();
 
       const mesaEncerradaNome = mesaExtratoAtiva;
       fecharModalExtratoMesaPdv();

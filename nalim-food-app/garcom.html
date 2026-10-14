@@ -62,7 +62,7 @@
   <!-- ============================================================== -->
   <!-- TOPO DO APP DO GARÇOM                                          -->
   <!-- ============================================================== -->
-  <header class="bg-white border-b border-slate-200 px-4 pt-3 pb-2.5 sticky top-0 z-30 shadow-xs">
+  <header class="bg-white border-b border-slate-200 px-4 py-2.5 sticky top-0 z-30 shadow-xs">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-xl bg-forest-600 flex items-center justify-center text-white font-extrabold text-sm shadow-xs">
@@ -78,11 +78,10 @@
       </div>
 
       <div class="flex items-center gap-1.5">
-        <!-- Seletor de Mesa / Comanda Ativa -->
-        <button onclick="abrirModalMesas()" class="flex items-center gap-1.5 bg-forest-50 border border-forest-200 text-forest-800 px-2.5 py-1.5 rounded-xl font-extrabold text-xs shadow-2xs active:scale-95 transition">
-          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-forest-600"></i>
-          <span id="label-mesa-ativa">Mesa 03</span>
-          <i data-lucide="chevron-down" class="w-3 h-3 text-forest-600"></i>
+        <!-- Botão Voltar para Mesas (visível quando estiver no atendimento de uma mesa) -->
+        <button id="btn-header-voltar-mesas" onclick="irParaViewMesas()" class="hidden flex items-center gap-1.5 bg-forest-50 border border-forest-200 text-forest-800 px-2.5 py-1.5 rounded-xl font-extrabold text-xs shadow-2xs active:scale-95 transition">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-forest-600"></i>
+          <span>Mesas</span>
         </button>
 
         <!-- Botão Versão Computador / PC -->
@@ -97,41 +96,12 @@
         </button>
       </div>
     </div>
-
-    <!-- Barra de Pesquisa Rápida -->
-    <div class="relative mt-2.5">
-      <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-      <input type="text" id="input-busca" oninput="buscarProdutos(this.value)" placeholder="Buscar hambúrguer, bebida ou porção..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-500">
-      <button onclick="limparBusca()" id="btn-limpar-busca" class="hidden absolute right-2.5 top-2.5 text-slate-400 text-xs">✕</button>
-    </div>
-
-    <!-- Categorias Deslizantes (Carrossel Horizontal) -->
-    <div class="flex items-center gap-2 overflow-x-auto custom-scroll pt-2 pb-0.5 text-xs font-extrabold" id="category-pills">
-      <button onclick="filtrarCategoria('todos')" class="cat-pill px-3 py-1 rounded-full bg-forest-700 text-white shrink-0 shadow-2xs" data-cat="todos">
-        Todos
-      </button>
-      <button onclick="filtrarCategoria('Hambúrguer')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Hambúrguer">
-        🍔 Burgers
-      </button>
-      <button onclick="filtrarCategoria('Combo')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Combo">
-        🍟 Combos
-      </button>
-      <button onclick="filtrarCategoria('Bebida')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Bebida">
-        🥤 Bebidas
-      </button>
-      <button onclick="filtrarCategoria('Porção')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Porção">
-        🍗 Porções
-      </button>
-    </div>
   </header>
 
   <!-- ============================================================== -->
-  <!-- BARRA DE STATUS DA MESA SELECIONADA                            -->
-  <!-- ============================================================== -->
-  <!-- ============================================================== -->
   <!-- BANNER DE NOTIFICAÇÃO: PEDIDO PRONTO NA COZINHA (CHAMAR GARÇOM)  -->
   <!-- ============================================================== -->
-  <div id="banner-pedidos-prontos" class="hidden bg-amber-500 text-slate-950 px-4 py-2.5 shadow-md flex items-center justify-between font-black text-xs border-b border-amber-600 sticky top-14 z-25">
+  <div id="banner-pedidos-prontos" class="hidden bg-amber-500 text-slate-950 px-4 py-2.5 shadow-md flex items-center justify-between font-black text-xs border-b border-amber-600 sticky top-12 z-25">
     <div class="flex items-center gap-2 min-w-0 pr-2">
       <span class="text-base animate-bounce">🔔</span>
       <div class="truncate">
@@ -146,30 +116,95 @@
   </div>
 
   <!-- ============================================================== -->
-  <!-- BARRA DE STATUS DA MESA SELECIONADA                            -->
+  <!-- 1. TELA PRINCIPAL (INICIAL): MAPA DE MESAS DO SALÃO            -->
   <!-- ============================================================== -->
-  <div id="banner-mesa-status" class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between text-xs shadow-2xs">
-    <div class="flex items-center gap-2">
-      <span id="badge-mesa-status" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
-        Mesa Livre
-      </span>
-      <span id="texto-mesa-consumo" class="font-extrabold text-slate-700">Conta: R$ 0,00</span>
+  <section id="view-garcom-mesas" class="flex-1 p-3.5 space-y-3.5 overflow-y-auto custom-scroll pb-24">
+    <div class="flex items-center justify-between bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+      <div>
+        <h2 class="text-sm font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+          <i data-lucide="utensils" class="w-4 h-4 text-forest-600"></i>
+          Mesas do Salão
+        </h2>
+        <p class="text-[11px] text-slate-500 font-medium mt-0.5">Selecione para pedir ou encerrar a conta</p>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span id="resumo-mesas-livres" class="px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
+          🟢 10 Livres
+        </span>
+        <span id="resumo-mesas-ocupadas" class="px-2.5 py-1 rounded-xl bg-amber-100 text-amber-900 text-[10px] font-black uppercase">
+          🍽️ 0 Ocupadas
+        </span>
+      </div>
     </div>
 
-    <div class="flex items-center gap-1.5">
-      <button id="btn-ver-conta-mesa" onclick="abrirModalExtratoMesa()" class="hidden px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs active:scale-95 flex items-center gap-1 transition">
+    <!-- Grid de Mesas (Apenas status Livre / Ocupada, sem valor de consumo nos cartões) -->
+    <div class="grid grid-cols-3 gap-2.5" id="grid-mesas-container">
+      <!-- Injetado dinamicamente via renderGridMesas() -->
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- 2. TELA DE ATENDIMENTO DA MESA (PEDIR PRODUTOS OU ENCERRAR)    -->
+  <!-- ============================================================== -->
+  <section id="view-garcom-atendimento" class="hidden flex-1 flex flex-col overflow-hidden">
+    
+    <!-- Barra Superior da Mesa Ativa com Botão Encerrar -->
+    <div class="bg-white border-b border-slate-200 px-3.5 py-2.5 flex items-center justify-between shadow-2xs shrink-0">
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="irParaViewMesas()" class="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-800 px-2.5 py-1.5 rounded-xl font-black text-xs transition active:scale-95">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span>Mesas</span>
+        </button>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span id="label-mesa-atendimento" class="font-black text-sm text-slate-900">Mesa 01</span>
+            <span id="badge-mesa-status-atend" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Livre
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botão para Encerrar a Mesa / Ver Extrato -->
+      <button id="btn-fechar-mesa-atend" onclick="abrirModalExtratoMesa()" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs active:scale-95 flex items-center gap-1 transition cursor-pointer">
         <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
-        <span>Fechar / Extrato</span>
+        <span>Encerrar Mesa</span>
       </button>
     </div>
-  </div>
 
-  <!-- ============================================================== -->
-  <!-- LISTA DE PRODUTOS DO CARDÁPIO (TOUCH FRIENDLY)                 -->
-  <!-- ============================================================== -->
-  <main class="flex-1 p-3.5 space-y-2.5 overflow-y-auto custom-scroll pb-28" id="produtos-container">
-    <!-- Renderizado dinamicamente pelo JavaScript -->
-  </main>
+    <!-- Sub-header com Busca e Categorias para Pedir Mais Produtos -->
+    <div class="bg-white border-b border-slate-200 px-3.5 pt-2 pb-2 space-y-2 shrink-0">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+        <input type="text" id="input-busca" oninput="buscarProdutos(this.value)" placeholder="Buscar hambúrguer, bebida ou porção..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-500">
+        <button onclick="limparBusca()" id="btn-limpar-busca" class="hidden absolute right-2.5 top-2.5 text-slate-400 text-xs">✕</button>
+      </div>
+
+      <div class="flex items-center gap-2 overflow-x-auto custom-scroll text-xs font-extrabold" id="category-pills">
+        <button onclick="filtrarCategoria('todos')" class="cat-pill px-3 py-1 rounded-full bg-forest-700 text-white shrink-0 shadow-2xs" data-cat="todos">
+          Todos
+        </button>
+        <button onclick="filtrarCategoria('Hambúrguer')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Hambúrguer">
+          🍔 Burgers
+        </button>
+        <button onclick="filtrarCategoria('Combo')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Combo">
+          🍟 Combos
+        </button>
+        <button onclick="filtrarCategoria('Bebida')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Bebida">
+          🥤 Bebidas
+        </button>
+        <button onclick="filtrarCategoria('Porção')" class="cat-pill px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 shrink-0 hover:bg-slate-50" data-cat="Porção">
+          🍗 Porções
+        </button>
+      </div>
+    </div>
+
+    <!-- Lista de Produtos do Cardápio para Adicionar à Comanda -->
+    <main class="flex-1 p-3.5 space-y-2.5 overflow-y-auto custom-scroll pb-28" id="produtos-container">
+      <!-- Renderizado dinamicamente pelo JavaScript -->
+    </main>
+
+  </section>
 
   <!-- ============================================================== -->
   <!-- BARRA FLUTUANTE DA COMANDA DO GARÇOM (FIXA EMBAIXO)             -->
@@ -307,29 +342,7 @@
     </div>
   </div>
 
-  <!-- ============================================================== -->
-  <!-- MODAL: SELETOR DE MESAS & COMANDAS (DINÂMICO E VISUAL)         -->
-  <!-- ============================================================== -->
-  <div id="modal-mesas" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-5 max-w-sm w-full space-y-3.5 shadow-2xl">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <div>
-          <h3 class="font-extrabold text-sm text-slate-900">Mapa de Mesas & Comandas</h3>
-          <p class="text-[10px] text-slate-400">Verde = Livre • Laranja = Ocupada com Consumo</p>
-        </div>
-        <button onclick="fecharModalMesas()" class="text-slate-400 hover:text-slate-700 p-1 font-bold text-sm">✕</button>
-      </div>
 
-      <!-- Grid dinâmico gerado pelo renderGridMesas() -->
-      <div class="grid grid-cols-3 gap-2 max-h-[60vh] overflow-y-auto custom-scroll p-0.5" id="grid-mesas-container">
-        <!-- Gerado via JavaScript -->
-      </div>
-
-      <div class="pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] text-slate-400 font-medium">
-        <span>* Toque na mesa para atender ou fechar a conta.</span>
-      </div>
-    </div>
-  </div>
 
   <!-- ============================================================== -->
   <!-- MODAL: EXTRATO COMPLETO & FECHAMENTO DE CONTA DA MESA          -->
@@ -438,7 +451,7 @@
   <!-- JAVASCRIPT DO APP MOBILE DO GARÇOM                             -->
   <!-- ============================================================== -->
   <script>
-    const API_BASE = window.location.origin;
+    const API_BASE = (window.location.protocol === 'file:' || window.location.port === '5500' || window.location.port === '3000' || window.location.port === '5173') ? 'http://127.0.0.1:8000' : window.location.origin;
     
     let authToken = null;
     let mesaAtiva = 'Mesa 01';
@@ -547,11 +560,33 @@
       renderGridMesas();
       atualizarBannerMesaAtiva();
       atualizarBarraComanda();
+      irParaViewMesas();
       lucide.createIcons();
 
-      // Sincronização contínua com Balcão e Cozinha a cada 3 segundos
-      setInterval(sincronizarMesasApi, 3000);
-      setInterval(verificarPedidosProntosCozinha, 3000);
+      // Sincronização contínua com Balcão e Cozinha a cada 2 segundos
+      setInterval(sincronizarMesasApi, 2000);
+      setInterval(verificarPedidosProntosCozinha, 2000);
+
+      // Listener de eventos do navegador para sincronização instantânea entre abas
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'nalim_mesas_consumo' && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            if (parsed && typeof parsed === 'object') {
+              mesasConsumoState = parsed;
+              renderGridMesas();
+              atualizarBannerMesaAtiva();
+              const modalConta = document.getElementById('modal-conta-mesa');
+              if (modalConta && !modalConta.classList.contains('hidden')) {
+                abrirModalExtratoMesa();
+              }
+            }
+          } catch(err) {}
+        }
+        if (e.key === 'nalim_pedidos_prontos' || e.key === 'nalim_kds_orders') {
+          verificarPedidosProntosCozinha();
+        }
+      });
     }
 
     function carregarEstadoMesasLocal() {
@@ -581,6 +616,22 @@
     }
 
     async function sincronizarMesasApi() {
+      // 1. Atualização instantânea via cache local compartilhado
+      try {
+        const salvo = localStorage.getItem('nalim_mesas_consumo');
+        if (salvo) {
+          const parsed = JSON.parse(salvo);
+          if (parsed && typeof parsed === 'object') {
+            Object.keys(parsed).forEach(k => {
+              mesasConsumoState[k] = parsed[k];
+            });
+            renderGridMesas();
+            atualizarBannerMesaAtiva();
+          }
+        }
+      } catch(e) {}
+
+      // 2. Consulta API backend
       try {
         const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
         const res = await fetch(`${API_BASE}/api/operacional/mesas`, { headers });
@@ -603,92 +654,148 @@
       } catch (err) {}
     }
 
+    function safeLucide() {
+      if (typeof lucide !== 'undefined' && lucide && typeof lucide.createIcons === 'function') {
+        try { lucide.createIcons(); } catch(e) {}
+      }
+    }
+
+    function irParaViewMesas() {
+      const viewMesas = document.getElementById('view-garcom-mesas');
+      const viewAtend = document.getElementById('view-garcom-atendimento');
+      const btnHeaderMesas = document.getElementById('btn-header-voltar-mesas');
+      if (viewMesas) viewMesas.classList.remove('hidden');
+      if (viewAtend) viewAtend.classList.add('hidden');
+      if (btnHeaderMesas) btnHeaderMesas.classList.add('hidden');
+      const barraFlutuante = document.getElementById('barra-comanda-flutuante');
+      if (barraFlutuante) barraFlutuante.classList.add('hidden');
+      renderGridMesas();
+      safeLucide();
+    }
+
+    function irParaViewAtendimento() {
+      const viewMesas = document.getElementById('view-garcom-mesas');
+      const viewAtend = document.getElementById('view-garcom-atendimento');
+      const btnHeaderMesas = document.getElementById('btn-header-voltar-mesas');
+      if (viewMesas) viewMesas.classList.add('hidden');
+      if (viewAtend) viewAtend.classList.remove('hidden');
+      if (btnHeaderMesas) btnHeaderMesas.classList.remove('hidden');
+      atualizarBannerMesaAtiva();
+      atualizarBarraComanda();
+      safeLucide();
+    }
+
+    function abrirModalMesas() {
+      irParaViewMesas();
+    }
+
+    function fecharModalMesas() {
+      const modal = document.getElementById('modal-mesas');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function selecionarMesa(mesa) {
+      mesaAtiva = mesa;
+      const labelTopo = document.getElementById('label-mesa-ativa');
+      if (labelTopo) labelTopo.textContent = mesa;
+      const labelAtend = document.getElementById('label-mesa-atendimento');
+      if (labelAtend) labelAtend.textContent = mesa;
+
+      fecharModalMesas();
+      irParaViewAtendimento();
+    }
+
     function renderGridMesas() {
       const container = document.getElementById('grid-mesas-container');
       if (!container) return;
       container.innerHTML = '';
 
+      let totalLivres = 0;
+      let totalOcupadas = 0;
+
       listaNomesMesas.forEach(nome => {
         const mesa = mesasConsumoState[nome] || { status: 'LIVRE', total: 0, itens: [] };
         const isAtiva = (nome === mesaAtiva);
-        const isOcupada = (mesa.status === 'OCUPADA' || mesa.total > 0);
+        const isOcupada = (mesa.status === 'OCUPADA' || (mesa.total && mesa.total > 0));
+
+        if (isOcupada) {
+          totalOcupadas++;
+        } else {
+          totalLivres++;
+        }
 
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.onclick = () => selecionarMesa(nome);
 
-        let classesBase = 'p-2.5 rounded-2xl flex flex-col justify-between items-center text-center transition active:scale-95 shadow-2xs relative ';
+        let classesBase = 'p-3 rounded-2xl flex flex-col justify-between items-center text-center transition active:scale-95 shadow-2xs relative cursor-pointer ';
         
         if (isAtiva) {
           classesBase += 'ring-2 ring-forest-600 border-2 border-forest-600 bg-forest-50/90 text-forest-900 font-black ';
         } else if (isOcupada) {
-          classesBase += 'border border-amber-300 bg-amber-50/60 text-slate-800 hover:border-amber-400 ';
+          classesBase += 'border-2 border-amber-300 bg-amber-50/80 text-slate-800 hover:border-amber-400 ';
         } else {
           classesBase += 'border border-slate-200 bg-white text-slate-700 hover:border-forest-400 hover:bg-forest-50/30 ';
         }
 
         btn.className = classesBase;
 
+        // Visualização limpa: mostra apenas se a mesa está Ocupada ou Livre (sem valores financeiros de consumo)
         btn.innerHTML = `
           <div class="w-full flex items-center justify-between gap-1 mb-1">
-            <span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full ${isOcupada ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800'}">
-              ${isOcupada ? 'Ocupada' : 'Livre'}
+            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isOcupada ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800'}">
+              ${isOcupada ? '🍽️ Ocupada' : '🟢 Livre'}
             </span>
             ${isAtiva ? '<span class="w-2 h-2 rounded-full bg-forest-600"></span>' : ''}
           </div>
-          <span class="font-extrabold text-xs block leading-tight text-slate-900">${nome}</span>
-          <span class="text-[11px] font-black mt-1 block ${isOcupada ? 'text-amber-800' : 'text-slate-400'}">
-            ${isOcupada ? `R$ ${mesa.total.toFixed(2)}` : 'R$ 0,00'}
+          <span class="font-extrabold text-sm block leading-tight text-slate-900 my-1">${nome}</span>
+          <span class="text-[10px] font-bold ${isOcupada ? 'text-amber-800' : 'text-slate-400'} mt-1 block">
+            ${isOcupada ? 'Atender / Encerrar' : 'Toque p/ Atender'}
           </span>
-          ${isOcupada && mesa.itens ? `<span class="text-[9px] text-slate-500 font-medium">${mesa.itens.length} ${mesa.itens.length === 1 ? 'item' : 'itens'}</span>` : ''}
         `;
 
         container.appendChild(btn);
       });
-    }
 
-    function abrirModalMesas() {
-      renderGridMesas();
-      document.getElementById('modal-mesas').classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    function fecharModalMesas() {
-      document.getElementById('modal-mesas').classList.add('hidden');
-    }
-
-    function selecionarMesa(mesa) {
-      mesaAtiva = mesa;
-      document.getElementById('label-mesa-ativa').textContent = mesa;
-      fecharModalMesas();
-      atualizarBannerMesaAtiva();
-      atualizarBarraComanda();
+      const resLiv = document.getElementById('resumo-mesas-livres');
+      const resOcup = document.getElementById('resumo-mesas-ocupadas');
+      if (resLiv) resLiv.textContent = `🟢 ${totalLivres} Livres`;
+      if (resOcup) resOcup.textContent = `🍽️ ${totalOcupadas} Ocupadas`;
     }
 
     function atualizarBannerMesaAtiva() {
       const mesa = mesasConsumoState[mesaAtiva] || { status: 'LIVRE', total: 0, itens: [] };
-      const isOcupada = (mesa.status === 'OCUPADA' || mesa.total > 0);
+      const isOcupada = (mesa.status === 'OCUPADA' || (mesa.total && mesa.total > 0));
 
-      const badge = document.getElementById('badge-mesa-status');
-      const consumoLabel = document.getElementById('texto-mesa-consumo');
-      const btnConta = document.getElementById('btn-ver-conta-mesa');
+      const badgeAtend = document.getElementById('badge-mesa-status-atend');
+      const labelAtend = document.getElementById('label-mesa-atendimento');
+      const btnFechar = document.getElementById('btn-fechar-mesa-atend');
       const labelTopo = document.getElementById('label-mesa-ativa');
 
       if (labelTopo) labelTopo.textContent = mesaAtiva;
+      if (labelAtend) labelAtend.textContent = mesaAtiva;
 
-      if (isOcupada) {
-        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300';
-        badge.textContent = 'Mesa Ocupada';
-        consumoLabel.textContent = `Consumo: R$ ${mesa.total.toFixed(2)} (${(mesa.itens || []).length} itens)`;
-        btnConta.classList.remove('hidden');
-      } else {
-        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200';
-        badge.textContent = 'Mesa Livre';
-        consumoLabel.textContent = 'Mesa Livre • Sem consumo';
-        btnConta.classList.add('hidden');
+      if (badgeAtend) {
+        if (isOcupada) {
+          badgeAtend.className = 'px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300';
+          badgeAtend.textContent = 'Ocupada';
+        } else {
+          badgeAtend.className = 'px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200';
+          badgeAtend.textContent = 'Livre';
+        }
       }
 
-      lucide.createIcons();
+      if (btnFechar) {
+        if (isOcupada) {
+          btnFechar.className = 'px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-xs active:scale-95 flex items-center gap-1 transition cursor-pointer';
+          btnFechar.innerHTML = `<i data-lucide="receipt" class="w-3.5 h-3.5"></i><span>Encerrar Mesa</span>`;
+        } else {
+          btnFechar.className = 'px-3 py-1.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs flex items-center gap-1 cursor-default';
+          btnFechar.innerHTML = `<i data-lucide="receipt" class="w-3.5 h-3.5"></i><span>Sem Consumo</span>`;
+        }
+      }
+
+      safeLucide();
     }
     let pedidosProntosCozinha = [];
     let ultimoAlertaTocadoId = null;
@@ -721,9 +828,24 @@
 
       function isPedidoParaGarcom(p) {
         if (!p) return false;
-        if (p.solicitante === 'Balcão' || p.canal === 'Balcão') return false;
-        if (typeof p.identificacao === 'string' && p.identificacao.toLowerCase().includes('balcão')) return false;
-        return true;
+        const sol = (p.solicitante || '').toLowerCase();
+        const ident = (typeof p.identificacao === 'string' ? p.identificacao.toLowerCase() : '');
+        const canal = (p.canal || '').toLowerCase();
+
+        // Se o solicitante foi explicitamente o Balcão, NUNCA avisa o Garçom (o aviso vai para o Balcão)
+        if (sol.includes('balcão') || sol.includes('balcao')) return false;
+
+        // Se for pedido exclusivo de retirada no balcão sem mesa associada, não notifica o garçom
+        if ((canal === 'balcão' || canal === 'balcao') && !ident.includes('mesa')) return false;
+        if (ident.includes('retirada') && !ident.includes('mesa')) return false;
+
+        // Se o solicitante foi o Garçom, SEMPRE avisa o Garçom
+        if (sol.includes('garçom') || sol.includes('garcom') || sol.includes('pedro')) return true;
+
+        // Sem solicitante explícito: se for do canal Salão ou mesa, notifica o Garçom
+        if (canal === 'salão' || canal === 'salao' || ident.includes('mesa')) return true;
+
+        return false;
       }
 
       // 1. Fila direta de pedidos prontos gravada pela Cozinha (KDS)
@@ -782,22 +904,24 @@
       if (pedidosProntosCozinha.length === 0) return;
       const ticket = pedidosProntosCozinha[0];
       const ticketId = ticket.id;
+      const numComanda = ticket.numero_comanda || ticketId;
 
       // 1. Remove da fila direta de pedidos prontos
       try {
         let filaDireta = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
-        filaDireta = filaDireta.filter(p => p.id !== ticketId);
+        filaDireta = filaDireta.filter(p => p.id !== ticketId && p.id !== numComanda && p.numero_comanda !== numComanda);
         localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(filaDireta));
       } catch (e) {}
 
       // 2. Atualiza localStorage do KDS
       try {
         let localKds = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        localKds = localKds.filter(t => t.id !== ticketId);
+        localKds = localKds.filter(t => t.id !== ticketId && t.id !== numComanda && t.numero_comanda !== numComanda);
         localStorage.setItem('nalim_kds_orders', JSON.stringify(localKds));
 
         let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
         if (!finalizados.includes(ticketId)) finalizados.push(ticketId);
+        if (!finalizados.includes(numComanda)) finalizados.push(numComanda);
         localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
       } catch (e) {}
 
@@ -812,10 +936,10 @@
         });
       } catch (e) {}
 
-      pedidosProntosCozinha = pedidosProntosCozinha.filter(t => t.id !== ticketId);
+      pedidosProntosCozinha = pedidosProntosCozinha.filter(t => t.id !== ticketId && t.id !== numComanda);
       verificarPedidosProntosCozinha();
 
-      alert(`✓ Pedido #${ticket.numero_comanda || ticketId} da ${ticket.identificacao} marcado como SERVIDO na mesa!`);
+      alert(`✓ Pedido #${numComanda} da ${ticket.identificacao} marcado como SERVIDO na mesa!`);
     }
 
     function calcularTrocoGarcom() {
@@ -999,6 +1123,7 @@
       fecharModalExtratoMesa();
       atualizarBannerMesaAtiva();
       renderGridMesas();
+      irParaViewMesas();
 
       btn.disabled = false;
       btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i><span>RECEBER & ZERAR MESA</span>`;
@@ -1111,13 +1236,12 @@
 
     function fecharOverlaySucesso() {
       document.getElementById('overlay-sucesso').classList.add('hidden');
+      irParaViewMesas();
     }
     async function carregarCardapioApi() {
-      if (!authToken) return;
       try {
-        const res = await fetch(`${API_BASE}/api/operacional/cardapio`, {
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
+        const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+        const res = await fetch(`${API_BASE}/api/operacional/cardapio`, { headers });
         if (res.ok) {
           const data = await res.json();
           if (data.produtos && data.produtos.length > 0) {
@@ -1304,11 +1428,14 @@
 
     function atualizarBarraComanda() {
       const bar = document.getElementById('barra-comanda-flutuante');
-      if (comanda.itens.length === 0) {
-        bar.classList.add('hidden');
+      const viewAtend = document.getElementById('view-garcom-atendimento');
+      const isAtendimentoVisivel = viewAtend && !viewAtend.classList.contains('hidden');
+
+      if (comanda.itens.length === 0 || !isAtendimentoVisivel) {
+        if (bar) bar.classList.add('hidden');
         return;
       }
-      bar.classList.remove('hidden');
+      if (bar) bar.classList.remove('hidden');
 
       let totalQtd = 0;
       let totalValor = 0;
