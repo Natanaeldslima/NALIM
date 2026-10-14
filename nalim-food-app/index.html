@@ -39,6 +39,7 @@
     }
   </script>
   <style>
+    .hidden { display: none !important; }
     body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; font-feature-settings: "tnum"; }
     .sidebar-link-active { background-color: rgba(5, 150, 105, 0.15); color: #047857; font-weight: 700; border-left: 3px solid #059669; }
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -94,7 +95,7 @@
             <span>Operacional</span>
           </div>
 
-          <button onclick="switchView('pdv')" id="btn-pdv" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition sidebar-link-active">
+          <button onclick="switchView('pdv')" id="btn-pdv" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
             <i data-lucide="shopping-bag" class="w-4 h-4 text-forest-600"></i>
             <span>Cardápio / Pedidos</span>
             <span class="ml-auto bg-forest-100 text-forest-800 text-[10px] px-1.5 py-0.5 rounded-full font-bold">PDV</span>
@@ -125,7 +126,7 @@
         <!-- ========================================== -->
         <!-- 2. BLOCO ADMINISTRATIVO (GERENTE & DONO)   -->
         <!-- ========================================== -->
-        <div id="group-administrativo" style="display: none;" class="space-y-1 pt-2 border-t border-slate-100">
+        <div id="group-administrativo" class="space-y-1 pt-2 border-t border-slate-100">
           <div class="px-5 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
             <i data-lucide="sliders" class="w-3 h-3 text-blue-600"></i>
             <span>Administrativo</span>
@@ -160,13 +161,13 @@
         <!-- ========================================== -->
         <!-- 3. BLOCO GERENCIAL (EXCLUSIVO DONO - SAÚDE)-->
         <!-- ========================================== -->
-        <div id="group-gerencial" style="display: none;" class="space-y-1 pt-2 border-t border-slate-100">
+        <div id="group-gerencial" class="space-y-1 pt-2 border-t border-slate-100">
           <div class="px-5 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
             <i data-lucide="crown" class="w-3 h-3 text-amber-500"></i>
             <span>Gerencial (Dono)</span>
           </div>
 
-          <button onclick="switchView('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
+          <button onclick="switchView('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition sidebar-link-active">
             <i data-lucide="pie-chart" class="w-4 h-4 text-forest-600"></i>
             <span>Saúde Financeira</span>
           </button>
@@ -290,7 +291,7 @@
       <!-- ========================================================== -->
       <!-- [1. OPERACIONAL] CARDÁPIO / PDV                            -->
       <!-- ========================================================== -->
-      <section id="view-pdv" class="space-y-4">
+      <section id="view-pdv" class="hidden space-y-4">
         
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-1">
           <div>
@@ -818,7 +819,7 @@
       <!-- [3. GERENCIAL] PAINEL FINANCEIRO / SAÚDE DO NEGÓCIO           -->
       <!-- Layout Idêntico à Matriz Visual de Inspiração NALIM V3.0      -->
       <!-- ========================================================== -->
-      <section id="view-dashboard" class="hidden space-y-5 max-w-7xl mx-auto">
+      <section id="view-dashboard" class="space-y-5 max-w-7xl mx-auto">
         
         <!-- CABEÇALHO DO PAINEL (NALIM GESTÃO & FINANÇAS) -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
@@ -2050,6 +2051,12 @@
     const API_BASE = window.location.origin;
     let authToken = localStorage.getItem('nalim_token') || null;
 
+    function safeLucide() {
+      if (typeof lucide !== 'undefined' && lucide && typeof lucide.createIcons === 'function') {
+        try { lucide.createIcons(); } catch(e) {}
+      }
+    }
+
     // ==============================================================
     // FORMATAÇÃO PADRÃO BRASILEIRO (MILHAR COM PONTO, CENTAVOS COM VÍRGULA)
     // ==============================================================
@@ -2667,7 +2674,7 @@
 
     function openModalLogin() {
       document.getElementById('modal-login').classList.remove('hidden');
-      lucide.createIcons();
+      safeLucide();
     }
 
     function closeModalLogin() {
@@ -2791,7 +2798,7 @@
         btnTaxasHeader.style.display = (role === 'operador') ? 'none' : 'flex';
       }
 
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (typeof lucide !== 'undefined') safeLucide();
     }
 
     function switchView(viewId) {
@@ -2824,7 +2831,7 @@
 
       // Atualiza o topo: Mês apenas no Adm e Gerencial; Regime apenas no Gerencial
       atualizarHeaderContexto(viewId);
-      lucide.createIcons();
+      safeLucide();
     }
 
     // ==============================================================
@@ -2904,7 +2911,7 @@
         `;
       }).join('');
 
-      lucide.createIcons();
+      safeLucide();
     }
 
     function openModalColaborador() {
@@ -2916,7 +2923,7 @@
       document.getElementById('colaborador-perfil').value = 'operador';
       document.getElementById('modal-colaborador-titulo').textContent = 'Novo Colaborador';
       document.getElementById('modal-colaborador').classList.remove('hidden');
-      lucide.createIcons();
+      safeLucide();
     }
 
     function closeModalColaborador() {
@@ -2935,7 +2942,7 @@
       document.getElementById('colaborador-perfil').value = u.perfil;
       document.getElementById('modal-colaborador-titulo').textContent = 'Editar Colaborador';
       document.getElementById('modal-colaborador').classList.remove('hidden');
-      lucide.createIcons();
+      safeLucide();
     }
 
     function salvarColaboradorForm() {
@@ -3112,7 +3119,7 @@
       }
       renderPdvProducts();
       renderComanda();
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (typeof lucide !== 'undefined') safeLucide();
     }
 
     function renderPdvProducts(filtroTexto = '') {
@@ -3162,7 +3169,7 @@
         `;
         grid.appendChild(card);
       });
-      lucide.createIcons();
+      safeLucide();
     }
 
     // MODAL DE PERSONALIZAR ITEM
@@ -3212,7 +3219,7 @@
       atualizarPrecoFinalModal();
 
       document.getElementById('modal-personalizar-item').classList.remove('hidden');
-      lucide.createIcons();
+      safeLucide();
     }
 
     function closeModalPersonalizar() {
@@ -3651,12 +3658,12 @@
           </div>
           <div class="double-divider"></div>
           <div class="center" style="font-size:10px;">Comanda de Produção e Expedição</div>
-          <script>
+          <${'script'}>
             window.onload = function() {
               window.print();
               setTimeout(function() { window.close(); }, 500);
             };
-          <\/script>
+          </${'script'}>
           
 
 </body>
@@ -3782,7 +3789,7 @@
         `;
         container.appendChild(card);
       });
-      lucide.createIcons();
+      safeLucide();
     }
 
     function marcarKdsPronto(ticketId) {
@@ -4047,7 +4054,7 @@
         tbody.appendChild(trMain);
         tbody.appendChild(trDetails);
       });
-      lucide.createIcons();
+      safeLucide();
     }
 
     function toggleAccordion(id) {
@@ -4220,7 +4227,7 @@
         `;
         tbody.appendChild(tr);
       });
-      lucide.createIcons();
+      safeLucide();
     }
 
     function openModalInsumo() {
@@ -4332,7 +4339,7 @@
       });
 
       document.getElementById('footer-custos-total').textContent = `R$ ${tot.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-      lucide.createIcons();
+      safeLucide();
     }
 
     function openModalCustoFixo() {
@@ -4445,7 +4452,7 @@
         `;
         tbody.appendChild(tr);
       });
-      lucide.createIcons();
+      safeLucide();
     }
 
     // ================================================================
@@ -4899,17 +4906,24 @@
         atingimentoPct
       });
 
-      if (window.lucide) lucide.createIcons();
+      if (window.lucide) safeLucide();
     }
 
     let chartDiarioInst = null;
     let chartMensalInst = null;
 
     function renderCharts(pontoEquilibrioMeta = 507.68, diasComVenda = {}, mesAtivo = '2026-10') {
+      if (typeof Chart === 'undefined') {
+        console.warn('Chart.js ainda não carregado ou offline.');
+        return;
+      }
       const data = getActiveData();
+      const canvasD = document.getElementById('chartEvolucaoDiaria');
+      const canvasM = document.getElementById('chartEvolucaoMensal');
+      if (!canvasD || !canvasM) return;
 
       // 1. Gráfico Diário de Evolução da Meta (Exibe dias do mês com vendas reais ou dias vigentes)
-      const ctxD = document.getElementById('chartEvolucaoDiaria').getContext('2d');
+      const ctxD = canvasD.getContext('2d');
       if (chartDiarioInst) chartDiarioInst.destroy();
 
       let labels = [];
@@ -4989,7 +5003,7 @@
       });
 
       // 2. Gráfico de Evolução Mensal Comparativo (Exclusivamente Agosto, Setembro e Outubro conforme solicitação)
-      const ctxM = document.getElementById('chartEvolucaoMensal').getContext('2d');
+      const ctxM = canvasM.getContext('2d');
       if (chartMensalInst) chartMensalInst.destroy();
 
       const resAgo = getResumoMes('2026-08');
@@ -5707,7 +5721,7 @@
           </div>
         `;
       }).join('');
-      if (window.lucide) lucide.createIcons();
+      if (window.lucide) safeLucide();
     }
 
     /**
@@ -5871,7 +5885,7 @@
           `;
         }
       }
-      if (window.lucide) lucide.createIcons();
+      if (window.lucide) safeLucide();
     }
 
     /**
@@ -6327,7 +6341,7 @@ _Painel Estratégico NALIM Food Service_`;
     function abrirModalTaxasAdmin() {
       carregarConfigTaxasAdmin();
       document.getElementById('modal-taxas-admin').classList.remove('hidden');
-      lucide.createIcons();
+      safeLucide();
     }
 
     function fecharModalTaxasAdmin() {
@@ -6471,13 +6485,13 @@ _Painel Estratégico NALIM Food Service_`;
           banner.classList.add('hidden');
         }
       }
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (typeof lucide !== 'undefined') safeLucide();
     }
 
     function abrirModalMesasPdv() {
       renderGridMesasPdv();
       document.getElementById('modal-mesas-pdv').classList.remove('hidden');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (typeof lucide !== 'undefined') safeLucide();
     }
 
     function fecharModalMesasPdv() {
@@ -6554,7 +6568,7 @@ _Painel Estratégico NALIM Food Service_`;
 
         container.appendChild(card);
       });
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (typeof lucide !== 'undefined') safeLucide();
     }
 
     function lancarMaisItensMesaPdv(nome) {
@@ -6576,7 +6590,7 @@ _Painel Estratégico NALIM Food Service_`;
       setPagtoMesaPdv(formaPagtoMesaPdv || 'PIX');
       recalcularTotalExtratoPdv();
       document.getElementById('modal-extrato-mesa-pdv').classList.remove('hidden');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+      if (typeof lucide !== 'undefined') safeLucide();
     }
 
     function recarregarItensExtratoPdv() {
@@ -6774,27 +6788,29 @@ _Painel Estratégico NALIM Food Service_`;
       });
     }
 
-    // INICIALIZAÇÃO
+    // INICIALIZAÇÃO BLINDADA
     window.addEventListener('DOMContentLoaded', () => {
-      verificarAutenticacao();
-      limparComanda();
-      renderPdvProducts();
-      renderKds();
-      renderDashboard();
-      renderHistoricoPedidos();
-      renderInsumos();
-      renderProdutosAccordion();
-      popularSimulador();
-      renderCustos();
-      renderEquipe();
-      sincronizarKdsRealtime();
-      setInterval(sincronizarKdsRealtime, 3000);
-      sincronizarMesasPdv();
-      setInterval(sincronizarMesasPdv, 3000);
-      sincronizarPedidosApi();
-      setInterval(sincronizarPedidosApi, 4000);
-      carregarConfigTaxasAdmin();
-      lucide.createIcons();
+      try { verificarAutenticacao(); } catch(e) { console.error('Erro verificarAutenticacao:', e); }
+      try { limparComanda(); } catch(e) { console.error('Erro limparComanda:', e); }
+      try { renderPdvProducts(); } catch(e) { console.error('Erro renderPdvProducts:', e); }
+      try { renderKds(); } catch(e) { console.error('Erro renderKds:', e); }
+      try { renderDashboard(); } catch(e) { console.error('Erro renderDashboard:', e); }
+      try { renderHistoricoPedidos(); } catch(e) { console.error('Erro renderHistoricoPedidos:', e); }
+      try { renderInsumos(); } catch(e) { console.error('Erro renderInsumos:', e); }
+      try { renderProdutosAccordion(); } catch(e) { console.error('Erro renderProdutosAccordion:', e); }
+      try { popularSimulador(); } catch(e) { console.error('Erro popularSimulador:', e); }
+      try { renderCustos(); } catch(e) { console.error('Erro renderCustos:', e); }
+      try { renderEquipe(); } catch(e) { console.error('Erro renderEquipe:', e); }
+      try {
+        sincronizarKdsRealtime();
+        setInterval(sincronizarKdsRealtime, 3000);
+        sincronizarMesasPdv();
+        setInterval(sincronizarMesasPdv, 3000);
+        sincronizarPedidosApi();
+        setInterval(sincronizarPedidosApi, 4000);
+        carregarConfigTaxasAdmin();
+      } catch(e) { console.error('Erro em sincronização realtime:', e); }
+      safeLucide();
     });
   </script>
 

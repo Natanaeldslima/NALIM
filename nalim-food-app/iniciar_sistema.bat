@@ -10,10 +10,13 @@ echo.
 echo [1/3] Verificando instalacao do Python...
 where python >nul 2>nul
 if %errorlevel% neq 0 (
-    echo ERRO: Python nao encontrado!
-    echo Por favor, instale o Python em https://www.python.org/
-    echo Certifique-se de marcar a opcao "Add Python to PATH" durante a instalacao.
-    pause
+    echo AVISO: Python no encontrado no PATH do sistema.
+    echo Abrindo o NALIM diretamente no seu navegador web...
+    start "" "%~dp0index.html"
+    echo.
+    echo Sistema aberto com sucesso no navegador!
+    echo (Para rodar o backend com banco de dados SQLite, instale o Python marcando 'Add to PATH').
+    timeout /t 5 >nul
     exit /b
 )
 
