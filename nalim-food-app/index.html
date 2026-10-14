@@ -2604,7 +2604,7 @@
 
       const isOperacional = ['pdv', 'cozinha', 'caixa'].includes(viewId);
       const isAdministrativo = ['produtos', 'insumos', 'vendas', 'custos', 'precificacao'].includes(viewId);
-      const isGerencial = ['dashboard', 'equipe'].includes(viewId);
+      const isGerencial = ['dashboard', 'saude-produtos', 'equipe'].includes(viewId);
 
       // MÊS VIGENTE: Visível APENAS no Administrativo e Gerencial (e NUNCA para operador)
       if (role !== 'operador' && (isAdministrativo || isGerencial)) {
@@ -2739,6 +2739,7 @@
     }
 
     function aplicarPermissoesPerfil(role) {
+      role = (role || 'dono').trim().toLowerCase();
       store.userRole = role;
 
       // Atualiza o Card do Usuário na barra lateral com dados da sessão
@@ -2746,18 +2747,20 @@
         dono: { nome: 'Carlos Nalim', email: 'dono@nalim.com.br', avatar: 'C', badge: 'Dono', badgeClass: 'bg-emerald-100 text-emerald-800' },
         gerente: { nome: 'Mariana Silva', email: 'gerente@nalim.com.br', avatar: 'M', badge: 'Gerente', badgeClass: 'bg-blue-100 text-blue-800' },
         operador: { nome: 'Pedro Lucas', email: 'operador@nalim.com.br', avatar: 'P', badge: 'Operador', badgeClass: 'bg-amber-100 text-amber-800' }
-      }[role] || { nome: 'Usuário', email: 'user@nalim.com.br', avatar: 'U', badge: 'Operador', badgeClass: 'bg-slate-100 text-slate-800' };
+      }[role] || { nome: 'Carlos Nalim', email: 'dono@nalim.com.br', avatar: 'C', badge: 'Dono', badgeClass: 'bg-emerald-100 text-emerald-800' };
 
       const nameEl = document.getElementById('user-name-display');
       if (nameEl) {
-        const nomeGravado = localStorage.getItem('nalim_nome') || userInfo.nome;
-        const emailGravado = localStorage.getItem('nalim_email') || userInfo.email;
-        nameEl.textContent = nomeGravado;
-        document.getElementById('user-email-display').textContent = emailGravado;
-        document.getElementById('user-avatar-badge').textContent = nomeGravado.charAt(0).toUpperCase();
+        nameEl.textContent = userInfo.nome;
+        const emailEl = document.getElementById('user-email-display');
+        if (emailEl) emailEl.textContent = userInfo.email;
+        const avatarEl = document.getElementById('user-avatar-badge');
+        if (avatarEl) avatarEl.textContent = userInfo.avatar;
         const badgeEl = document.getElementById('user-role-badge');
-        badgeEl.textContent = userInfo.badge;
-        badgeEl.className = `text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${userInfo.badgeClass}`;
+        if (badgeEl) {
+          badgeEl.textContent = userInfo.badge;
+          badgeEl.className = `text-[9px] font-black uppercase px-1.5 py-0.2 rounded ${userInfo.badgeClass}`;
+        }
       }
 
       const groupOp = document.getElementById('group-operacional');
@@ -5868,8 +5871,6 @@
           `;
         }
       }
-      if (window.lucide) lucide.createIcons();
-    }
       if (window.lucide) lucide.createIcons();
     }
 
