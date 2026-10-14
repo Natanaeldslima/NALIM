@@ -149,6 +149,39 @@ def criar_pedido(
         "mensagem": "Pedido registrado com sucesso e enviado para a Cozinha/KDS!"
     }
 
+# 2.1 Listar Todos os Pedidos (Para Saúde Financeira e Histórico de Vendas)
+@router.get("/pedidos")
+def listar_todos_pedidos(
+    tenant_id: int = Depends(get_tenant_id_permissive),
+    db: Session = Depends(get_db)
+):
+    pedidos = db.query(Pedido).filter(Pedido.tenant_id == tenant_id).order_by(Pedido.id.desc()).all()
+    resultado = []
+    for p in pedidos:
+        resultado.append({
+            "id": p.id,
+            "numero_comanda": p.numero_comanda,
+            "data_hora": p.data_hora.strftime("%Y-%m-%d %H:%M") if p.data_hora else "",
+            "data_iso": p.data_hora.strftime("%Y-%m-%d") if p.data_hora else "",
+            "canal": p.canal,
+            "identificacao": p.identificacao,
+            "forma_pagto": p.forma_pagto,
+            "status_kds": p.status_kds,
+            "valor_bruto": round(p.valor_bruto or 0.0, 2),
+            "cmv_total": round(p.cmv_total or 0.0, 2),
+            "taxa_canal": round(p.taxa_canal or 0.0, 2),
+            "lucro_liquido": round(p.lucro_liquido or 0.0, 2),
+            "itens": [{
+                "nome": it.nome_produto,
+                "quantidade": it.quantidade,
+                "preco_unitario": it.preco_unitario,
+                "cmv_unitario": it.cmv_unitario,
+                "modificacoes": it.modificacoes
+            } for it in p.itens]
+        })
+    return {"pedidos": resultado}
+
+
 # 3. KDS — Painel da Cozinha em Tempo Real (Funciona com ou sem Token para Telas e Abas Anônimas)
 @router.get("/kds")
 @router.get("/kds/realtime")
@@ -517,8 +550,8 @@ def criar_pedido_publico(
         tenant_id=tenant_id,
         numero_comanda=numero_comanda,
         data_hora=datetime.datetime.utcnow(),
-        canal=dados.canal or "Delivery Próprio",
-        identificacao=dados.identificacao or f"Delivery #{numero_comanda}",
+        canal=dados.canal or "Cardápio Digital",
+        identificacao=dados.identificacao or f"Cardápio Digital #{numero_comanda}",
         forma_pagto=dados.forma_pagto,
         status_kds="Na Chapa"
     )
@@ -547,7 +580,7 @@ def criar_pedido_publico(
         item_db = ItemPedido(
             pedido_id=novo_pedido.id,
             produto_id=prod.id if prod else None,
-            nome_produto=prod.nome if prod else item_input.produto_codigo,
+            nome_produto=item_input.nome or (prod.nome if prod else item_input.produto_codigo),
             quantidade=item_input.quantidade,
             preco_unitario=item_input.preco_unitario,
             cmv_unitario=cmv_prod,
