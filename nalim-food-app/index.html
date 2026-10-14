@@ -168,7 +168,13 @@
 
           <button onclick="switchView('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
             <i data-lucide="pie-chart" class="w-4 h-4 text-forest-600"></i>
-            <span>Saúde Financeira & DRE</span>
+            <span>Saúde Financeira</span>
+          </button>
+
+          <button onclick="switchView('saude-produtos')" id="btn-saude-produtos" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+            <span>Saúde dos Produtos</span>
+            <span class="ml-auto bg-amber-100 text-amber-900 text-[9px] px-1.5 py-0.2 rounded font-black">BCG</span>
           </button>
 
           <button onclick="switchView('equipe')" id="btn-equipe" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
@@ -445,22 +451,47 @@
               </div>
             </div>
 
-            <!-- Rodapé e Pagamento: TOTAL LIMPO, SEM LUCRO OU REPASSE -->
+            <!-- Rodapé e Pagamento: Balcão e Salão -->
             <div class="mt-3 pt-2.5 border-t border-slate-100 space-y-2.5">
               
-              <div>
-                <label class="block font-semibold text-slate-500 text-[10px] uppercase mb-1">Forma de Pagamento</label>
-                <div class="grid grid-cols-3 gap-1 text-xs font-bold">
-                  <button type="button" onclick="setFormaPagto('PIX')" class="pay-btn py-1 border border-forest-600 bg-forest-50 text-forest-800 rounded-lg text-center" data-method="PIX">
+              <!-- Bloco de Pagamento do PDV Balcão -->
+              <div id="pdv-pagamento-bloco">
+                <div class="flex justify-between items-center mb-1">
+                  <label class="block font-semibold text-slate-500 text-[10px] uppercase">Forma de Pagamento (Balcão)</label>
+                  <span class="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">Cobrança Imediata</span>
+                </div>
+                <div class="grid grid-cols-4 gap-1 text-xs font-bold">
+                  <button type="button" onclick="setFormaPagto('PIX')" class="pay-btn py-1.5 border border-forest-600 bg-forest-50 text-forest-800 rounded-lg text-center" data-method="PIX">
                     PIX
                   </button>
-                  <button type="button" onclick="setFormaPagto('Cartão')" class="pay-btn py-1 border border-slate-200 bg-white text-slate-600 rounded-lg text-center hover:bg-slate-50" data-method="Cartão">
-                    Cartão
-                  </button>
-                  <button type="button" onclick="setFormaPagto('Dinheiro')" class="pay-btn py-1 border border-slate-200 bg-white text-slate-600 rounded-lg text-center hover:bg-slate-50" data-method="Dinheiro">
+                  <button type="button" onclick="setFormaPagto('Dinheiro')" class="pay-btn py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-center hover:bg-slate-50" data-method="Dinheiro">
                     Dinheiro
                   </button>
+                  <button type="button" onclick="setFormaPagto('Débito')" class="pay-btn py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-center hover:bg-slate-50" data-method="Débito">
+                    Débito
+                  </button>
+                  <button type="button" onclick="setFormaPagto('Crédito')" class="pay-btn py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-center hover:bg-slate-50" data-method="Crédito">
+                    Crédito
+                  </button>
                 </div>
+
+                <!-- Campo de Troco Dinâmico se for Dinheiro -->
+                <div id="pdv-troco-container" class="hidden mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[11px] font-bold text-amber-900">Troco p/: R$</span>
+                    <input type="number" id="pdv-valor-recebido-dinheiro" oninput="calcularTrocoPdv()" placeholder="Ex: 50" class="w-20 bg-white border border-amber-300 rounded px-1.5 py-0.5 text-xs font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-amber-500">
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] text-amber-700 block font-semibold leading-tight">Troco a Devolver:</span>
+                    <span id="pdv-troco-resultado" class="font-black text-amber-950 text-xs">R$ 0,00</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Aviso quando for Salão (Pagamento na Saída / Fechamento de Mesa) -->
+              <div id="pdv-aviso-salao" class="hidden p-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 flex items-center gap-1.5">
+                <i data-lucide="info" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>
+                <span>Pagamento na mesa realizado no <strong>encerramento da comanda</strong>.</span>
               </div>
 
               <!-- Total do Pedido -->
@@ -470,8 +501,8 @@
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button type="button" onclick="enviarPedidoCozinha()" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2.5 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-xs">
-                  <i data-lucide="send" class="w-4 h-4"></i> Enviar Cozinha (Salvar)
+                <button type="button" id="btn-enviar-pedido-pdv" onclick="enviarPedidoCozinha()" class="w-full bg-forest-600 hover:bg-forest-700 text-white font-extrabold py-2.5 px-3 rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-xs">
+                  <i data-lucide="send" class="w-4 h-4"></i> <span id="label-btn-enviar-pdv">✓ Receber & Enviar Cozinha</span>
                 </button>
                 <button type="button" onclick="imprimirComandaAtual()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 font-bold py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs">
                   <i data-lucide="printer" class="w-4 h-4 text-slate-600"></i> Imprimir Cupom Térmico
@@ -615,7 +646,9 @@
                   <th class="py-2.5 px-3 text-right sortable" onclick="ordenarProdutos('preco_desc')">PREÇO SALÃO ↕</th>
                   <th class="py-2.5 px-3 text-right">PREÇO IFOOD</th>
                   <th class="py-2.5 px-3 text-right">CMV INSUMOS</th>
-                  <th class="py-2.5 px-3 text-center sortable" onclick="ordenarProdutos('margem_desc')">MARGEM % ↕</th>
+                  <th class="py-2.5 px-3 text-right" title="Média ponderada Débito 55% / Crédito 45%">TAXA MAQ.</th>
+                  <th class="py-2.5 px-3 text-right">CUSTO REAL</th>
+                  <th class="py-2.5 px-3 text-center sortable" onclick="ordenarProdutos('margem_desc')">MARGEM REAL ↕</th>
                   <th class="py-2.5 px-3 text-center">RECEITA</th>
                 </tr>
               </thead>
@@ -1035,7 +1068,7 @@
           </div>
         </div>
 
-        <!-- FEATURE 2 & 4: DESMEMBRAMENTO DE CANAIS DE VENDA & PREVISÃO DE FLUXO DE CAIXA -->
+        <!-- FEATURE 2 & NOTIFICAÇÕES: DESMEMBRAMENTO DE CANAIS + NOTIFICAÇÕES POR EXCEÇÃO -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
           <!-- FEATURE 2: Desmembramento por Canais de Venda (7 Colunas) -->
@@ -1047,7 +1080,7 @@
                 </span>
                 <div>
                   <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">DESMEMBRAMENTO POR CANAIS DE VENDA</h4>
-                  <p class="text-[11px] text-slate-500">iFood vs. Balcão/Salão vs. WhatsApp Próprio (Taxas Retidas & Margem Real)</p>
+                  <p class="text-[11px] text-slate-500">iFood vs. Balcão/Salão vs. Cardápio Digital (Taxas Retidas & Margem Real)</p>
                 </div>
               </div>
               <span class="text-[10px] font-extrabold bg-blue-100 text-blue-900 px-2 py-0.5 rounded-full">Multicanal</span>
@@ -1063,185 +1096,62 @@
             </div>
           </div>
 
-          <!-- FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (5 Colunas) -->
-          <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
-              <div class="flex items-center gap-2">
-                <span class="p-1.5 rounded-lg bg-purple-50 text-purple-700">
-                  <i data-lucide="wallet" class="w-4 h-4"></i>
-                </span>
-                <div>
-                  <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">PREVISÃO DE CAIXA (PRÓXIMOS 15 DIAS)</h4>
-                  <p class="text-[11px] text-slate-500">Lucro DRE vs. Dinheiro em Conta (Liquidação vs. Boletos)</p>
-                </div>
-              </div>
-              <button type="button" onclick="abrirModalContasPagar()" class="text-[10px] font-black bg-purple-100 hover:bg-purple-200 text-purple-900 px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Gerenciar Boletos e Saldo em Caixa">
-                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-                <span>⚙️ Agendar Contas</span>
-              </button>
-            </div>
-
-            <div class="space-y-1.5 overflow-y-auto max-h-64 custom-scroll pr-1" id="caixa-previsao-lista">
-              <!-- 10 dias com entradas/saídas e saldo projetado -->
-            </div>
-
-            <div id="caixa-alerta-liquidez" class="p-3 rounded-xl text-xs font-bold transition">
-              <!-- Alerta de Liquidez se saldo projetado < 0 -->
-            </div>
-          </div>
-
-        </div>
-
-        <!-- 4. TOP 5 MARGEM + DESEMPENHO DOS PRODUTOS + ALERTAS DO NEGÓCIO -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-          
-          <!-- Top 5 por Margem Gerada (3 Colunas) -->
-          <div class="md:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
-              <i data-lucide="bar-chart-2" class="w-4 h-4 text-forest-600"></i> TOP 5 PRODUTOS POR MARGEM GERADA
-            </h4>
-            <div class="mt-3.5 space-y-2.5" id="dash-top5-margem-lista">
-              <!-- Populado dinamicamente das vendas -->
-            </div>
-          </div>
-
-          <!-- Desempenho dos Produtos Tabela (5 Colunas) -->
-          <div class="md:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
-              <i data-lucide="layers" class="w-4 h-4 text-forest-600"></i> DESEMPENHO DOS PRODUTOS
-            </h4>
-            <div class="overflow-x-auto mt-2">
-              <table class="w-full text-left text-xs">
-                <thead>
-                  <tr class="text-[10px] text-slate-400 font-black uppercase border-b border-slate-100 pb-1">
-                    <th class="pb-2">Produto</th>
-                    <th class="pb-2 text-center">Vendas</th>
-                    <th class="pb-2 text-right">Faturamento</th>
-                    <th class="pb-2 text-center">Margem</th>
-                    <th class="pb-2 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-xs font-medium" id="dash-tabela-desempenho-produtos">
-                  <!-- Populado dinamicamente das vendas -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Notificações por Exceção (Auditoria Inteligente por Regras) -->
-          <div class="md:col-span-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+          <!-- Notificações por Exceção (Auditoria Inteligente por Regras) (5 Colunas) -->
+          <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between space-y-3">
             <div>
               <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                  <i data-lucide="shield-alert" class="w-4 h-4 text-slate-700"></i> NOTIFICAÇÕES POR EXCEÇÃO
-                </h4>
-                <span class="text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Auditoria Ativa</span>
+                <div class="flex items-center gap-2">
+                  <span class="p-1.5 rounded-lg bg-slate-100 text-slate-700">
+                    <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                  </span>
+                  <div>
+                    <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">NOTIFICAÇÕES POR EXCEÇÃO</h4>
+                    <p class="text-[11px] text-slate-500">Auditoria Ativa de Distorções Operacionais</p>
+                  </div>
+                </div>
+                <span class="text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Automático</span>
               </div>
               <div class="mt-3 space-y-2" id="dash-alertas-lista">
                 <!-- Se tudo ok: badge compacto verde. Se anomalias: cards expansíveis prescritivos -->
               </div>
             </div>
-            <div class="mt-3 pt-2.5 border-t border-slate-100 text-[10px] text-slate-400 font-medium">
-              Monitora CMV (>35%), desperdício (>2.5%), canais e meta diária.
+            <div class="pt-2.5 border-t border-slate-100 text-[10px] text-slate-400 font-medium">
+              Monitora CMV (>35%), perdas (>2.5%), margem de canais e meta diária.
             </div>
           </div>
 
         </div>
 
-        <!-- 4.5 ENGENHARIA DE CARDÁPIO (MATRIZ BCG GASTRONÔMICA: ESTRELAS, BURROS DE CARGA, QUEBRA-CABEÇAS, CÃES) -->
+        <!-- FEATURE 4: PREVISÃO DE FLUXO DE CAIXA EM FORMATO DE CALENDÁRIO COM REPASSES SEMANAIS -->
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="p-1.5 rounded-lg bg-amber-50 text-amber-700">
-                  <i data-lucide="sparkles" class="w-4 h-4"></i>
-                </span>
-                <h3 class="text-sm font-black text-slate-900 uppercase tracking-tight">ENGENHARIA DE CARDÁPIO (MATRIZ BCG GASTRONÔMICA)</h3>
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 rounded-lg bg-purple-50 text-purple-700">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+              </span>
+              <div>
+                <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">PREVISÃO DE FLUXO DE CAIXA • CALENDÁRIO FINANCEIRO (14 A 21 DIAS)</h4>
+                <p class="text-[11px] text-slate-500">Saldo Projetado = Caixa Atual + Liquidação Cartões/PIX + <strong>Repasse Semanal Apps (Quartas)</strong> - Boletos/Contas Agendadas</p>
               </div>
-              <p class="text-xs text-slate-500 mt-0.5">Cruzamento inteligente de Volume de Vendas vs. Margem de Lucro para tomada de decisão imediata.</p>
             </div>
-            <span class="text-[10px] font-bold bg-forest-50 text-forest-700 border border-forest-200 px-2.5 py-1 rounded-full">
-              Inteligência de Cardápio Ativa
-            </span>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span> Repasse Apps Toda Quarta
+              </span>
+              <button type="button" onclick="abrirModalContasPagar()" class="text-[10px] font-black bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Gerenciar Boletos e Saldo em Caixa">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                <span>⚙️ Agendar Contas</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Grid dos 4 Quadrantes da Matriz (Refatorado: Campeões, Populares, Oportunidades, Revisar / Retirar) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" id="matriz-bcg-grid">
-            <!-- 1. Campeões (Antigas Estrelas) -->
-            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
-              <div>
-                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                    ⭐ CAMPEÕES
-                  </span>
-                  <span class="text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full" id="bcg-count-estrelas">0 itens</span>
-                </div>
-                <p class="text-[10px] text-emerald-700 font-bold mt-2">Alta Saída + Alta Margem</p>
-                <div class="mt-2 space-y-1.5" id="bcg-list-estrelas">
-                  <!-- Itens Campeões -->
-                </div>
-              </div>
-              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                <strong class="text-emerald-700">💡 Prescrição:</strong> Mantenha a receita rigorosa e dê destaque de ouro na capa do cardápio e nos aplicativos.
-              </div>
-            </div>
+          <!-- Grade de Dias no Formato Calendário (7 Colunas: Seg a Dom) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2.5" id="caixa-previsao-lista">
+            <!-- Preenchido via renderPrevisaoCaixa() em formato de cartões de calendário -->
+          </div>
 
-            <!-- 2. Populares (Antigos Burros de Carga) -->
-            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
-              <div>
-                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                    🐂 POPULARES
-                  </span>
-                  <span class="text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full" id="bcg-count-burros">0 itens</span>
-                </div>
-                <p class="text-[10px] text-amber-700 font-bold mt-2">Alta Saída + Baixa Margem</p>
-                <div class="mt-2 space-y-1.5" id="bcg-list-burros">
-                  <!-- Itens Populares -->
-                </div>
-              </div>
-              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                <strong class="text-amber-700">💡 Prescrição:</strong> Suba o preço em R$ 1,50 ou renegocie insumos com fornecedores. A demanda é fiel e absorve o ajuste.
-              </div>
-            </div>
-
-            <!-- 3. Oportunidades (Antigos Quebra-Cabeças) -->
-            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
-              <div>
-                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                    ❓ OPORTUNIDADES
-                  </span>
-                  <span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full" id="bcg-count-quebras">0 itens</span>
-                </div>
-                <p class="text-[10px] text-blue-700 font-bold mt-2">Baixa Saída + Alta Margem</p>
-                <div class="mt-2 space-y-1.5" id="bcg-list-quebras">
-                  <!-- Itens Oportunidades -->
-                </div>
-              </div>
-              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                <strong class="text-blue-700">💡 Prescrição:</strong> Monte combos promocionais com seus Populares e faça fotos atraentes no cardápio.
-              </div>
-            </div>
-
-            <!-- 4. Revisar / Retirar (Antigos Cães/Abacaxis) -->
-            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
-              <div>
-                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
-                    🐶 REVISAR / RETIRAR
-                  </span>
-                  <span class="text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full" id="bcg-count-caes">0 itens</span>
-                </div>
-                <p class="text-[10px] text-rose-700 font-bold mt-2">Baixa Saída + Baixa Margem</p>
-                <div class="mt-2 space-y-1.5" id="bcg-list-caes">
-                  <!-- Itens Revisar / Retirar -->
-                </div>
-              </div>
-              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                <strong class="text-rose-700">💡 Prescrição:</strong> Amarram dinheiro em estoque e geram prejuízo invisível. Simplifique ou retire do cardápio.
-              </div>
-            </div>
+          <div id="caixa-alerta-liquidez" class="p-3 rounded-xl text-xs font-bold transition">
+            <!-- Alerta de Liquidez se saldo projetado < 0 -->
           </div>
         </div>
 
@@ -1343,6 +1253,164 @@
           <div class="flex items-center gap-2">
             <span class="font-bold text-slate-800">NALIM GESTÃO & FINANÇAS</span>
             <span class="text-[11px] text-slate-400">• SEU NEGÓCIO MAIS FORTE AMANHÃ.</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- [3. GERENCIAL] SAÚDE DOS PRODUTOS & MATRIZ BCG             -->
+      <!-- ========================================================== -->
+      <section id="view-saude-produtos" class="hidden space-y-5">
+        
+        <!-- Header da Seção de Saúde dos Produtos -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 rounded-lg bg-amber-50 text-amber-700">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </span>
+              <h2 class="text-base font-black text-slate-900 uppercase tracking-tight">SAÚDE DOS PRODUTOS & ENGENHARIA DE CARDÁPIO</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Análise prato a prato: quais itens geram mais lucro real no seu bolso e quais itens precisam ser corrigidos ou eliminados.</p>
+          </div>
+          <span class="text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full">
+            Inteligência de Cardápio Ativa
+          </span>
+        </div>
+
+        <!-- Grid: Top 5 Margem (4 Colunas) + Desempenho dos Produtos (8 Colunas) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          
+          <!-- Top 5 por Margem Gerada (4 Colunas) -->
+          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="bar-chart-2" class="w-4 h-4 text-forest-600"></i> TOP 5 PRODUTOS POR MARGEM GERADA
+            </h4>
+            <div class="mt-3.5 space-y-2.5" id="dash-top5-margem-lista">
+              <!-- Populado dinamicamente das vendas -->
+            </div>
+          </div>
+
+          <!-- Desempenho dos Produtos Tabela Completa (8 Colunas) -->
+          <div class="lg:col-span-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-4 h-4 text-forest-600"></i> DESEMPENHO DOS PRODUTOS (VOLUME VS FATURAMENTO VS MARGEM)
+            </h4>
+            <div class="overflow-x-auto mt-2">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-[10px] text-slate-400 font-black uppercase border-b border-slate-100 pb-1">
+                    <th class="pb-2">Produto</th>
+                    <th class="pb-2 text-center">Vendas</th>
+                    <th class="pb-2 text-right">Faturamento</th>
+                    <th class="pb-2 text-center">Margem</th>
+                    <th class="pb-2 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-xs font-medium" id="dash-tabela-desempenho-produtos">
+                  <!-- Populado dinamicamente das vendas -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Matriz BCG Gastronômica dos 4 Quadrantes (Campeões, Populares, Oportunidades, Revisar / Retirar) -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-lg bg-amber-50 text-amber-700">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </span>
+                <h3 class="text-sm font-black text-slate-900 uppercase tracking-tight">ENGENHARIA DE CARDÁPIO (MATRIZ BCG GASTRONÔMICA)</h3>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Cruzamento inteligente de Volume de Vendas vs. Margem de Lucro para tomada de decisão imediata.</p>
+            </div>
+            <span class="text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-full">
+              Classificação Automática BCG
+            </span>
+          </div>
+
+          <!-- Grid dos 4 Quadrantes da Matriz (Campeões, Populares, Oportunidades, Revisar / Retirar) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" id="matriz-bcg-grid">
+            <!-- 1. Campeões (Antigas Estrelas) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    ⭐ CAMPEÕES
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full" id="bcg-count-estrelas">0 itens</span>
+                </div>
+                <p class="text-[10px] text-emerald-700 font-bold mt-2">Alta Saída + Alta Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-estrelas">
+                  <!-- Itens Campeões -->
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-emerald-700">💡 Prescrição:</strong> Mantenha a receita rigorosa e dê destaque de ouro na capa do cardápio e nos aplicativos.
+              </div>
+            </div>
+
+            <!-- 2. Populares (Antigos Burros de Carga) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    🐂 POPULARES
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full" id="bcg-count-burros">0 itens</span>
+                </div>
+                <p class="text-[10px] text-amber-700 font-bold mt-2">Alta Saída + Baixa Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-burros">
+                  <!-- Itens Populares -->
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-amber-700">💡 Prescrição:</strong> Suba o preço em R$ 1,50 ou renegocie insumos com fornecedores. A demanda é fiel e absorve o ajuste.
+              </div>
+            </div>
+
+            <!-- 3. Oportunidades (Antigos Quebra-Cabeças) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    ❓ OPORTUNIDADES
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full" id="bcg-count-quebras">0 itens</span>
+                </div>
+                <p class="text-[10px] text-blue-700 font-bold mt-2">Baixa Saída + Alta Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-quebras">
+                  <!-- Itens Oportunidades -->
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-blue-700">💡 Prescrição:</strong> Monte combos promocionais com seus Populares e faça fotos atraentes no cardápio.
+              </div>
+            </div>
+
+            <!-- 4. Revisar / Retirar (Antigos Cães/Abacaxis) -->
+            <div class="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <span class="font-black text-xs text-slate-900 flex items-center gap-1.5">
+                    🐶 REVISAR / RETIRAR
+                  </span>
+                  <span class="text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-full" id="bcg-count-caes">0 itens</span>
+                </div>
+                <p class="text-[10px] text-rose-700 font-bold mt-2">Baixa Saída + Baixa Margem</p>
+                <div class="mt-2 space-y-1.5" id="bcg-list-caes">
+                  <!-- Itens Revisar / Retirar -->
+                </div>
+              </div>
+              <div class="text-[10px] text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                <strong class="text-rose-700">💡 Prescrição:</strong> Amarram dinheiro em estoque e geram prejuízo invisível. Simplifique ou retire do cardápio.
+              </div>
+            </div>
           </div>
         </div>
 
@@ -2707,7 +2775,9 @@
         if (groupGer) groupGer.style.display = 'none';
         switchView('produtos');
       } else {
-        // DONO (ACESSO COMPLETO)
+        // DONO (ACESSO COMPLETO A TODOS OS MÓDULOS: OPERACIONAL, ADMINISTRATIVO E GERENCIAL)
+        if (groupOp) groupOp.style.display = 'block';
+        if (groupAdm) groupAdm.style.display = 'block';
         if (groupGer) groupGer.style.display = 'block';
         switchView('dashboard');
       }
@@ -2725,7 +2795,7 @@
       closeSidebarMobile();
       const role = store.userRole || 'dono';
       const admViews = ['produtos', 'insumos', 'vendas', 'custos', 'precificacao'];
-      const gerViews = ['dashboard', 'equipe'];
+      const gerViews = ['dashboard', 'saude-produtos', 'equipe'];
 
       // Bloqueio rigoroso de segurança de visualização
       if (role === 'operador' && (admViews.includes(viewId) || gerViews.includes(viewId))) {
@@ -2734,7 +2804,7 @@
         viewId = 'produtos';
       }
 
-      const views = ['pdv', 'cozinha', 'caixa', 'produtos', 'insumos', 'vendas', 'custos', 'dashboard', 'precificacao', 'equipe'];
+      const views = ['pdv', 'cozinha', 'caixa', 'produtos', 'insumos', 'vendas', 'custos', 'dashboard', 'saude-produtos', 'precificacao', 'equipe'];
       views.forEach(v => {
         const el = document.getElementById('view-' + v);
         const btn = document.getElementById('btn-' + v);
@@ -2990,6 +3060,9 @@
       const bannerMesa = document.getElementById('pdv-mesa-banner-status');
       const labelBox = document.getElementById('label-delivery-box');
       const tagBox = document.getElementById('tag-delivery-box');
+      const blocoPagto = document.getElementById('pdv-pagamento-bloco');
+      const avisoSalao = document.getElementById('pdv-aviso-salao');
+      const labelBtnEnviar = document.getElementById('label-btn-enviar-pdv');
 
       if (canal === 'iFood') {
         boxIfood.classList.remove('hidden');
@@ -3000,6 +3073,9 @@
         identInput.value = 'Pedido iFood #4092';
         if (labelBox) labelBox.innerHTML = '<i data-lucide="bike" class="w-3.5 h-3.5 text-rose-600"></i> Pedido iFood Delivery';
         if (tagBox) { tagBox.textContent = 'iFood (23%)'; tagBox.className = 'bg-rose-200 text-rose-900 px-2 py-0.5 rounded-full font-black text-[9px]'; }
+        if (blocoPagto) blocoPagto.classList.remove('hidden');
+        if (avisoSalao) avisoSalao.classList.add('hidden');
+        if (labelBtnEnviar) labelBtnEnviar.textContent = '✓ Confirmar & Cozinha';
       } else if (canal === '99Food') {
         boxIfood.classList.remove('hidden');
         boxIfood.className = 'p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl space-y-2';
@@ -3009,10 +3085,16 @@
         identInput.value = 'Pedido 99Food #9281';
         if (labelBox) labelBox.innerHTML = '<i data-lucide="bike" class="w-3.5 h-3.5 text-amber-600"></i> Pedido 99Food Delivery';
         if (tagBox) { tagBox.textContent = '99Food (18%)'; tagBox.className = 'bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-black text-[9px]'; }
+        if (blocoPagto) blocoPagto.classList.remove('hidden');
+        if (avisoSalao) avisoSalao.classList.add('hidden');
+        if (labelBtnEnviar) labelBtnEnviar.textContent = '✓ Confirmar & Cozinha';
       } else if (canal === 'Salão') {
         boxIfood.classList.add('hidden');
         if (wrapIdent) wrapIdent.classList.add('hidden');
         if (wrapMesa) wrapMesa.classList.remove('hidden');
+        if (blocoPagto) blocoPagto.classList.add('hidden');
+        if (avisoSalao) avisoSalao.classList.remove('hidden');
+        if (labelBtnEnviar) labelBtnEnviar.textContent = 'Lançar na Mesa & Cozinha';
         atualizarSelectMesasPdv();
         aoSelecionarMesaPdv(mesaAtivaPdv);
       } else {
@@ -3020,6 +3102,9 @@
         if (wrapIdent) wrapIdent.classList.remove('hidden');
         if (wrapMesa) wrapMesa.classList.add('hidden');
         if (bannerMesa) bannerMesa.classList.add('hidden');
+        if (blocoPagto) blocoPagto.classList.remove('hidden');
+        if (avisoSalao) avisoSalao.classList.add('hidden');
+        if (labelBtnEnviar) labelBtnEnviar.textContent = '✓ Receber & Enviar Cozinha';
         identInput.value = 'Balcão / Retirada';
       }
       renderPdvProducts();
@@ -3257,11 +3342,36 @@
       store.selectedPaymentMethod = metodo;
       document.querySelectorAll('.pay-btn').forEach(btn => {
         if (btn.dataset.method === metodo) {
-          btn.className = 'pay-btn py-1 border border-forest-600 bg-forest-50 text-forest-800 rounded-lg text-center font-bold';
+          btn.className = 'pay-btn py-1.5 border border-forest-600 bg-forest-50 text-forest-800 rounded-lg text-center font-bold';
         } else {
-          btn.className = 'pay-btn py-1 border border-slate-200 bg-white text-slate-600 rounded-lg text-center hover:bg-slate-50 font-bold';
+          btn.className = 'pay-btn py-1.5 border border-slate-200 bg-white text-slate-600 rounded-lg text-center hover:bg-slate-50 font-bold';
         }
       });
+      const trocoContainer = document.getElementById('pdv-troco-container');
+      if (trocoContainer) {
+        if (metodo === 'Dinheiro') {
+          trocoContainer.classList.remove('hidden');
+          calcularTrocoPdv();
+        } else {
+          trocoContainer.classList.add('hidden');
+        }
+      }
+    }
+
+    function calcularTrocoPdv() {
+      const input = document.getElementById('pdv-valor-recebido-dinheiro');
+      const trocoDisplay = document.getElementById('pdv-troco-resultado');
+      if (!input || !trocoDisplay) return;
+      const valorRecebido = parseFloat(input.value) || 0;
+      let subtotal = 0;
+      store.currentOrder.items.forEach(it => { subtotal += it.precoUnit * it.qtd; });
+      if (valorRecebido <= 0) {
+        trocoDisplay.textContent = 'R$ 0,00';
+      } else if (valorRecebido < subtotal) {
+        trocoDisplay.innerHTML = `<span class="text-rose-600 font-bold">Falta ${formatarMoeda(subtotal - valorRecebido)}</span>`;
+      } else {
+        trocoDisplay.textContent = formatarMoeda(valorRecebido - subtotal);
+      }
     }
 
     function renderComanda() {
@@ -3275,6 +3385,7 @@
           </div>
         `;
         document.getElementById('pdv-total-display').textContent = 'R$ 0,00';
+        calcularTrocoPdv();
         return;
       }
 
@@ -3302,6 +3413,7 @@
       });
 
       document.getElementById('pdv-total-display').textContent = formatarMoeda(subtotal);
+      calcularTrocoPdv();
     }
 
     async function enviarPedidoCozinha() {
@@ -3402,9 +3514,40 @@
         }
       }
 
-      // 2. Histórico Pedidos Local
       const hojeIso = new Date().toISOString().split('T')[0];
       const agoraHora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // 1.5 Envia IMEDIATAMENTE para a Cozinha (KDS) em tempo real
+      const novoTicketKds = {
+        id: ticketNumeroFinal,
+        dataHora: agoraHora,
+        identificacao: identificacaoFinal,
+        canal: canal,
+        status: 'Na Chapa',
+        tempoDecorrido: 'Agora',
+        items: store.currentOrder.items.map(it => {
+          let nomeAmigavel = it.nome;
+          const matchProd = (getActiveData()?.produtos || []).find(p => p.codigo === it.produtoCodigo || p.codigo === it.nome);
+          if (matchProd) nomeAmigavel = matchProd.nome;
+          return {
+            nome: nomeAmigavel,
+            qtd: it.qtd,
+            modificacoes: it.modificacoes || null
+          };
+        })
+      };
+
+      store.kdsOrders.unshift(novoTicketKds);
+
+      try {
+        let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        ords.unshift(novoTicketKds);
+        localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
+      } catch (e) {}
+
+      renderKds();
+
+      // 2. Histórico Pedidos Local
       store.pedidos.unshift({
         id: ticketNumeroFinal,
         dataHora: `${hojeIso} ${agoraHora}`,
@@ -3430,6 +3573,7 @@
 
       store.orderCounter++;
       document.getElementById('pdv-comanda-num').textContent = store.orderCounter;
+      try { localStorage.setItem('nalim_comanda_seq', store.orderCounter.toString()); } catch(e){}
 
       limparComanda();
       await sincronizarKdsRealtime();
@@ -3575,23 +3719,21 @@
     }
 
     // ================================================================
-    // KDS / COZINHA
+    // KDS / COZINHA (CLIQUE ÚNICO PARA AVISAR QUE ESTÁ PRONTO)
     // ================================================================
     function renderKds() {
       const container = document.getElementById('kds-tickets-grid');
       const badge = document.getElementById('badge-pedidos-kds');
       const countEl = document.getElementById('kds-order-counter');
+      if (!container) return;
       container.innerHTML = '';
 
-      badge.textContent = store.kdsOrders.length;
-      countEl.textContent = `${store.kdsOrders.length} Pedidos em Espera`;
+      if (badge) badge.textContent = store.kdsOrders.length;
+      if (countEl) countEl.textContent = `${store.kdsOrders.length} Pedidos em Espera`;
 
       store.kdsOrders.forEach((ord, index) => {
         const card = document.createElement('div');
-        const isPronto = (ord.status === 'Pronto');
-        card.className = isPronto 
-          ? 'bg-emerald-50/40 rounded-2xl border-2 border-emerald-400 p-4 shadow-sm flex flex-col justify-between transition'
-          : 'bg-white rounded-2xl border-2 border-amber-300 p-4 shadow-xs flex flex-col justify-between transition';
+        card.className = 'bg-white rounded-2xl border-2 border-amber-300 p-4 shadow-xs flex flex-col justify-between transition';
 
         let itemsHtml = '';
         ord.items.forEach(it => {
@@ -3601,7 +3743,7 @@
                 <span class="w-6 h-6 rounded-md bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center">${it.qtd}</span>
                 <span class="font-extrabold text-slate-900 text-sm">${it.nome}</span>
               </div>
-              ${it.modificacoes ? `<div class="mt-1 text-[11px] text-amber-900 bg-amber-50 p-1.5 rounded font-bold border border-amber-200/80">⚠️ ${it.modificacoes}</div>` : ''}
+              ${it.modificacoes ? `<div class="mt-1 text-[11px] text-amber-900 bg-amber-50 p-1.5 rounded font-bold border border-amber-200/80">⚡ ${it.modificacoes}</div>` : ''}
             </div>
           `;
         });
@@ -3617,15 +3759,9 @@
                 <button type="button" onclick="imprimirComandaKds(${ord.id})" class="p-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition" title="Reimprimir Cupom Térmico (80mm)">
                   <i data-lucide="printer" class="w-4 h-4"></i>
                 </button>
-                ${isPronto ? `
-                  <span class="text-[10px] font-black bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full animate-pulse border border-emerald-300">
-                    🔔 PRONTO / CHAMANDO
-                  </span>
-                ` : `
-                  <span class="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
-                    ⏱️ ${ord.tempoDecorrido}
-                  </span>
-                `}
+                <span class="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full">
+                  ⏱️ ${ord.tempoDecorrido}
+                </span>
               </div>
             </div>
 
@@ -3634,17 +3770,11 @@
             </div>
           </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
-            ${isPronto ? `
-              <button onclick="concluirKdsTicket(${ord.id})" class="w-full bg-slate-900 hover:bg-black text-white font-extrabold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer">
-                <i data-lucide="check-check" class="w-4 h-4 text-emerald-400"></i>
-                <span>✓ Concluir / Pedido Entregue</span>
-              </button>
-            ` : `
-              <button onclick="marcarKdsPronto(${ord.id})" class="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer">
-                <span>🔔 Pronto / Chamar Garçom</span>
-              </button>
-            `}
+          <div class="mt-4 pt-3 border-t border-slate-100">
+            <button type="button" onclick="marcarKdsPronto(${ord.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
+              <i data-lucide="bell-ring" class="w-4 h-4"></i>
+              <span>🔔 PEDIDO PRONTO / CHAMAR GARÇOM</span>
+            </button>
           </div>
         `;
         container.appendChild(card);
@@ -3654,21 +3784,43 @@
 
     function marcarKdsPronto(ticketId) {
       const ord = store.kdsOrders.find(o => o.id === ticketId);
-      if (ord) ord.status = 'Pronto';
+      const identTicket = ord ? ord.identificacao : `Pedido #${ticketId}`;
 
+      // 1. Grava na fila direta de pedidos prontos para alertar o Garçom
       try {
-        let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        const idx = ords.findIndex(o => o.id === ticketId);
-        if (idx !== -1) {
-          ords[idx].status = 'Pronto';
-          localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
+        let prontos = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
+        if (!prontos.some(p => p.id === ticketId)) {
+          prontos.unshift({
+            id: ticketId,
+            identificacao: identTicket,
+            numero_comanda: ticketId,
+            hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          });
+          localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(prontos));
         }
       } catch (e) {}
 
-      const token = localStorage.getItem('nalim_token');
+      // 2. Remove da fila de preparo da cozinha (CONCLUÍDO COM 1 CLIQUE ÚNICO)
+      store.kdsOrders = store.kdsOrders.filter(o => o.id !== ticketId);
+
+      // 3. Atualiza localStorage do KDS e grava na lista de finalizados para NUNCA voltar ao atualizar
+      try {
+        let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+        ords = ords.filter(o => o.id !== ticketId);
+        localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
+
+        let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
+        if (!finalizados.includes(ticketId)) {
+          finalizados.push(ticketId);
+          localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
+        }
+      } catch (e) {}
+
+      // 4. Envia para o backend API
+      const token = localStorage.getItem('nalim_token') || authToken;
       const headers = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      fetch(`/api/operacional/kds/${ticketId}/status`, {
+      fetch(`${API_BASE}/api/operacional/kds/${ticketId}/status`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ status_kds: 'Pronto' })
@@ -3678,32 +3830,7 @@
     }
 
     function concluirKdsTicket(ticketId) {
-      try {
-        let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
-        if (!finalizados.includes(ticketId)) {
-          finalizados.push(ticketId);
-          localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
-        }
-      } catch (e) {}
-
-      store.kdsOrders = store.kdsOrders.filter(o => o.id !== ticketId);
-
-      try {
-        let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        ords = ords.filter(o => o.id !== ticketId);
-        localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
-      } catch (e) {}
-
-      const token = localStorage.getItem('nalim_token');
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      fetch(`/api/operacional/kds/${ticketId}/status`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ status_kds: 'Entregue' })
-      }).catch(() => {});
-
-      renderKds();
+      marcarKdsPronto(ticketId);
     }
 
     async function sincronizarKdsRealtime() {
@@ -3786,6 +3913,13 @@
       renderProdutosAccordion();
     }
 
+    function calcularTaxaMediaPonderadaBalcao() {
+      const deb = (adminConfigTaxas && adminConfigTaxas.taxa_debito !== undefined) ? adminConfigTaxas.taxa_debito : 1.99;
+      const cred = (adminConfigTaxas && adminConfigTaxas.taxa_credito_vista !== undefined) ? adminConfigTaxas.taxa_credito_vista : 3.49;
+      // Média ponderada típica do Food Service: Débito 55% e Crédito 45%
+      return (deb * 0.55) + (cred * 0.45);
+    }
+
     function renderProdutosAccordion() {
       const data = getActiveData();
       const tbody = document.getElementById('tabela-produtos-accordion-body');
@@ -3797,23 +3931,32 @@
         list = list.filter(p => p.nome.toLowerCase().includes(produtosFiltroTexto) || p.categoria.toLowerCase().includes(produtosFiltroTexto));
       }
 
+      const taxaMediaBalcaoPct = calcularTaxaMediaPonderadaBalcao();
+
       list.sort((a, b) => {
         if (produtosOrdem === 'nome_asc') return a.nome.localeCompare(b.nome);
         if (produtosOrdem === 'nome_desc') return b.nome.localeCompare(a.nome);
         if (produtosOrdem === 'preco_desc') return b.precoVenda - a.precoVenda;
         if (produtosOrdem === 'preco_asc') return a.precoVenda - b.precoVenda;
         if (produtosOrdem === 'margem_desc') {
-          const mA = ((a.precoVenda - calcCmvItem(a, data.insumos)) / a.precoVenda);
-          const mB = ((b.precoVenda - calcCmvItem(b, data.insumos)) / b.precoVenda);
+          const cmvA = calcCmvItem(a, data.insumos);
+          const custoRealA = cmvA + (a.precoVenda * (taxaMediaBalcaoPct / 100));
+          const mA = ((a.precoVenda - custoRealA) / a.precoVenda);
+
+          const cmvB = calcCmvItem(b, data.insumos);
+          const custoRealB = cmvB + (b.precoVenda * (taxaMediaBalcaoPct / 100));
+          const mB = ((b.precoVenda - custoRealB) / b.precoVenda);
           return mB - mA;
         }
         return 0;
       });
 
       list.forEach(prod => {
-        const cmv = calcCmvItem(prod, data.insumos);
-        const lucro = prod.precoVenda - cmv;
-        const margemPct = (lucro / prod.precoVenda) * 100;
+        const cmvInsumos = calcCmvItem(prod, data.insumos);
+        const taxaMaquininha = prod.precoVenda * (taxaMediaBalcaoPct / 100);
+        const custoRealTotal = cmvInsumos + taxaMaquininha;
+        const lucroReal = prod.precoVenda - custoRealTotal;
+        const margemRealPct = (lucroReal / prod.precoVenda) * 100;
         const accordionId = `accordion-prod-${prod.codigo}`;
 
         let compHtml = '';
@@ -3840,8 +3983,10 @@
           <td class="py-2.5 px-3"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">${prod.categoria}</span></td>
           <td class="py-2.5 px-3 text-right font-black text-slate-900">${formatarMoeda(prod.precoVenda)}</td>
           <td class="py-2.5 px-3 text-right font-bold text-rose-700">${formatarMoeda(prod.precoIfood)}</td>
-          <td class="py-2.5 px-3 text-right font-bold text-slate-600">${formatarMoeda(cmv)}</td>
-          <td class="py-2.5 px-3 text-center font-extrabold text-emerald-700">${formatarPct(margemPct, 1)}</td>
+          <td class="py-2.5 px-3 text-right font-bold text-slate-600">${formatarMoeda(cmvInsumos)}</td>
+          <td class="py-2.5 px-3 text-right font-medium text-slate-500">${formatarMoeda(taxaMaquininha)} <small class="text-[9px] text-slate-400 font-normal">(${taxaMediaBalcaoPct.toFixed(2)}%)</small></td>
+          <td class="py-2.5 px-3 text-right font-black text-slate-900">${formatarMoeda(custoRealTotal)}</td>
+          <td class="py-2.5 px-3 text-center font-extrabold ${margemRealPct >= 60 ? 'text-emerald-700' : (margemRealPct >= 40 ? 'text-amber-700' : 'text-rose-700')}">${formatarPct(margemRealPct, 1)}</td>
           <td class="py-2.5 px-3 text-center space-x-1">
             <button onclick="event.stopPropagation(); editarProdutoFicha('${prod.codigo}')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[11px] font-bold">
               Editar ✎
@@ -3856,10 +4001,10 @@
         trDetails.id = accordionId;
         trDetails.className = 'hidden bg-slate-50/80';
         trDetails.innerHTML = `
-          <td colspan="8" class="p-4 border-b border-slate-200">
-            <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+          <td colspan="10" class="p-4 border-b border-slate-200">
+            <div class="bg-white p-3.5 rounded-xl border border-slate-200 space-y-3">
               <div class="flex justify-between items-center pb-2 border-b border-slate-100">
-                <span class="font-bold text-slate-800 uppercase text-[10px]">Composição da Receita • ${prod.nome}</span>
+                <span class="font-bold text-slate-800 uppercase text-[10px]">Composição da Receita & Custos Reais • ${prod.nome}</span>
                 <div class="flex items-center gap-2">
                   <span class="text-xs text-slate-500 font-medium">iFood ID: <strong>${prod.ifoodId || 'Não vinculado'}</strong></span>
                   <button onclick="editarProdutoFicha('${prod.codigo}')" class="text-xs bg-blue-600 text-white font-bold px-2.5 py-1 rounded-lg hover:bg-blue-700">
@@ -3867,7 +4012,29 @@
                   </button>
                 </div>
               </div>
+
+              <!-- Resumo do Custo Real com Taxa da Maquininha -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs">
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-bold uppercase">CMV Insumos:</span>
+                  <strong class="text-slate-800">${formatarMoeda(cmvInsumos)}</strong>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-bold uppercase">Taxa Maq. (${taxaMediaBalcaoPct.toFixed(2)}%):</span>
+                  <strong class="text-amber-700">+ ${formatarMoeda(taxaMaquininha)}</strong>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-bold uppercase">Custo Real Total:</span>
+                  <strong class="text-slate-900">${formatarMoeda(custoRealTotal)}</strong>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-bold uppercase">Margem Líquida Balcão:</span>
+                  <strong class="text-emerald-700">${formatarPct(margemRealPct, 1)} (${formatarMoeda(lucroReal)})</strong>
+                </div>
+              </div>
+
               <div class="space-y-1">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Ingredientes da Ficha Técnica:</span>
                 ${compHtml}
               </div>
             </div>
@@ -5281,18 +5448,29 @@
     function calcularDesmembramentoCanais(pedidosDoMes) {
       const canaisMap = {
         'Salão & Balcão': { canal: 'Salão & Balcão', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.02 },
-        'Cardápio Digital / Próprio': { canal: 'Cardápio Digital / Próprio', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.015 },
+        'Cardápio Digital': { canal: 'Cardápio Digital', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.015 },
         'iFood': { canal: 'iFood Marketplace', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.23 },
         '99Food': { canal: '99Food Marketplace', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.18 }
       };
 
-      pedidosDoMes.forEach(p => {
+      // Junta pedidos do mês com quaisquer pedidos salvos localmente do cardápio digital
+      const pedidosParaCalcular = [...pedidosDoMes];
+      try {
+        const pedidosReaisLocais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
+        pedidosReaisLocais.forEach(pr => {
+          if (!pedidosParaCalcular.some(p => p.id === pr.id || (p.numero_comanda && p.numero_comanda === pr.numero_comanda))) {
+            pedidosParaCalcular.push(pr);
+          }
+        });
+      } catch (e) {}
+
+      pedidosParaCalcular.forEach(p => {
         let ch = canaisMap['Salão & Balcão'];
         const cLower = (p.canal || '').toLowerCase();
         if (cLower.includes('ifood')) ch = canaisMap['iFood'];
         else if (cLower.includes('99')) ch = canaisMap['99Food'];
         else if (cLower.includes('cardapio') || cLower.includes('cardápio') || cLower.includes('proprio') || cLower.includes('próprio') || cLower.includes('whatsapp') || cLower.includes('delivery')) {
-          ch = canaisMap['Cardápio Digital / Próprio'];
+          ch = canaisMap['Cardápio Digital'];
         } else {
           ch = canaisMap['Salão & Balcão'];
         }
@@ -5300,9 +5478,9 @@
         const taxa = cLower.includes('ifood') ? p.total * 0.23 : (cLower.includes('99') ? p.total * 0.18 : (cLower.includes('cardapio') || cLower.includes('cardápio') ? p.total * 0.015 : p.total * 0.02));
         ch.pedidosCount++;
         ch.faturamentoBruto += p.total;
-        ch.cmvTotal += p.cmv;
+        ch.cmvTotal += (p.cmv || p.total * 0.28);
         ch.taxasRetidas += taxa;
-        ch.lucroLiquido += (p.total - p.cmv - taxa);
+        ch.lucroLiquido += (p.total - (p.cmv || p.total * 0.28) - taxa);
       });
 
       return Object.values(canaisMap).map(ch => {
@@ -5530,7 +5708,7 @@
     }
 
     /**
-     * FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (Próximos 15 dias)
+     * FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (Calendário Financeiro de 21 Dias com Repasse Semanal de Apps)
      */
     function renderPrevisaoCaixa(pedidosDoMes, data) {
       const container = document.getElementById('caixa-previsao-lista');
@@ -5541,10 +5719,11 @@
       let saldoAcumulado = carregarSaldoCaixa();
 
       const diasProjecao = [];
-      const dataBase = new Date(2026, 9, 4); // 04 de Outubro de 2026
+      const dataBase = new Date(2026, 9, 5); // Segunda-feira, 05 de Outubro de 2026
       const diasSemanaNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-      for (let i = 0; i < 15; i++) {
+      // Projeta 21 dias (3 semanas completas de Segunda a Domingo)
+      for (let i = 0; i < 21; i++) {
         const d = new Date(dataBase);
         d.setDate(dataBase.getDate() + i);
         const diaNum = d.getDate();
@@ -5554,18 +5733,24 @@
         const diaFormatado = `${String(diaNum).padStart(2, '0')}/${String(mesNum).padStart(2, '0')}`;
         const dataIso = `${anoNum}-${String(mesNum).padStart(2, '0')}-${String(diaNum).padStart(2, '0')}`;
 
-        // 1. Entradas previstas (Liquidações de Cartões D+1/D+30, PIX na hora e Repasse semanal Quarta-feira)
+        // 1. Entradas previstas diárias
         let entradas = 0;
-        if (d.getDay() === 5 || d.getDay() === 6) entradas = 960.00; // Sexta e Sábado
-        else if (d.getDay() === 0) entradas = 780.00; // Domingo
-        else if (d.getDay() === 3) entradas = 1250.00; // Quarta (Repasse adquirentes / Marketplace)
-        else entradas = 510.00; // Dias de semana normais
+        const isQuartaRepasse = (d.getDay() === 3); // QUARTA-FEIRA: Dia oficial do Repasse Semanal iFood & 99Food
 
-        // Se houver pedidos reais do dia registrado no store:
+        if (d.getDay() === 5 || d.getDay() === 6) entradas = 1250.00; // Sexta e Sábado (pico salão/balcão)
+        else if (d.getDay() === 0) entradas = 980.00; // Domingo
+        else if (isQuartaRepasse) entradas = 550.00 + 2850.00; // Vendas diárias + Repasse semanal marketplace (iFood & 99Food)
+        else entradas = 550.00; // Segunda, Terça, Quinta
+
+        // Se houver pedidos registrados no store para esse dia:
         const pedidosDia = (store.pedidos || []).filter(p => p.dataIso === dataIso);
         if (pedidosDia.length > 0) {
           const somaVendas = pedidosDia.reduce((a, b) => a + (b.total || 0), 0);
-          entradas = Math.max(entradas, somaVendas);
+          if (isQuartaRepasse) {
+            entradas = somaVendas + 2850.00;
+          } else {
+            entradas = Math.max(entradas, somaVendas);
+          }
         }
 
         // 2. Saídas previstas das Contas a Pagar / Boletos
@@ -5598,6 +5783,7 @@
           diaSemana: diaSemanaStr,
           entradas,
           saidas,
+          isQuartaRepasse,
           saldoProjetado: saldoAcumulado,
           descSaida
         });
@@ -5612,19 +5798,49 @@
           diaCritico = dp;
         }
 
-        const saldoCor = dp.saldoProjetado >= 0 ? 'text-slate-900 font-black' : 'text-rose-600 font-black';
-        const cardBg = dp.saldoProjetado >= 0 ? 'bg-slate-50/50 border-slate-100' : 'bg-rose-50 border-rose-200';
+        const isNegativo = dp.saldoProjetado < 0;
+        const saldoCor = isNegativo ? 'text-rose-600' : 'text-emerald-700';
+        const cardBg = isNegativo 
+          ? 'bg-rose-50/70 border-rose-300' 
+          : (dp.isQuartaRepasse ? 'bg-purple-50/40 border-purple-200' : 'bg-slate-50/60 border-slate-200');
 
         return `
-          <div class="flex items-center justify-between p-2 rounded-lg border ${cardBg} text-xs">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-slate-800 text-[11px]">${dp.diaFormatado} (${dp.diaSemana})</span>
-              ${dp.descSaida ? `<span class="text-[9px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-bold" title="${dp.descSaida}">${dp.descSaida.length > 28 ? dp.descSaida.substring(0, 28) + '...' : dp.descSaida}</span>` : ''}
+          <div class="p-3 rounded-2xl border ${cardBg} shadow-2xs flex flex-col justify-between space-y-2.5 transition hover:shadow-xs">
+            <div>
+              <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                <span class="font-black text-xs text-slate-900">${dp.diaSemana} • ${dp.diaFormatado}</span>
+                ${dp.isQuartaRepasse ? '<span class="text-[9px] font-black bg-purple-100 text-purple-900 border border-purple-200 px-1.5 py-0.2 rounded-full">📦 Apps</span>' : ''}
+              </div>
+
+              <!-- Entradas e Repasse -->
+              <div class="mt-2 space-y-1 text-[11px]">
+                <div class="flex justify-between items-center text-slate-600">
+                  <span class="text-[10px] text-slate-400">Entradas:</span>
+                  <strong class="text-emerald-700 font-black">+ ${formatarMoeda(dp.entradas)}</strong>
+                </div>
+                ${dp.isQuartaRepasse ? `
+                  <div class="text-[9px] text-purple-800 font-extrabold bg-purple-100/70 px-1.5 py-0.5 rounded border border-purple-200/80">
+                    + R$ 2.850 iFood & 99
+                  </div>
+                ` : ''}
+
+                <!-- Saídas / Boletos Agendados -->
+                <div class="flex justify-between items-center text-slate-600">
+                  <span class="text-[10px] text-slate-400">Boletos:</span>
+                  <strong class="${dp.saidas > 0 ? 'text-rose-600' : 'text-slate-400'} font-black">${dp.saidas > 0 ? `- ${formatarMoeda(dp.saidas)}` : 'R$ 0,00'}</strong>
+                </div>
+                ${dp.descSaida ? `
+                  <div class="text-[9px] text-rose-800 bg-rose-50 px-1.5 py-0.5 rounded font-bold border border-rose-200/60 truncate" title="${dp.descSaida}">
+                    ⚡ ${dp.descSaida}
+                  </div>
+                ` : ''}
+              </div>
             </div>
-            <div class="flex items-center gap-3 text-right">
-              <span class="text-[10px] text-emerald-700 font-bold">+R$ ${Math.round(dp.entradas)}</span>
-              ${dp.saidas > 0 ? `<span class="text-[10px] text-rose-600 font-bold">-R$ ${Math.round(dp.saidas)}</span>` : '<span class="text-[10px] text-slate-300">-</span>'}
-              <span class="text-xs font-bold ${saldoCor} min-w-[70px]">${dp.saldoProjetado >= 0 ? 'R$ ' : '-R$ '}${formatarNumero(Math.abs(dp.saldoProjetado), 0)}</span>
+
+            <!-- Saldo Projetado Acumulado -->
+            <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+              <span class="text-[9px] font-bold text-slate-400 uppercase">Saldo:</span>
+              <strong class="text-xs font-black ${saldoCor}">${dp.saldoProjetado >= 0 ? '+' : ''}${formatarMoeda(dp.saldoProjetado)}</strong>
             </div>
           </div>
         `;
@@ -5632,22 +5848,28 @@
 
       if (alerta) {
         if (temDeficit && diaCritico) {
-          alerta.className = 'p-3 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-950 flex items-start gap-2.5';
+          alerta.className = 'p-3.5 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-950 flex items-start gap-2.5';
           alerta.innerHTML = `
-            <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5"></i>
+            <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5"></i>
             <div>
-              <span class="block font-black text-rose-900">Alerta de Liquidez em ${diaCritico.diaFormatado} (${diaCritico.diaSemana}):</span>
-              <span class="font-normal text-rose-800">Saldo projetado negativo em <strong>-R$ ${formatarNumero(Math.abs(diaCritico.saldoProjetado))}</strong> com o vencimento de <strong>${diaCritico.descSaida}</strong>. Ação: Antecipe recebíveis de cartão da semana ou negocie prorrogação de 3 dias no boleto para evitar juros e cheque especial.</span>
+              <span class="block font-black text-rose-900 text-sm">Alerta de Liquidez em ${diaCritico.diaFormatado} (${diaCritico.diaSemana}):</span>
+              <span class="font-normal text-rose-800 mt-0.5 block">Saldo projetado em conta ficará negativo em <strong>-R$ ${formatarNumero(Math.abs(diaCritico.saldoProjetado))}</strong> devido ao vencimento de <strong>${diaCritico.descSaida}</strong>.
+              <strong class="block mt-1 text-slate-900">💡 Prescrição NALIM:</strong> O próximo repasse semanal dos aplicativos cai na quarta-feira seguinte (+R$ 2.850). Antecipe recebíveis de cartão ou solicite 2 dias de prazo no boleto com seu fornecedor para evitar taxas de cheque especial.</span>
             </div>
           `;
         } else {
-          alerta.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-center gap-2';
+          alerta.className = 'p-3.5 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-950 flex items-center gap-2.5';
           alerta.innerHTML = `
-            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
-            <span>Liquidez Saudável: Todas as saídas e boletos dos próximos 15 dias estão cobertos pelas entradas previstas em conta.</span>
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 flex-shrink-0"></i>
+            <div>
+              <strong class="font-black text-emerald-900 block">Fluxo de Caixa Saudável (21 Dias):</strong>
+              <span class="font-normal text-emerald-800">Todas as saídas e boletos programados estão cobertos pelas entradas diárias e pelos repasses semanais de aplicativos às quartas-feiras.</span>
+            </div>
           `;
         }
       }
+      if (window.lucide) lucide.createIcons();
+    }
       if (window.lucide) lucide.createIcons();
     }
 

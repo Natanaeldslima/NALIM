@@ -284,16 +284,6 @@
         <div class="mt-3 space-y-2 max-h-56 overflow-y-auto custom-scroll pr-1" id="drawer-itens-lista">
           <!-- Injetado dinamicamente -->
         </div>
-
-        <!-- Forma de Pagamento Prevista -->
-        <div class="mt-3 pt-3 border-t border-slate-100">
-          <label class="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Pagamento Previsto:</label>
-          <div class="grid grid-cols-3 gap-1.5 text-xs font-bold">
-            <button type="button" onclick="setPagto('PIX')" class="pay-btn py-1.5 rounded-xl border border-forest-600 bg-forest-50 text-forest-800 text-center" data-method="PIX">PIX</button>
-            <button type="button" onclick="setPagto('Cartão')" class="pay-btn py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center" data-method="Cartão">Cartão</button>
-            <button type="button" onclick="setPagto('Dinheiro')" class="pay-btn py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-center" data-method="Dinheiro">Dinheiro</button>
-          </div>
-        </div>
       </div>
 
       <!-- Resumo Total e Botão Gigante de Enviar para a Cozinha -->
@@ -700,6 +690,26 @@
       lucide.createIcons();
     }
     let pedidosProntosCozinha = [];
+    let ultimoAlertaTocadoId = null;
+
+    function tocarAlertaPedidoPronto() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.4);
+      } catch(e) {}
+    }
 
     async function verificarPedidosProntosCozinha() {
       const banner = document.getElementById('banner-pedidos-prontos');
@@ -708,19 +718,17 @@
 
       let prontos = [];
 
-      // 1. Tenta API backend em tempo real
+      // 1. Fila direta de pedidos prontos gravada pela Cozinha (KDS)
       try {
-        const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-        const res = await fetch(`${API_BASE}/api/operacional/kds/realtime`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.tickets && Array.isArray(data.tickets)) {
-            prontos = data.tickets.filter(t => t.status === 'Pronto');
-          }
+        const filaDireta = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
+        if (Array.isArray(filaDireta)) {
+          filaDireta.forEach(fp => {
+            if (!prontos.some(p => p.id === fp.id)) prontos.push(fp);
+          });
         }
       } catch (e) {}
 
-      // 2. Fallback / merge com localStorage
+      // 2. Fila do KDS com status 'Pronto'
       try {
         const localKds = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
         const prontosLocal = localKds.filter(t => t.status === 'Pronto');
@@ -729,14 +737,35 @@
         });
       } catch (e) {}
 
+      // 3. Tenta API backend em tempo real
+      try {
+        const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+        const res = await fetch(`${API_BASE}/api/operacional/kds/realtime`, { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.tickets && Array.isArray(data.tickets)) {
+            data.tickets.filter(t => t.status === 'Pronto').forEach(tk => {
+              if (!prontos.some(p => p.id === tk.id)) prontos.push(tk);
+            });
+          }
+        }
+      } catch (e) {}
+
       pedidosProntosCozinha = prontos;
 
       if (prontos.length > 0) {
         const primeiro = prontos[0];
         banner.classList.remove('hidden');
-        detalhe.textContent = `${primeiro.identificacao} • Ticket #${primeiro.numero_comanda || primeiro.id}${prontos.length > 1 ? ` (+${prontos.length - 1} prontos na cozinha)` : ''}`;
+        detalhe.textContent = `${primeiro.identificacao} • Ticket #${primeiro.numero_comanda || primeiro.id}${prontos.length > 1 ? ` (+${prontos.length - 1} prontos p/ recolher)` : ''}`;
+        
+        // Toca alerta sonoro se for um novo pedido pronto
+        if (ultimoAlertaTocadoId !== primeiro.id) {
+          ultimoAlertaTocadoId = primeiro.id;
+          tocarAlertaPedidoPronto();
+        }
       } else {
         banner.classList.add('hidden');
+        ultimoAlertaTocadoId = null;
       }
       lucide.createIcons();
     }
@@ -746,15 +775,11 @@
       const ticket = pedidosProntosCozinha[0];
       const ticketId = ticket.id;
 
-      // 1. Atualiza API Python
+      // 1. Remove da fila direta de pedidos prontos
       try {
-        const headers = { 'Content-Type': 'application/json' };
-        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-        await fetch(`${API_BASE}/api/operacional/kds/${ticketId}/status`, {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ status_kds: 'Entregue' })
-        });
+        let filaDireta = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
+        filaDireta = filaDireta.filter(p => p.id !== ticketId);
+        localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(filaDireta));
       } catch (e) {}
 
       // 2. Atualiza localStorage do KDS
@@ -766,6 +791,17 @@
         let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
         if (!finalizados.includes(ticketId)) finalizados.push(ticketId);
         localStorage.setItem('nalim_kds_finalizados', JSON.stringify(finalizados));
+      } catch (e) {}
+
+      // 3. Atualiza API Python
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+        await fetch(`${API_BASE}/api/operacional/kds/${ticketId}/status`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ status_kds: 'Entregue' })
+        });
       } catch (e) {}
 
       pedidosProntosCozinha = pedidosProntosCozinha.filter(t => t.id !== ticketId);

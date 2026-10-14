@@ -134,7 +134,7 @@
       <div class="h-3 w-px bg-slate-200"></div>
       <div class="flex items-center gap-1 text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full font-extrabold text-[10px]">
         <i data-lucide="store" class="w-3 h-3 text-brand-600"></i>
-        <span>Retirada Balcão: Grátis</span>
+        <span>Retirada no Balcão</span>
       </div>
     </div>
 
@@ -380,7 +380,7 @@
                     class="border-2 border-slate-200 bg-white text-slate-600 p-3 rounded-2xl font-black text-xs flex flex-col items-center justify-center gap-1 transition hover:bg-slate-50">
               <i data-lucide="store" class="w-5 h-5 text-slate-400"></i>
               <span>🏬 Retirar no Balcão</span>
-              <span class="text-[10px] text-emerald-600 font-bold">Grátis (R$ 0,00)</span>
+              <span class="text-[10px] text-slate-500 font-bold">Sem taxa adicional</span>
             </button>
           </div>
         </div>
@@ -1253,10 +1253,16 @@
         console.warn('Backend indisponível, usando numeração sequencial local:', e);
       }
 
-      // Se offline ou não retornou número da API, utiliza numeração sequencial local garantida (sem Math.random)
+      // Se offline ou não retornou número da API, utiliza numeração sequencial real sincronizada
       if (!numComanda) {
-        let seqAtual = parseInt(localStorage.getItem('nalim_comanda_seq') || '105', 10);
-        seqAtual++;
+        let seqAtual = parseInt(localStorage.getItem('nalim_comanda_seq') || '106', 10);
+        let pedidosLocais = [];
+        try { pedidosLocais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]'); } catch(e){}
+        let kdsLocais = [];
+        try { kdsLocais = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]'); } catch(e){}
+        const maxPed = pedidosLocais.reduce((m, p) => Math.max(m, p.numero_comanda || (typeof p.id === 'number' ? p.id : 0)), 0);
+        const maxKds = kdsLocais.reduce((m, k) => Math.max(m, (typeof k.id === 'number' ? k.id : 0)), 0);
+        seqAtual = Math.max(seqAtual, maxPed, maxKds) + 1;
         localStorage.setItem('nalim_comanda_seq', seqAtual.toString());
         numComanda = seqAtual;
       }
@@ -1282,7 +1288,7 @@
         // Guarda no histórico de pedidos reais para ser puxado no dashboard do dono
         let pedidosReais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
         pedidosReais.unshift({
-          id: pedidoId || numComanda,
+          id: 'DIGITAL_' + numComanda,
           numero_comanda: numComanda,
           dataHora: `${new Date().toISOString().split('T')[0]} ${agoraHora}`,
           dataIso: new Date().toISOString().split('T')[0],
