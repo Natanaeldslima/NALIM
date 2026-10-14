@@ -1,4 +1,4 @@
-﻿from typing import List, Optional
+from typing import List, Optional
 from pydantic import BaseModel
 
 # Auth Schemas
@@ -79,6 +79,7 @@ class ProdutoResponse(BaseModel):
 # Pedidos e PDV
 class ItemPedidoInput(BaseModel):
     produto_codigo: str
+    nome: Optional[str] = None
     quantidade: int = 1
     modificacoes: Optional[str] = None
     preco_unitario: float
