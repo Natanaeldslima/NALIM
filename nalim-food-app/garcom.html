@@ -719,12 +719,19 @@
 
       let prontos = [];
 
+      function isPedidoParaGarcom(p) {
+        if (!p) return false;
+        if (p.solicitante === 'Balcão' || p.canal === 'Balcão') return false;
+        if (typeof p.identificacao === 'string' && p.identificacao.toLowerCase().includes('balcão')) return false;
+        return true;
+      }
+
       // 1. Fila direta de pedidos prontos gravada pela Cozinha (KDS)
       try {
         const filaDireta = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
         if (Array.isArray(filaDireta)) {
           filaDireta.forEach(fp => {
-            if (!prontos.some(p => p.id === fp.id)) prontos.push(fp);
+            if (isPedidoParaGarcom(fp) && !prontos.some(p => p.id === fp.id)) prontos.push(fp);
           });
         }
       } catch (e) {}
@@ -732,7 +739,7 @@
       // 2. Fila do KDS com status 'Pronto'
       try {
         const localKds = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        const prontosLocal = localKds.filter(t => t.status === 'Pronto');
+        const prontosLocal = localKds.filter(t => t.status === 'Pronto' && isPedidoParaGarcom(t));
         prontosLocal.forEach(pl => {
           if (!prontos.some(p => p.id === pl.id)) prontos.push(pl);
         });
@@ -745,7 +752,7 @@
         if (res.ok) {
           const data = await res.json();
           if (data.tickets && Array.isArray(data.tickets)) {
-            data.tickets.filter(t => t.status === 'Pronto').forEach(tk => {
+            data.tickets.filter(t => t.status === 'Pronto' && isPedidoParaGarcom(t)).forEach(tk => {
               if (!prontos.some(p => p.id === tk.id)) prontos.push(tk);
             });
           }
@@ -1033,19 +1040,22 @@
 
       salvarEstadoMesasLocal();
 
+      const nomeGarcom = localStorage.getItem('nalim_nome') || 'Pedro Lucas (Garçom)';
+      const payload = {
+        solicitante: nomeGarcom,
+        itens: comanda.itens.map(it => ({
+          produto_codigo: it.produtoCodigo,
+          nome: it.nome,
+          quantidade: it.qtd || 1,
+          preco_unitario: Number(it.precoUnit) || 0,
+          modificacoes: it.modificacoes || null
+        }))
+      };
+
+      let salvoNoBackend = false;
       try {
         const headers = { 'Content-Type': 'application/json' };
         if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-
-        const payload = {
-          itens: comanda.itens.map(it => ({
-            produto_codigo: it.produtoCodigo,
-            nome: it.nome,
-            quantidade: it.qtd,
-            preco_unitario: it.precoUnit,
-            modificacoes: it.modificacoes
-          }))
-        };
 
         const res = await fetch(`${API_BASE}/api/operacional/mesas/${encodeURIComponent(mesaAtiva)}/adicionar-itens`, {
           method: 'POST',
@@ -1055,12 +1065,15 @@
 
         if (res.ok) {
           const data = await res.json();
-          document.getElementById('sucesso-detalhes').textContent = `Ticket #${data.numero_comanda || 107} da ${mesaAtiva} caiu na chapa agora! Consumo acumulado: R$ ${data.consumo_acumulado.toFixed(2)}`;
-        } else {
-          document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} enviado com sucesso para a cozinha!`;
+          salvoNoBackend = true;
+          document.getElementById('sucesso-detalhes').textContent = `Ticket #${data.numero_comanda || 107} da ${mesaAtiva} caiu na chapa agora! Consumo acumulado: R$ ${(data.consumo_acumulado || totalRodada).toFixed(2)}`;
         }
       } catch (err) {
-        // Fallback offline se o backend estiver inacessível
+        console.warn('[GARÇOM] Erro na rede / backend offline:', err);
+      }
+
+      // Se o backend não confirmou sucesso, salva na fila local do KDS garantindo que nunca se perca
+      if (!salvoNoBackend) {
         try {
           let kdsOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
           const novoTicketId = Math.floor(100 + Math.random() * 900);
@@ -1068,18 +1081,19 @@
             id: novoTicketId,
             dataHora: agoraHora,
             identificacao: `${mesaAtiva} (Salão)`,
+            solicitante: nomeGarcom,
             canal: 'Salão',
             status: 'Na Chapa',
             tempoDecorrido: 'Agora',
             items: comanda.itens.map(it => ({
               nome: it.nome,
-              qtd: it.qtd,
-              modificacoes: it.modificacoes
+              qtd: it.qtd || 1,
+              modificacoes: it.modificacoes || null
             }))
           });
           localStorage.setItem('nalim_kds_orders', JSON.stringify(kdsOrders));
         } catch (e) {}
-        document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} registrado e enviado para a chapa.`;
+        document.getElementById('sucesso-detalhes').textContent = `Pedido da ${mesaAtiva} despachado com sucesso para a Cozinha/KDS!`;
       }
 
       fecharDrawerComanda();
@@ -1174,9 +1188,11 @@
       const prod = cardapioProdutos.find(p => p.codigo === codigo);
       if (!prod) return;
 
+      const precoEfetivo = Number(prod.preco || prod.preco_salao || 0);
+
       itemEmCustomizacao = {
         produto: prod,
-        precoBase: prod.preco,
+        precoBase: precoEfetivo,
         removidos: [],
         adicionados: [],
         obs: ''
@@ -1257,25 +1273,27 @@
     }
 
     function atualizarPrecoModal() {
-      let tot = itemEmCustomizacao.precoBase;
-      itemEmCustomizacao.adicionados.forEach(ex => tot += ex.preco);
+      let tot = Number(itemEmCustomizacao.precoBase) || 0;
+      itemEmCustomizacao.adicionados.forEach(ex => tot += Number(ex.preco) || 0);
       document.getElementById('cust-preco-total-btn').textContent = `R$ ${tot.toFixed(2)}`;
     }
 
     function confirmarItemNaComanda() {
       const obs = document.getElementById('cust-obs-input').value.trim();
-      let tot = itemEmCustomizacao.precoBase;
-      itemEmCustomizacao.adicionados.forEach(ex => tot += ex.preco);
+      let tot = Number(itemEmCustomizacao.precoBase) || 0;
+      itemEmCustomizacao.adicionados.forEach(ex => tot += Number(ex.preco) || 0);
 
       const mods = [];
       if (itemEmCustomizacao.removidos.length > 0) mods.push(`SEM ${itemEmCustomizacao.removidos.join(', ')}`);
       if (itemEmCustomizacao.adicionados.length > 0) mods.push(`+ EXTRA: ${itemEmCustomizacao.adicionados.map(a => a.nome).join(', ')}`);
       if (obs) mods.push(obs);
 
+      const precoUnitFinal = tot > 0 ? tot : (Number(itemEmCustomizacao.precoBase) || 0);
+
       comanda.itens.push({
         produtoCodigo: itemEmCustomizacao.produto.codigo,
         nome: itemEmCustomizacao.produto.nome,
-        precoUnit: tot,
+        precoUnit: precoUnitFinal,
         qtd: 1,
         modificacoes: mods.join(' • ')
       });
