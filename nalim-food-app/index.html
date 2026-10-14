@@ -288,27 +288,27 @@
     <!-- CONTAINER DE CONTEÚDO DINÂMICO -->
     <main class="p-4 sm:p-6 space-y-6">
 
-      <!-- BANNER GLOBAL DE AVISO: PEDIDOS PRONTOS NA COZINHA (VISÍVEL EM TODAS AS ABAS) -->
-      <div id="banner-pedidos-prontos-balcao" class="hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 p-4 rounded-2xl shadow-xl border-2 border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse sticky top-2 z-30">
-        <div class="flex items-center gap-3">
-          <span class="w-11 h-11 rounded-2xl bg-slate-950 text-amber-300 flex items-center justify-center text-xl font-black shrink-0 shadow-md">
-            🔔
-          </span>
-          <div>
-            <span class="block text-xs font-black uppercase tracking-wider text-slate-950">PEDIDO PRONTO NA COZINHA!</span>
-            <span id="banner-pedidos-prontos-balcao-detalhe" class="text-sm font-black text-amber-950 block">Pedido #105 — Balcão / Retirada</span>
-          </div>
-        </div>
-        <button type="button" onclick="marcarPedidoProntoBalcaoEntregue()" class="bg-slate-950 hover:bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer shrink-0">
-          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
-          <span>✓ Marcar como Entregue / Concluir</span>
-        </button>
-      </div>
-
       <!-- ========================================================== -->
       <!-- [1. OPERACIONAL] CARDÁPIO / PDV                            -->
       <!-- ========================================================== -->
       <section id="view-pdv" class="hidden space-y-4">
+
+        <!-- BANNER EXCLUSIVO DA ABA DO BALCÃO: PEDIDOS PRONTOS NA COZINHA -->
+        <div id="banner-pedidos-prontos-balcao" class="hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 p-4 rounded-2xl shadow-xl border-2 border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-pulse sticky top-2 z-30">
+          <div class="flex items-center gap-3">
+            <span class="w-11 h-11 rounded-2xl bg-slate-950 text-amber-300 flex items-center justify-center text-xl font-black shrink-0 shadow-md">
+              🔔
+            </span>
+            <div>
+              <span class="block text-xs font-black uppercase tracking-wider text-slate-950">PEDIDO DO BALCÃO PRONTO NA COZINHA!</span>
+              <span id="banner-pedidos-prontos-balcao-detalhe" class="text-sm font-black text-amber-950 block">Pedido #105 — Balcão / Retirada</span>
+            </div>
+          </div>
+          <button type="button" onclick="marcarPedidoProntoBalcaoEntregue()" class="bg-slate-950 hover:bg-black text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-2 cursor-pointer shrink-0">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+            <span>✓ Marcar como Entregue ao Cliente</span>
+          </button>
+        </div>
         
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-1">
           <div>
@@ -2848,6 +2848,15 @@
 
       // Atualiza o topo: Mês apenas no Adm e Gerencial; Regime apenas no Gerencial
       atualizarHeaderContexto(viewId);
+
+      // Notificação de pedidos prontos: Exibe SOMENTE na aba do Balcão (PDV), nunca na cozinha ou outras abas
+      if (viewId === 'pdv') {
+        verificarPedidosProntosBalcao();
+      } else {
+        const bannerBalcao = document.getElementById('banner-pedidos-prontos-balcao');
+        if (bannerBalcao) bannerBalcao.classList.add('hidden');
+      }
+
       safeLucide();
     }
 
@@ -3855,36 +3864,35 @@
     }
 
     function marcarKdsPronto(ticketId) {
-      const ord = store.kdsOrders.find(o => o.id === ticketId || (o.numero_comanda && o.numero_comanda === ticketId));
+      const ord = store.kdsOrders.find(o => String(o.id) === String(ticketId) || (o.numero_comanda && String(o.numero_comanda) === String(ticketId)));
       const ticketIdReal = ord ? ord.id : ticketId;
       const numComandaReal = ord ? (ord.numero_comanda || ticketIdReal) : ticketId;
       const identTicket = ord ? ord.identificacao : `Pedido #${numComandaReal}`;
-      const solicitanteTicket = ord ? (ord.solicitante || (ord.canal === 'Balcão' ? 'Balcão' : 'Garçom')) : 'Balcão';
+      const solicitanteTicket = ord ? (ord.solicitante || (ord.canal === 'Salão' ? 'Garçom' : 'Balcão')) : 'Balcão';
       const canalTicket = ord ? (ord.canal || 'Balcão') : 'Balcão';
 
       // 1. Grava na fila direta de pedidos prontos para alertar quem solicitou
       try {
         let prontos = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
-        if (!prontos.some(p => p.id === ticketIdReal || p.numero_comanda === numComandaReal)) {
-          prontos.unshift({
-            id: ticketIdReal,
-            numero_comanda: numComandaReal,
-            identificacao: identTicket,
-            solicitante: solicitanteTicket,
-            canal: canalTicket,
-            hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          });
-          localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(prontos));
-        }
+        prontos = prontos.filter(p => String(p.id) !== String(ticketIdReal) && (!p.numero_comanda || String(p.numero_comanda) !== String(numComandaReal)));
+        prontos.unshift({
+          id: ticketIdReal,
+          numero_comanda: numComandaReal,
+          identificacao: identTicket,
+          solicitante: solicitanteTicket,
+          canal: canalTicket,
+          hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(prontos));
       } catch (e) {}
 
       // 2. Remove da fila de preparo da cozinha (CONCLUÍDO COM 1 CLIQUE ÚNICO)
-      store.kdsOrders = store.kdsOrders.filter(o => o.id !== ticketIdReal && o.id !== numComandaReal && o.numero_comanda !== numComandaReal);
+      store.kdsOrders = store.kdsOrders.filter(o => String(o.id) !== String(ticketIdReal) && (!o.numero_comanda || String(o.numero_comanda) !== String(numComandaReal)));
 
       // 3. Atualiza localStorage do KDS e grava na lista de finalizados para NUNCA voltar ao atualizar
       try {
         let ords = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        ords = ords.filter(o => o.id !== ticketIdReal && o.id !== numComandaReal && o.numero_comanda !== numComandaReal);
+        ords = ords.filter(o => String(o.id) !== String(ticketIdReal) && (!o.numero_comanda || String(o.numero_comanda) !== String(numComandaReal)));
         localStorage.setItem('nalim_kds_orders', JSON.stringify(ords));
 
         let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
@@ -4012,11 +4020,16 @@
       const ident = (typeof p.identificacao === 'string' ? p.identificacao.toLowerCase() : '');
       const canal = (p.canal || '').toLowerCase();
 
-      // Se foi solicitado explicitamente pelo Balcão, SEMPRE notifica o Balcão
-      if (sol.includes('balcão') || sol.includes('balcao')) return true;
+      // Se foi solicitado explicitamente por um Garçom, NUNCA notifica o Balcão (vai para o Garçom que pediu)
+      if (sol.includes('garçom') || sol.includes('garcom') || sol.includes('pedro') || sol.includes('operador')) return false;
 
-      // Se foi solicitado pelo Garçom, NÃO notifica o Balcão (vai para o Garçom)
-      if (sol.includes('garçom') || sol.includes('garcom') || sol.includes('pedro')) return false;
+      // Se for mesa e não for pedido explícito de retirada, é atendimento de salão (vai para o Garçom)
+      if ((canal.includes('salão') || canal.includes('salao') || ident.includes('mesa')) && !sol.includes('balcão') && !sol.includes('balcao')) {
+        return false;
+      }
+
+      // Se foi solicitado pelo Balcão, SEMPRE notifica o Balcão
+      if (sol.includes('balcão') || sol.includes('balcao')) return true;
 
       // Sem solicitante explícito: canais Balcão, iFood, 99Food ou identificação com 'balcão' ou 'retirada'
       if (canal.includes('balcão') || canal.includes('balcao') || ident.includes('balcão') || ident.includes('balcao')) return true;
@@ -4028,6 +4041,15 @@
       const banner = document.getElementById('banner-pedidos-prontos-balcao');
       const detalhe = document.getElementById('banner-pedidos-prontos-balcao-detalhe');
       if (!banner) return;
+
+      // O aviso de pedido pronto do balcão DEVE FICAR APENAS NA ABA DO BALCÃO (view-pdv)
+      // Se o usuário estiver na cozinha (view-cozinha) ou qualquer outra aba, oculta e não toca alarme
+      const viewPdv = document.getElementById('view-pdv');
+      const isAbaBalcaoAtiva = viewPdv && !viewPdv.classList.contains('hidden');
+      if (!isAbaBalcaoAtiva) {
+        banner.classList.add('hidden');
+        return;
+      }
 
       let prontos = [];
 

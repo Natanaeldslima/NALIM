@@ -832,18 +832,20 @@
         const ident = (typeof p.identificacao === 'string' ? p.identificacao.toLowerCase() : '');
         const canal = (p.canal || '').toLowerCase();
 
-        // Se o solicitante foi explicitamente o Balcão, NUNCA avisa o Garçom (o aviso vai para o Balcão)
-        if (sol.includes('balcão') || sol.includes('balcao')) return false;
+        // Se for pedido exclusivo de retirada no balcão sem mesa associada, é exclusivo do Balcão
+        if ((sol.includes('balcão') || sol.includes('balcao') || canal.includes('balcão') || canal.includes('balcao')) && !ident.includes('mesa') && !canal.includes('salão') && !canal.includes('salao')) {
+          return false;
+        }
 
-        // Se for pedido exclusivo de retirada no balcão sem mesa associada, não notifica o garçom
-        if ((canal === 'balcão' || canal === 'balcao') && !ident.includes('mesa')) return false;
-        if (ident.includes('retirada') && !ident.includes('mesa')) return false;
+        // Se for pedido de mesa / salão (ex: "Mesa 01"), o Garçom SEMPRE deve ser avisado para servir
+        if (ident.includes('mesa') || canal.includes('salão') || canal.includes('salao')) {
+          return true;
+        }
 
-        // Se o solicitante foi o Garçom, SEMPRE avisa o Garçom
-        if (sol.includes('garçom') || sol.includes('garcom') || sol.includes('pedro')) return true;
-
-        // Sem solicitante explícito: se for do canal Salão ou mesa, notifica o Garçom
-        if (canal === 'salão' || canal === 'salao' || ident.includes('mesa')) return true;
+        // Se o solicitante foi o Garçom / Operador
+        if (sol.includes('garçom') || sol.includes('garcom') || sol.includes('pedro') || sol.includes('operador')) {
+          return true;
+        }
 
         return false;
       }
@@ -853,7 +855,7 @@
         const filaDireta = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
         if (Array.isArray(filaDireta)) {
           filaDireta.forEach(fp => {
-            if (isPedidoParaGarcom(fp) && !prontos.some(p => p.id === fp.id)) prontos.push(fp);
+            if (isPedidoParaGarcom(fp) && !prontos.some(p => String(p.id) === String(fp.id))) prontos.push(fp);
           });
         }
       } catch (e) {}
@@ -863,7 +865,7 @@
         const localKds = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
         const prontosLocal = localKds.filter(t => t.status === 'Pronto' && isPedidoParaGarcom(t));
         prontosLocal.forEach(pl => {
-          if (!prontos.some(p => p.id === pl.id)) prontos.push(pl);
+          if (!prontos.some(p => String(p.id) === String(pl.id))) prontos.push(pl);
         });
       } catch (e) {}
 
@@ -875,7 +877,7 @@
           const data = await res.json();
           if (data.tickets && Array.isArray(data.tickets)) {
             data.tickets.filter(t => t.status === 'Pronto' && isPedidoParaGarcom(t)).forEach(tk => {
-              if (!prontos.some(p => p.id === tk.id)) prontos.push(tk);
+              if (!prontos.some(p => String(p.id) === String(tk.id))) prontos.push(tk);
             });
           }
         }
@@ -909,14 +911,14 @@
       // 1. Remove da fila direta de pedidos prontos
       try {
         let filaDireta = JSON.parse(localStorage.getItem('nalim_pedidos_prontos') || '[]');
-        filaDireta = filaDireta.filter(p => p.id !== ticketId && p.id !== numComanda && p.numero_comanda !== numComanda);
+        filaDireta = filaDireta.filter(p => String(p.id) !== String(ticketId) && String(p.id) !== String(numComanda) && (!p.numero_comanda || String(p.numero_comanda) !== String(numComanda)));
         localStorage.setItem('nalim_pedidos_prontos', JSON.stringify(filaDireta));
       } catch (e) {}
 
       // 2. Atualiza localStorage do KDS
       try {
         let localKds = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        localKds = localKds.filter(t => t.id !== ticketId && t.id !== numComanda && t.numero_comanda !== numComanda);
+        localKds = localKds.filter(t => String(t.id) !== String(ticketId) && String(t.id) !== String(numComanda) && (!t.numero_comanda || String(t.numero_comanda) !== String(numComanda)));
         localStorage.setItem('nalim_kds_orders', JSON.stringify(localKds));
 
         let finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
