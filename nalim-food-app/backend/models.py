@@ -1,4 +1,4 @@
-﻿import datetime
+import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from database import Base
@@ -101,6 +101,7 @@ class Pedido(Base):
 
     # Status operacional KDS
     status_kds = Column(String(30), default="Na Chapa")  # 'Na Chapa', 'Pronto', 'Entregue'
+    solicitante = Column(String(100), default="Balcão", nullable=True)  # 'Balcão', 'Garçom', 'Cardápio Digital'
 
     tenant = relationship("Tenant", back_populates="pedidos")
     itens = relationship("ItemPedido", back_populates="pedido", cascade="all, delete-orphan")

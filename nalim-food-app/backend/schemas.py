@@ -82,11 +82,12 @@ class ItemPedidoInput(BaseModel):
     nome: Optional[str] = None
     quantidade: int = 1
     modificacoes: Optional[str] = None
-    preco_unitario: float
+    preco_unitario: float = 0.0
 
 class PedidoCreate(BaseModel):
     canal: str = "Salão"  # Salão, Balcão, iFood
     identificacao: Optional[str] = "Balcão"
+    solicitante: Optional[str] = "Balcão"
     ifood_order_id: Optional[str] = None
     ifood_cliente: Optional[str] = None
     forma_pagto: str = "PIX"
@@ -192,12 +193,13 @@ class PerdaItemResponse(BaseModel):
 # Mesas & Comandas
 class ItemMesaInput(BaseModel):
     produto_codigo: str
-    nome: str
+    nome: Optional[str] = None
     quantidade: int = 1
-    preco_unitario: float
+    preco_unitario: float = 0.0
     modificacoes: Optional[str] = None
 
 class AdicionarItensMesaInput(BaseModel):
+    solicitante: Optional[str] = "Garçom"
     itens: List[ItemMesaInput]
 
 class FecharMesaRequest(BaseModel):

@@ -8,6 +8,13 @@ from auth import hash_password
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE pedidos ADD COLUMN solicitante VARCHAR(100) DEFAULT 'Balcão'"))
+            conn.commit()
+    except Exception:
+        pass
     db = SessionLocal()
 
     # Verifica se já está populado
