@@ -226,15 +226,15 @@ def atualizar_status_kds(
     db: Session = Depends(get_db)
 ):
     pedido = db.query(Pedido).filter(
-        Pedido.id == pedido_id,
-        Pedido.tenant_id == tenant_id
-    ).first()
+        (Pedido.id == pedido_id) | (Pedido.numero_comanda == pedido_id)
+    ).order_by(Pedido.id.desc()).first()
+
     if not pedido:
-        raise HTTPException(status_code=404, detail="Pedido não encontrado.")
+        return {"sucesso": False, "aviso": "Pedido não encontrado no banco, mantido em cache local."}
 
     pedido.status_kds = dados.status_kds
     db.commit()
-    return {"sucesso": True, "pedido_id": pedido.id, "novo_status": pedido.status_kds}
+    return {"sucesso": True, "pedido_id": pedido.id, "numero_comanda": pedido.numero_comanda, "novo_status": pedido.status_kds}
 
 # 5. GESTÃO DE MESAS (Comanda Acumulada, Status Livre/Ocupada e Zeramento)
 @router.get("/mesas")
@@ -313,13 +313,19 @@ def adicionar_itens_mesa(
     agora_hora = datetime.datetime.now().strftime("%H:%M")
 
     for it in dados.itens:
-        total_item = it.preco_unitario * it.quantidade
+        prod = db.query(Produto).filter(
+            Produto.tenant_id == tenant_id,
+            Produto.codigo == it.produto_codigo
+        ).first()
+        preco_unit = float(it.preco_unitario or (prod.preco_salao if prod else 0.0))
+        nome_prod = it.nome or (prod.nome if prod else it.produto_codigo)
+        total_item = preco_unit * it.quantidade
         subtotal_rodada += total_item
         itens_acumulados.append({
             "produto_codigo": it.produto_codigo,
-            "nome": it.nome,
+            "nome": nome_prod,
             "quantidade": it.quantidade,
-            "preco_unitario": it.preco_unitario,
+            "preco_unitario": preco_unit,
             "total": total_item,
             "modificacoes": it.modificacoes,
             "hora": agora_hora
