@@ -33,16 +33,16 @@ def get_tenant_id_permissive(authorization: Optional[str] = Header(None), db: Se
 # 1. Cardápio Limpo para Atendimento (SEM CMV, SEM LUCRO)
 @router.get("/cardapio")
 def listar_cardapio_operacional(
-    current_user: User = Depends(require_role(["operador", "gerente", "dono"])),
+    tenant_id: int = Depends(get_tenant_id_permissive),
     db: Session = Depends(get_db)
 ):
     produtos = db.query(Produto).filter(
-        Produto.tenant_id == current_user.tenant_id,
+        Produto.tenant_id == tenant_id,
         Produto.ativo == True
     ).all()
 
     insumos_extras = db.query(Insumo).filter(
-        Insumo.tenant_id == current_user.tenant_id,
+        Insumo.tenant_id == tenant_id,
         Insumo.preco_venda_extra > 0
     ).all()
 
@@ -54,6 +54,7 @@ def listar_cardapio_operacional(
             "nome": p.nome,
             "categoria": p.categoria,
             "descricao": p.descricao,
+            "preco": p.preco_salao,
             "preco_salao": p.preco_salao,
             "preco_ifood": p.preco_ifood,
             "ingredientes": ingredientes_nomes
@@ -71,25 +72,28 @@ def listar_cardapio_operacional(
 @router.post("/pedidos")
 def criar_pedido(
     dados: PedidoCreate,
-    current_user: User = Depends(require_role(["operador", "gerente", "dono"])),
+    tenant_id: int = Depends(get_tenant_id_permissive),
     db: Session = Depends(get_db)
 ):
     if not dados.itens:
         raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item.")
 
-    ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == current_user.tenant_id).order_by(Pedido.id.desc()).first()
+    ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == tenant_id).order_by(Pedido.id.desc()).first()
     numero_comanda = (ultimo_pedido.numero_comanda + 1) if ultimo_pedido and ultimo_pedido.numero_comanda else 101
 
     identificacao_final = dados.identificacao or "Balcão"
     if dados.canal == "iFood" and dados.ifood_order_id:
         identificacao_final = f"Pedido iFood {dados.ifood_order_id} ({dados.ifood_cliente or 'Cliente'})"
 
+    solicitante_final = dados.solicitante or ("Balcão" if dados.canal == "Balcão" else "Garçom")
+
     novo_pedido = Pedido(
-        tenant_id=current_user.tenant_id,
+        tenant_id=tenant_id,
         numero_comanda=numero_comanda,
         data_hora=datetime.datetime.utcnow(),
         canal=dados.canal,
         identificacao=identificacao_final,
+        solicitante=solicitante_final,
         ifood_order_id=dados.ifood_order_id,
         ifood_cliente=dados.ifood_cliente,
         forma_pagto=dados.forma_pagto,
@@ -103,7 +107,7 @@ def criar_pedido(
 
     for item_input in dados.itens:
         prod = db.query(Produto).filter(
-            Produto.tenant_id == current_user.tenant_id,
+            Produto.tenant_id == tenant_id,
             Produto.codigo == item_input.produto_codigo
         ).first()
 
@@ -202,6 +206,7 @@ def listar_pedidos_kds(
             "data_hora": p.data_hora.strftime("%H:%M") if p.data_hora else datetime.datetime.now().strftime("%H:%M"),
             "canal": p.canal,
             "identificacao": p.identificacao,
+            "solicitante": p.solicitante or ("Balcão" if p.canal == "Balcão" else "Garçom"),
             "status": p.status_kds,
             "itens": [{
                 "nome": it.nome_produto,
@@ -330,12 +335,15 @@ def adicionar_itens_mesa(
     ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == tenant_id).order_by(Pedido.id.desc()).first()
     numero_comanda = (ultimo_pedido.numero_comanda + 1) if ultimo_pedido and ultimo_pedido.numero_comanda else 101
 
+    solicitante_final = dados.solicitante or "Garçom"
+
     pedido_kds = Pedido(
         tenant_id=tenant_id,
         numero_comanda=numero_comanda,
         data_hora=datetime.datetime.utcnow(),
         canal="Salão",
         identificacao=f"{mesa.numero} (Salão)",
+        solicitante=solicitante_final,
         forma_pagto="Em Aberto (Mesa)",
         status_kds="Na Chapa",
         valor_bruto=subtotal_rodada,
@@ -352,13 +360,16 @@ def adicionar_itens_mesa(
             Produto.codigo == it.produto_codigo
         ).first()
 
+        preco_unit = float(it.preco_unitario or (prod.preco_salao if prod else 0.0))
+        nome_prod = it.nome or (prod.nome if prod else it.produto_codigo)
+
         db.add(ItemPedido(
             pedido_id=pedido_kds.id,
             produto_id=prod.id if prod else None,
-            nome_produto=it.nome,
+            nome_produto=nome_prod,
             quantidade=it.quantidade,
-            preco_unitario=it.preco_unitario,
-            cmv_unitario=it.preco_unitario * 0.30,
+            preco_unitario=preco_unit,
+            cmv_unitario=preco_unit * 0.30,
             modificacoes=it.modificacoes
         ))
 
