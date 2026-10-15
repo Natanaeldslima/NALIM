@@ -30,6 +30,7 @@ FRONTEND_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "i
 GARCOM_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "garcom.html"))
 LOGIN_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "login.html"))
 CARDAPIO_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cardapio.html"))
+SW_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sw.js"))
 
 # Auto-seed no startup
 @app.on_event("startup")
@@ -104,3 +105,41 @@ def api_info():
 @app.get("/api/health")
 def health():
     return {"status": "ok", "banco_de_dados": "conectado"}
+
+# Service Worker servido na raiz do domínio com escopo global "/"
+@app.get("/sw.js")
+def serve_service_worker():
+    if os.path.exists(SW_FILE):
+        return FileResponse(
+            SW_FILE,
+            media_type="application/javascript",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+                "Service-Worker-Allowed": "/"
+            }
+        )
+    return FileResponse(FRONTEND_FILE, media_type="application/javascript")
+
+# Endpoints diretos de Web Push (compatíveis com /api/subscribe e /api/vapid-public-key)
+@app.get("/api/vapid-public-key")
+def get_vapid_key_root():
+    from push_service import VAPID_PUBLIC_KEY
+    return {"public_key": VAPID_PUBLIC_KEY}
+
+@app.post("/api/subscribe")
+def subscribe_push_root(dados: dict):
+    from push_service import salvar_subscription
+    garcom = dados.get("garcom", "Garçom")
+    subscription = dados.get("subscription")
+    sucesso = salvar_subscription(garcom, subscription)
+    return {"sucesso": sucesso}
+
+@app.post("/api/push-test")
+def test_push_root(dados: dict = None):
+    from push_service import enviar_push_teste
+    garcom = (dados or {}).get("garcom", "Garçom")
+    enviar_push_teste(garcom)
+    return {"sucesso": True, "mensagem": "Push de teste disparado com sucesso."}
+

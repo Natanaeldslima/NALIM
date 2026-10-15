@@ -191,3 +191,12 @@ class PerdaItem(Base):
     observacao = Column(String(200), nullable=True)
 
     tenant = relationship("Tenant", back_populates="perdas")
+
+class PushSubscription(Base):
+    __tablename__ = "push_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    garcom_id = Column(String(100), nullable=False, default="garcom")
+    endpoint = Column(Text, unique=True, nullable=False, index=True)
+    subscription_json = Column(Text, nullable=False)
+    criado_em = Column(DateTime, default=datetime.datetime.utcnow)

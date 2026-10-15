@@ -23,6 +23,21 @@ def executar_migracoes(db_engine):
                     conn.commit()
             except Exception:
                 pass
+
+            try:
+                # Garante criação da tabela push_subscriptions se ainda não existir
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS push_subscriptions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        garcom_id VARCHAR(100) NOT NULL DEFAULT 'garcom',
+                        endpoint TEXT NOT NULL UNIQUE,
+                        subscription_json TEXT NOT NULL,
+                        criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """))
+                conn.commit()
+            except Exception:
+                pass
     except Exception:
         pass
 
