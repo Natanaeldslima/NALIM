@@ -8,6 +8,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   
+  <!-- Prevenção de Cache no Navegador Mobile (Garante Sempre Versão Atualizada no Render) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
@@ -78,6 +83,12 @@
       </div>
 
       <div class="flex items-center gap-1.5">
+        <!-- Botão Testar / Ativar Alarme no Celular -->
+        <button id="btn-ativar-alarme" onclick="testarEAtivarAlarmeMobile()" title="Testar Som, Vibração e Notificações" class="flex items-center gap-1 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 px-2 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition">
+          <i data-lucide="bell" id="icone-btn-alarme" class="w-3.5 h-3.5 text-amber-700"></i>
+          <span id="texto-btn-alarme">Testar Alerta</span>
+        </button>
+
         <!-- Botão Voltar para Mesas (visível quando estiver no atendimento de uma mesa) -->
         <button id="btn-header-voltar-mesas" onclick="irParaViewMesas()" class="hidden flex items-center gap-1.5 bg-forest-50 border border-forest-200 text-forest-800 px-2.5 py-1.5 rounded-xl font-extrabold text-xs shadow-2xs active:scale-95 transition">
           <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-forest-600"></i>
@@ -101,7 +112,7 @@
   <!-- ============================================================== -->
   <!-- 1. TELA PRINCIPAL (INICIAL): MAPA DE MESAS DO SALÃO            -->
   <!-- ============================================================== -->
-  <section id="view-garcom-mesas" class="flex-1 p-3.5 space-y-3.5 overflow-y-auto custom-scroll pb-24">
+  <section id="view-garcom-mesas" class="flex-1 p-3.5 space-y-3 overflow-y-auto custom-scroll pb-24">
 
     <!-- BANNER DE ALERTA: PEDIDO PRONTO NA COZINHA (EXATAMENTE NO ESPAÇO ACIMA DAS MESAS) -->
     <div id="banner-pedidos-prontos" class="hidden bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 p-3.5 rounded-2xl shadow-xl border-2 border-amber-300 flex items-center justify-between gap-3 animate-pulse">
@@ -117,6 +128,20 @@
       <button type="button" id="btn-marcar-servido-banner" onclick="marcarPrimeiroPedidoProntoServido()" class="shrink-0 bg-slate-950 hover:bg-black text-white px-3.5 py-2.5 rounded-xl text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
         <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
         <span>✓ Servido</span>
+      </button>
+    </div>
+
+    <!-- DICA DE ATIVAÇÃO / TESTE DO ALERTA NO CELULAR -->
+    <div id="dica-ativacao-alarme" class="bg-amber-50 border border-amber-300 text-amber-950 p-2.5 rounded-2xl text-xs flex items-center justify-between gap-2 shadow-2xs">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-base">🔔</span>
+        <div class="leading-tight">
+          <span class="font-black text-slate-900 block text-xs">Ativar Som & Vibração</span>
+          <span class="text-[10px] text-amber-800 font-bold block">Toque aqui para liberar áudio e vibração neste celular</span>
+        </div>
+      </div>
+      <button type="button" onclick="testarEAtivarAlarmeMobile()" class="shrink-0 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-[11px] px-2.5 py-1.5 rounded-xl shadow-xs transition cursor-pointer">
+        Testar Agora
       </button>
     </div>
 
@@ -814,25 +839,173 @@
       safeLucide();
     }
     let pedidosProntosCozinha = [];
-    let ultimoAlertaTocadoId = null;
+    let pedidosAlertadosIds = new Set();
+    let audioCtxGlobal = null;
+    let wakeLock = null;
 
-    function tocarAlertaPedidoPronto() {
+    // Desbloqueia o motor de áudio em qualquer toque na tela (política de autoplay mobile do Chrome e Safari)
+    function desbloquearAudioMobile() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtxGlobal && AudioCtx) {
+          audioCtxGlobal = new AudioCtx();
+        }
+        if (audioCtxGlobal && audioCtxGlobal.state === 'suspended') {
+          audioCtxGlobal.resume();
+        }
+        // No iOS Safari: toca 1 frame de buffer silencioso para manter hardware de áudio ativo
+        if (audioCtxGlobal && audioCtxGlobal.state === 'running') {
+          const buffer = audioCtxGlobal.createBuffer(1, 1, 22050);
+          const source = audioCtxGlobal.createBufferSource();
+          source.buffer = buffer;
+          source.connect(audioCtxGlobal.destination);
+          source.start(0);
+        }
+      } catch (e) {}
+    }
+
+    // Registra desbloqueio automático no primeiro gesto do usuário
+    window.addEventListener('touchstart', desbloquearAudioMobile, { passive: true });
+    window.addEventListener('pointerdown', desbloquearAudioMobile, { passive: true });
+    window.addEventListener('click', desbloquearAudioMobile, { passive: true });
+
+    // Mantém a tela do celular acesa enquanto o garçom opera a comanda
+    async function ativarWakeLock() {
+      try {
+        if ('wakeLock' in navigator && !wakeLock) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => { wakeLock = null; });
+        }
+      } catch(e) {}
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        ativarWakeLock();
+        verificarPedidosProntosCozinha();
+        sincronizarMesasApi();
+      }
+    });
+
+    // Emite o alerta multicanal: Vibração física no aparelho + Som alto polifônico + Notificação do sistema
+    function tocarAlertaPedidoPronto(isTeste = false) {
+      // 1. Vibração física do celular (3 pulsos marcantes para sentir no bolso/mão)
+      try {
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          navigator.vibrate([350, 150, 350, 150, 600]);
+        }
+      } catch (e) {}
+
+      // 2. Notificação nativa na barra de status do celular
+      try {
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          const titulo = isTeste ? '🔔 Teste de Alerta Concluído!' : '🍽️ PEDIDO PRONTO NA COZINHA!';
+          const corpo = isTeste 
+            ? 'Som, vibração e notificações funcionando perfeitamente no seu celular.'
+            : 'Há pedidos na chapa prontos para recolher e servir aos clientes.';
+          new Notification(titulo, {
+            body: corpo,
+            icon: 'https://cdn-icons-png.flaticon.com/512/3075/3075977.png',
+            tag: 'nalim-pedido-pronto',
+            renotify: true
+          });
+        }
+      } catch (e) {}
+
+      // 3. Toque sonoro polifônico alto e nítido (Tríade harmônica de sino de restaurante)
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.4);
-      } catch(e) {}
+        if (!audioCtxGlobal) {
+          audioCtxGlobal = new AudioCtx();
+        }
+        if (audioCtxGlobal.state === 'suspended') {
+          audioCtxGlobal.resume();
+        }
+
+        const ctx = audioCtxGlobal;
+        const now = ctx.currentTime;
+
+        // Nota 1: Sol 5 (784.00 Hz)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'triangle';
+        osc1.frequency.setValueAtTime(784.00, now);
+        gain1.gain.setValueAtTime(0.4, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.25);
+
+        // Nota 2: Si 5 (987.77 Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(987.77, now + 0.18);
+        gain2.gain.setValueAtTime(0.45, now + 0.18);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.18);
+        osc2.stop(now + 0.45);
+
+        // Nota 3: Mi 6 (1318.51 Hz) - O tom de sino característico
+        const osc3 = ctx.createOscillator();
+        const gain3 = ctx.createGain();
+        osc3.type = 'triangle';
+        osc3.frequency.setValueAtTime(1318.51, now + 0.35);
+        gain3.gain.setValueAtTime(0.5, now + 0.35);
+        gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+        osc3.connect(gain3);
+        gain3.connect(ctx.destination);
+        osc3.start(now + 0.35);
+        osc3.stop(now + 0.7);
+      } catch(e) {
+        console.warn('[AUDIO] Erro no alarme sonoro:', e);
+      }
+    }
+
+    // Função de ativação e teste com 1 toque no celular
+    async function testarEAtivarAlarmeMobile() {
+      desbloquearAudioMobile();
+      ativarWakeLock();
+
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch(e) {}
+      }
+
+      tocarAlertaPedidoPronto(true);
+
+      const btnAlarme = document.getElementById('btn-ativar-alarme');
+      const txtAlarme = document.getElementById('texto-btn-alarme');
+      const icoAlarme = document.getElementById('icone-btn-alarme');
+      const dicaAlarme = document.getElementById('dica-ativacao-alarme');
+
+      if (btnAlarme) {
+        btnAlarme.className = 'flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 px-2 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition';
+      }
+      if (txtAlarme) txtAlarme.textContent = 'Alarme Ativo';
+      if (icoAlarme) icoAlarme.className = 'w-3.5 h-3.5 text-emerald-600';
+      if (dicaAlarme) dicaAlarme.classList.add('hidden');
+
+      mostrarToastGarcom('✅ Som, Vibração e Tela Ativa liberados com sucesso no seu celular!');
+      safeLucide();
+    }
+
+    function mostrarToastGarcom(msg) {
+      let toast = document.getElementById('toast-garcom');
+      let txt = document.getElementById('toast-garcom-texto');
+      if (!toast || !txt) return;
+      txt.textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-8', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-8', 'pointer-events-none');
+      }, 3500);
     }
 
     async function verificarPedidosProntosCozinha() {
@@ -899,6 +1072,7 @@
 
       if (prontos.length > 0) {
         const primeiro = prontos[0];
+        const primeiroKey = String(primeiro.numero_comanda || primeiro.id);
         const textoDetalhe = `${primeiro.identificacao} • Ticket #${primeiro.numero_comanda || primeiro.id}${prontos.length > 1 ? ` (+${prontos.length - 1} prontos p/ recolher)` : ''}`;
 
         if (banner) {
@@ -910,15 +1084,15 @@
           if (detalheAtend) detalheAtend.textContent = textoDetalhe;
         }
 
-        // Toca alerta sonoro se for um novo pedido pronto
-        if (ultimoAlertaTocadoId !== primeiro.id) {
-          ultimoAlertaTocadoId = primeiro.id;
+        // Toca alerta sonoro e vibra se for um novo pedido pronto
+        if (!pedidosAlertadosIds.has(primeiroKey)) {
+          pedidosAlertadosIds.add(primeiroKey);
           tocarAlertaPedidoPronto();
         }
       } else {
         if (banner) banner.classList.add('hidden');
         if (bannerAtend) bannerAtend.classList.add('hidden');
-        ultimoAlertaTocadoId = null;
+        pedidosAlertadosIds.clear();
       }
       safeLucide();
     }
@@ -1558,5 +1732,10 @@
 
     window.addEventListener('DOMContentLoaded', initGarcomApp);
   </script>
+
+  <!-- TOAST FLUTUANTE DE FEEDBACK MOBILE -->
+  <div id="toast-garcom" class="fixed bottom-16 left-4 right-4 max-w-sm mx-auto bg-slate-900 text-white px-4 py-3 rounded-2xl text-xs font-black shadow-2xl flex items-center gap-2.5 z-50 transition-all duration-300 transform translate-y-8 opacity-0 pointer-events-none">
+    <span id="toast-garcom-texto">Mensagem</span>
+  </div>
 </body>
 </html>
