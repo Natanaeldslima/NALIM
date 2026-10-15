@@ -42,34 +42,40 @@ app.include_router(administrativo.router)
 app.include_router(gerencial.router)
 app.include_router(ifood.router)
 
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
+
 # Rota Raiz: Serve tela de Login como porta de entrada
 @app.get("/")
 def serve_root():
     if os.path.exists(LOGIN_FILE):
-        return FileResponse(LOGIN_FILE)
+        return FileResponse(LOGIN_FILE, headers=NO_CACHE_HEADERS)
     elif os.path.exists(FRONTEND_FILE):
-        return FileResponse(FRONTEND_FILE)
+        return FileResponse(FRONTEND_FILE, headers=NO_CACHE_HEADERS)
     return {"mensagem": "Interface NALIM não encontrada."}
 
 # Rota do Login Oficial
 @app.get("/login")
 def serve_login():
     if os.path.exists(LOGIN_FILE):
-        return FileResponse(LOGIN_FILE)
+        return FileResponse(LOGIN_FILE, headers=NO_CACHE_HEADERS)
     return {"mensagem": "Arquivo login.html não encontrado."}
 
 # Rota do Sistema de Gestão (Dono & Gerente)
 @app.get("/app")
 def serve_app():
     if os.path.exists(FRONTEND_FILE):
-        return FileResponse(FRONTEND_FILE)
+        return FileResponse(FRONTEND_FILE, headers=NO_CACHE_HEADERS)
     return {"mensagem": "Arquivo index.html não encontrado."}
 
 # Rota do Aplicativo Mobile do Garçom (Comanda Digital no celular)
 @app.get("/garcom")
 def serve_garcom():
     if os.path.exists(GARCOM_FILE):
-        return FileResponse(GARCOM_FILE)
+        return FileResponse(GARCOM_FILE, headers=NO_CACHE_HEADERS)
     return {"mensagem": "Arquivo garcom.html não encontrado."}
 
 # Rota do Cardápio Digital & Delivery Próprio (WhatsApp)
@@ -77,7 +83,7 @@ def serve_garcom():
 @app.get("/delivery")
 def serve_cardapio():
     if os.path.exists(CARDAPIO_FILE):
-        return FileResponse(CARDAPIO_FILE)
+        return FileResponse(CARDAPIO_FILE, headers=NO_CACHE_HEADERS)
     return {"mensagem": "Arquivo cardapio.html não encontrado."}
 
 @app.get("/api")
