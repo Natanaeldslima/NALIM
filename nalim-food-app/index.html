@@ -3928,7 +3928,10 @@
       try {
         const token = localStorage.getItem('nalim_token') || authToken;
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const res = await fetch(`${API_BASE}/api/operacional/kds/realtime`, { headers });
+        const res = await fetch(`${API_BASE}/api/operacional/kds/realtime?_t=${Date.now()}`, {
+          headers,
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.tickets && Array.isArray(data.tickets)) {
@@ -4084,21 +4087,29 @@
     }
 
     function mostrarToastPdv(msg) {
+      if (!msg) return;
+      const textoLimpo = String(msg).replace(/\n\s*\n/g, ' • ').replace(/\n/g, ' • ');
       let toast = document.getElementById('toast-pdv-alerta');
       if (!toast) {
         toast = document.createElement('div');
         toast.id = 'toast-pdv-alerta';
-        toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-bold transition duration-300 opacity-0 pointer-events-none transform translate-y-4';
+        toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-bold transition duration-300 opacity-0 pointer-events-none transform translate-y-4 max-w-sm backdrop-blur-xs border border-slate-700';
         document.body.appendChild(toast);
       }
-      toast.innerHTML = `<span class="text-base text-emerald-400">✓</span><span>${msg}</span>`;
+      toast.innerHTML = `<span class="text-base text-emerald-400">✓</span><span>${textoLimpo}</span>`;
       toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
       toast.classList.add('opacity-100', 'translate-y-0');
-      setTimeout(() => {
+      if (window._toastPdvTimeout) clearTimeout(window._toastPdvTimeout);
+      window._toastPdvTimeout = setTimeout(() => {
         toast.classList.remove('opacity-100', 'translate-y-0');
         toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
-      }, 2500);
+      }, 3000);
     }
+
+    // Sobrescreve o alert nativo do navegador para nunca mais exibir popups de "OK" do Google
+    window.alert = function(msg) {
+      mostrarToastPdv(msg);
+    };
 
     async function marcarPedidoProntoBalcaoEntregue() {
       if (pedidosProntosBalcao.length === 0) return;
@@ -6693,7 +6704,10 @@ _Painel Estratégico NALIM Food Service_`;
       try {
         const token = localStorage.getItem('nalim_token') || authToken;
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-        const res = await fetch(`${API_BASE}/api/operacional/mesas`, { headers });
+        const res = await fetch(`${API_BASE}/api/operacional/mesas?_t=${Date.now()}`, {
+          headers,
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.mesas && Array.isArray(data.mesas)) {
@@ -7065,7 +7079,7 @@ _Painel Estratégico NALIM Food Service_`;
         btn.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i><span>RECEBER & ZERAR</span>`;
       }
 
-      alert(`✓ Conta da ${mesaEncerradaNome} RECEBIDA com sucesso!\n\n• Valor Pago: R$ ${totalPago.toFixed(2)}\n• Forma de Pagamento: ${formaPagtoMesaPdv}\n\nA mesa foi zerada no sistema e está LIVRE para novos clientes.`);
+      mostrarToastPdv(`✓ Conta da ${mesaEncerradaNome} RECEBIDA! Valor: R$ ${totalPago.toFixed(2)} (${formaPagtoMesaPdv}). Mesa liberada.`);
     }
 
     function imprimirExtratoMesaPdv() {

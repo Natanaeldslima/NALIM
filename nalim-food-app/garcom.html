@@ -638,9 +638,9 @@
       irParaViewMesas();
       lucide.createIcons();
 
-      // Sincronização contínua com Balcão e Cozinha a cada 2 segundos
-      setInterval(sincronizarMesasApi, 2000);
-      setInterval(verificarPedidosProntosCozinha, 2000);
+      // Sincronização contínua com Balcão e Cozinha a cada 3 segundos
+      setInterval(sincronizarMesasApi, 3000);
+      setInterval(verificarPedidosProntosCozinha, 3000);
 
       // Listener de eventos do navegador para sincronização instantânea entre abas
       window.addEventListener('storage', (e) => {
@@ -691,25 +691,12 @@
     }
 
     async function sincronizarMesasApi() {
-      // 1. Atualização instantânea via cache local compartilhado
-      try {
-        const salvo = localStorage.getItem('nalim_mesas_consumo');
-        if (salvo) {
-          const parsed = JSON.parse(salvo);
-          if (parsed && typeof parsed === 'object') {
-            Object.keys(parsed).forEach(k => {
-              mesasConsumoState[k] = parsed[k];
-            });
-            renderGridMesas();
-            atualizarBannerMesaAtiva();
-          }
-        }
-      } catch(e) {}
-
-      // 2. Consulta API backend
       try {
         const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-        const res = await fetch(`${API_BASE}/api/operacional/mesas`, { headers });
+        const res = await fetch(`${API_BASE}/api/operacional/mesas?_t=${Date.now()}`, {
+          headers,
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.mesas && Array.isArray(data.mesas)) {
@@ -1059,6 +1046,11 @@
       }, 3500);
     }
 
+    // Sobrescreve o alert nativo do navegador para nunca exibir modal de OK do Google no celular
+    window.alert = function(msg) {
+      mostrarToastGarcom(msg);
+    };
+
     async function verificarPedidosProntosCozinha() {
       const banner = document.getElementById('banner-pedidos-prontos');
       const detalhe = document.getElementById('banner-pedidos-prontos-detalhe');
@@ -1106,10 +1098,13 @@
         }
       } catch (e) {}
 
-      // 3. Tenta API backend em tempo real
+      // 3. Tenta API backend em tempo real com anti-cache
       try {
         const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
-        const res = await fetch(`${API_BASE}/api/operacional/kds/realtime`, { headers });
+        const res = await fetch(`${API_BASE}/api/operacional/kds/realtime?_t=${Date.now()}`, {
+          headers,
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.tickets && Array.isArray(data.tickets)) {
@@ -1123,12 +1118,29 @@
       const mudouQtd = (pedidosProntosCozinha.length !== prontos.length);
       pedidosProntosCozinha = prontos;
 
-      if (prontos.length > 0) {
-        const primeiro = prontos[0];
-        const primeiroKey = String(primeiro.numero_comanda || primeiro.id);
-        const textoDetalhe = `${primeiro.identificacao} • Ticket #${primeiro.numero_comanda || primeiro.id}${prontos.length > 1 ? ` (+${prontos.length - 1} prontos p/ recolher)` : ''}`;
+      // Identifica se há qualquer NOVO pedido pronto que ainda não foi alertado
+      let novoPedidoDetectado = null;
+      prontos.forEach(p => {
+        const pKey = String(p.numero_comanda || p.id);
+        if (!pedidosAlertadosIds.has(pKey)) {
+          pedidosAlertadosIds.add(pKey);
+          if (!novoPedidoDetectado) novoPedidoDetectado = p;
+        }
+      });
 
-        // Alerta fixo no topo do site
+      // Limpa do set de alertados pedidos que já foram entregues/fechados
+      const keysAtuais = new Set(prontos.map(p => String(p.numero_comanda || p.id)));
+      for (const id of pedidosAlertadosIds) {
+        if (!keysAtuais.has(id)) {
+          pedidosAlertadosIds.delete(id);
+        }
+      }
+
+      if (prontos.length > 0) {
+        const displayTicket = novoPedidoDetectado || prontos[0];
+        const textoDetalhe = `${displayTicket.identificacao} • Ticket #${displayTicket.numero_comanda || displayTicket.id}${prontos.length > 1 ? ` (+${prontos.length - 1} prontos p/ recolher)` : ''}`;
+
+        // Alerta fixo no topo do site (fica ativo enquanto houver pedidos prontos)
         if (alertaSite) {
           alertaSite.classList.remove('hidden');
           if (alertaSiteTexto) alertaSiteTexto.textContent = textoDetalhe;
@@ -1144,11 +1156,10 @@
           if (detalheAtend) detalheAtend.textContent = textoDetalhe;
         }
 
-        // Novo pedido pronto detectado: Toca sino e abre informativo popup no site
-        if (!pedidosAlertadosIds.has(primeiroKey)) {
-          pedidosAlertadosIds.add(primeiroKey);
+        // Se um novo pedido ficou pronto: Toca sino e abre informativo popup no site
+        if (novoPedidoDetectado) {
           tocarAlertaPedidoPronto();
-          if (modalDetalhe) modalDetalhe.textContent = textoDetalhe;
+          if (modalDetalhe) modalDetalhe.textContent = `${novoPedidoDetectado.identificacao} • Ticket #${novoPedidoDetectado.numero_comanda || novoPedidoDetectado.id}`;
           if (modalPronto) modalPronto.classList.remove('hidden');
         }
       } else {
@@ -1156,7 +1167,6 @@
         if (banner) banner.classList.add('hidden');
         if (bannerAtend) bannerAtend.classList.add('hidden');
         fecharModalAvisoPronto();
-        pedidosAlertadosIds.clear();
       }
 
       // Se mudou o estado de prontos, atualiza os cartões das mesas imediatamente
