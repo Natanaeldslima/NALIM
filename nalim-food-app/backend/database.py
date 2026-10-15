@@ -10,6 +10,24 @@ engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+def executar_migracoes(db_engine):
+    """Garante que a coluna solicitante e tabelas existam no banco sem falhas de migração no Render."""
+    try:
+        from sqlalchemy import text
+        with db_engine.connect() as conn:
+            try:
+                res = conn.execute(text("PRAGMA table_info(pedidos)")).fetchall()
+                colunas = [r[1] for r in res]
+                if colunas and "solicitante" not in colunas:
+                    conn.execute(text("ALTER TABLE pedidos ADD COLUMN solicitante VARCHAR(100) DEFAULT 'Balcão'"))
+                    conn.commit()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+executar_migracoes(engine)
+
 def get_db():
     db = SessionLocal()
     try:

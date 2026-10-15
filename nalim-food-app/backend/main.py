@@ -2,12 +2,13 @@ import os
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base
+from database import engine, Base, executar_migracoes
 from seed import seed_database
 from routers import auth, operacional, administrativo, gerencial, ifood
 
-# Cria tabelas no banco de dados
+# Cria tabelas no banco de dados e executa migrações
 Base.metadata.create_all(bind=engine)
+executar_migracoes(engine)
 
 app = FastAPI(
     title="NALIM — Gestão Financeira Food Service API",
