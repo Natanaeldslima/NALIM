@@ -120,6 +120,9 @@ class CustoFixoCreate(BaseModel):
     categoria: str
     fornecedor: str
     valor: float
+    data_vencimento: Optional[str] = None
+    dia_vencimento: Optional[int] = None
+    encaminhar_previsao: Optional[bool] = True
 
 class CustoFixoResponse(BaseModel):
     id: int
@@ -127,6 +130,9 @@ class CustoFixoResponse(BaseModel):
     categoria: str
     fornecedor: str
     valor: float
+    data_vencimento: Optional[str] = None
+    dia_vencimento: Optional[int] = None
+    encaminhar_previsao: Optional[bool] = True
     class Config:
         from_attributes = True
 

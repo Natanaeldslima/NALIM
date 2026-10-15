@@ -142,6 +142,9 @@ class CustoFixo(Base):
     categoria = Column(String(50), nullable=False)
     fornecedor = Column(String(100), nullable=False)
     valor = Column(Float, default=0.0)
+    data_vencimento = Column(String(10), nullable=True)  # Formato 'YYYY-MM-DD'
+    dia_vencimento = Column(Integer, nullable=True)  # Dia do mês (1 a 31)
+    encaminhar_previsao = Column(Boolean, default=True)  # Projeta no fluxo de caixa da Saúde Financeira
 
     tenant = relationship("Tenant", back_populates="custos_fixos")
 

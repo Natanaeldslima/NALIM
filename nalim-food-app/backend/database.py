@@ -38,6 +38,21 @@ def executar_migracoes(db_engine):
                 conn.commit()
             except Exception:
                 pass
+
+            try:
+                # Garante que custos_fixos tenha as colunas de data_vencimento, dia_vencimento e encaminhar_previsao
+                res_cf = conn.execute(text("PRAGMA table_info(custos_fixos)")).fetchall()
+                colunas_cf = [r[1] for r in res_cf]
+                if colunas_cf:
+                    if "data_vencimento" not in colunas_cf:
+                        conn.execute(text("ALTER TABLE custos_fixos ADD COLUMN data_vencimento VARCHAR(10) NULL"))
+                    if "dia_vencimento" not in colunas_cf:
+                        conn.execute(text("ALTER TABLE custos_fixos ADD COLUMN dia_vencimento INTEGER NULL"))
+                    if "encaminhar_previsao" not in colunas_cf:
+                        conn.execute(text("ALTER TABLE custos_fixos ADD COLUMN encaminhar_previsao BOOLEAN DEFAULT 1"))
+                    conn.commit()
+            except Exception:
+                pass
     except Exception:
         pass
 

@@ -117,19 +117,19 @@ def seed_database():
 
     # 6. Custos Fixos (Agosto 2026 e Setembro 2026)
     custos_agosto = [
-        ("Ocupação / Aluguel", "Imobiliária Central", 2800.00),
-        ("Energia Elétrica", "Enel / Concessionária", 1150.00),
-        ("Água & Esgoto", "Sabesp / Sanepar", 280.00),
-        ("Internet & Telefonia", "Vivo Fibra Empresas", 150.00),
-        ("Sistema de Gestão", "NALIM Gestão Financeira SaaS", 180.00),
-        ("Contabilidade", "Assessoria Contábil Silva", 650.00),
-        ("Marketing & Ads", "Google Ads & Tráfego Local", 800.00),
-        ("Pró-Labore Sócio", "Retirada Mensal Diretor", 3000.00),
+        ("Ocupação / Aluguel", "Imobiliária Central", 2800.00, 10),
+        ("Energia Elétrica", "Enel / Concessionária", 1150.00, 12),
+        ("Água & Esgoto", "Sabesp / Sanepar", 280.00, 15),
+        ("Internet & Telefonia", "Vivo Fibra Empresas", 150.00, 5),
+        ("Sistema de Gestão", "NALIM Gestão Financeira SaaS", 180.00, 5),
+        ("Contabilidade", "Assessoria Contábil Silva", 650.00, 15),
+        ("Marketing & Ads", "Google Ads & Tráfego Local", 800.00, 20),
+        ("Pró-Labore Sócio", "Retirada Mensal Diretor", 3000.00, 20),
     ]
-    for cat, forn, val in custos_agosto:
-        db.add(CustoFixo(tenant_id=tenant.id, mes_vigencia="2026-08", categoria=cat, fornecedor=forn, valor=val))
-        db.add(CustoFixo(tenant_id=tenant.id, mes_vigencia="2026-09", categoria=cat, fornecedor=forn, valor=val * 1.05))
-        db.add(CustoFixo(tenant_id=tenant.id, mes_vigencia="2026-10", categoria=cat, fornecedor=forn, valor=val * 1.05))
+    for cat, forn, val, dia in custos_agosto:
+        db.add(CustoFixo(tenant_id=tenant.id, mes_vigencia="2026-08", categoria=cat, fornecedor=forn, valor=val, dia_vencimento=dia, data_vencimento=f"2026-08-{dia:02d}", encaminhar_previsao=True))
+        db.add(CustoFixo(tenant_id=tenant.id, mes_vigencia="2026-09", categoria=cat, fornecedor=forn, valor=val * 1.05, dia_vencimento=dia, data_vencimento=f"2026-09-{dia:02d}", encaminhar_previsao=True))
+        db.add(CustoFixo(tenant_id=tenant.id, mes_vigencia="2026-10", categoria=cat, fornecedor=forn, valor=val * 1.05, dia_vencimento=dia, data_vencimento=f"2026-10-{dia:02d}", encaminhar_previsao=True))
 
     # 7. Pedidos Iniciais de Exemplo no KDS
     ped1 = Pedido(
