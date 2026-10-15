@@ -3650,7 +3650,7 @@
       renderHistoricoPedidos();
       renderDashboard();
 
-      alert(`✓ Pedido #${ticketNumeroFinal} ENVIADO PARA A COZINHA!\n\n• Canal: ${canal}\n• Identificação: ${identificacaoFinal}\n• Total: ${formatarMoeda(subtotal)}`);
+      mostrarToastPdv(`✓ Pedido #${ticketNumeroFinal} (${identificacaoFinal}) enviado para a Cozinha!`);
     }
 
     // ================================================================
@@ -4083,6 +4083,23 @@
       }
     }
 
+    function mostrarToastPdv(msg) {
+      let toast = document.getElementById('toast-pdv-alerta');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast-pdv-alerta';
+        toast.className = 'fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-bold transition duration-300 opacity-0 pointer-events-none transform translate-y-4';
+        document.body.appendChild(toast);
+      }
+      toast.innerHTML = `<span class="text-base text-emerald-400">✓</span><span>${msg}</span>`;
+      toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+      }, 2500);
+    }
+
     async function marcarPedidoProntoBalcaoEntregue() {
       if (pedidosProntosBalcao.length === 0) return;
       const ticket = pedidosProntosBalcao[0];
@@ -4118,7 +4135,7 @@
 
       pedidosProntosBalcao = pedidosProntosBalcao.filter(t => t.id !== ticketId && t.id !== numComanda);
       verificarPedidosProntosBalcao();
-      alert(`✓ Pedido #${numComanda} marcado como ENTREGUE ao cliente!`);
+      mostrarToastPdv(`✓ Pedido #${numComanda} entregue ao cliente!`);
     }
 
     // ================================================================

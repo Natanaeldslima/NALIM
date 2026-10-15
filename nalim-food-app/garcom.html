@@ -67,7 +67,7 @@
   <!-- ============================================================== -->
   <!-- AVISO / INFORMATIVO FIXO NO TOPO DO SITE (PEDIDO PRONTO)       -->
   <!-- ============================================================== -->
-  <div id="alerta-site-pedido-pronto" class="hidden sticky top-0 z-50 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 px-3.5 py-2.5 shadow-xl border-b-2 border-amber-300 flex items-center justify-between gap-2 animate-pulse">
+  <div id="alerta-site-pedido-pronto" class="hidden fixed top-0 left-0 right-0 max-w-md mx-auto z-50 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 px-3.5 py-2.5 shadow-2xl border-b-2 border-amber-300 flex items-center justify-between gap-2 animate-pulse">
     <div class="flex items-center gap-2.5 min-w-0">
       <span class="w-8 h-8 rounded-xl bg-slate-950 text-amber-300 flex items-center justify-center text-lg font-black shrink-0 shadow-md">
         🔔
@@ -790,9 +790,9 @@
 
       function mesaTemPedidoPronto(nomeMesa) {
         if (!pedidosProntosCozinha || pedidosProntosCozinha.length === 0) return false;
-        const norm = (nomeMesa || '').toLowerCase().replace(/[^0-9a-z]/g, '');
+        const norm = (nomeMesa || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^0-9a-z]/g, '');
         return pedidosProntosCozinha.some(p => {
-          const idNorm = ((p.identificacao || '') + ' ' + (p.canal || '')).toLowerCase().replace(/[^0-9a-z]/g, '');
+          const idNorm = ((p.identificacao || '') + ' ' + (p.canal || '')).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^0-9a-z]/g, '');
           return idNorm.includes(norm);
         });
       }
@@ -1035,7 +1035,11 @@
     function testarSomSite() {
       desbloquearAudioMobile();
       tocarAlertaPedidoPronto(true);
-      mostrarToastGarcom('🔔 Teste de aviso sonoro reproduzido com sucesso!');
+      const btn = document.getElementById('btn-ativar-alarme');
+      const txt = document.getElementById('texto-btn-alarme');
+      if (btn) btn.className = 'flex items-center gap-1 bg-emerald-100 border border-emerald-300 text-emerald-950 px-2.5 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition';
+      if (txt) txt.textContent = 'Alarme Ativo';
+      mostrarToastGarcom('🔔 Som de aviso da cozinha ativado com sucesso!');
     }
 
     async function testarEAtivarAlarmeMobile() {
@@ -1069,19 +1073,16 @@
 
       function isPedidoParaGarcom(p) {
         if (!p) return false;
-        const sol = (p.solicitante || '').toLowerCase();
-        const ident = (typeof p.identificacao === 'string' ? p.identificacao.toLowerCase() : '');
         const canal = (p.canal || '').toLowerCase();
+        const ident = (typeof p.identificacao === 'string' ? p.identificacao.toLowerCase() : '');
 
-        // Se for pedido exclusivo de retirada no balcão sem mesa e sem ser salão, é exclusivo do Balcão
-        const isApenasBalcao = (canal === 'balcão' || canal === 'balcao' || ident.includes('retirada') || canal === 'ifood' || canal === '99') 
-                               && !ident.includes('mesa') && !canal.includes('salão') && !canal.includes('salao');
-        if (isApenasBalcao) {
+        // Apenas pedidos estritamente de motoboys externos do iFood/99Food sem atendimento presencial não vão para o garçom
+        if ((canal === 'ifood' || canal === '99food' || canal === '99') && !ident.includes('mesa') && !ident.includes('salão') && !ident.includes('salao') && !ident.includes('balcão') && !ident.includes('balcao')) {
           return false;
         }
 
-        // QUALQUER outro pedido pronto (mesas 01 a 10, salão, ou solicitado no celular):
-        // SEMPRE notifica o Garçom para recolher na chapa e levar aos clientes!
+        // TODOS os demais pedidos prontos (Mesas 01 a 10, Salão, Balcão / Retirada e qualquer pedido presencial):
+        // SEMPRE notificam o Garçom com destaque visual na tela e alarme sonoro!
         return true;
       }
 
@@ -1353,7 +1354,7 @@
     async function confirmarFechamentoMesa() {
       const mesa = mesasConsumoState[mesaAtiva];
       if (!mesa || mesa.total === 0) {
-        alert('Esta mesa não possui consumo em aberto para fechar.');
+        mostrarToastGarcom('Esta mesa não possui consumo em aberto para fechar.');
         return;
       }
 
@@ -1397,7 +1398,7 @@
       btn.innerHTML = `<i data-lucide="check-circle" class="w-5 h-5"></i><span>RECEBER & ZERAR MESA</span>`;
       lucide.createIcons();
 
-      alert(`✓ Pagamento de R$ ${totalPago.toFixed(2)} recebido com sucesso!\n\nA comanda da ${mesaAtiva} foi ZERADA e a mesa está LIVRE para novos clientes.`);
+      mostrarToastGarcom(`✓ Pagamento de R$ ${totalPago.toFixed(2)} recebido! Mesa ${mesaAtiva} liberada.`);
     }
 
     async function enviarPedidoCozinhaGarcom() {
