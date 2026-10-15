@@ -234,7 +234,42 @@ def atualizar_status_kds(
 
     pedido.status_kds = dados.status_kds
     db.commit()
+
+    # Se o pedido ficou 'Pronto' na cozinha, dispara notificação Web Push em segundo plano
+    if dados.status_kds == "Pronto":
+        try:
+            from push_service import notificar_garcom_push
+            notificar_garcom_push(
+                mesa=pedido.identificacao or f"Comanda #{pedido.numero_comanda}",
+                comanda_num=pedido.numero_comanda or pedido.id,
+                solicitante=pedido.solicitante or pedido.canal
+            )
+        except Exception:
+            pass
+
     return {"sucesso": True, "pedido_id": pedido.id, "numero_comanda": pedido.numero_comanda, "novo_status": pedido.status_kds}
+
+# Endpoints Web Push no Roteador Operacional
+@router.get("/vapid-public-key")
+def obter_chave_publica_vapid():
+    from push_service import VAPID_PUBLIC_KEY
+    return {"public_key": VAPID_PUBLIC_KEY}
+
+@router.post("/subscribe")
+def registrar_push_subscription(dados: dict):
+    from push_service import salvar_subscription
+    garcom = dados.get("garcom", "Garçom")
+    sub = dados.get("subscription")
+    ok = salvar_subscription(garcom, sub)
+    return {"sucesso": ok}
+
+@router.post("/push-test")
+def disparar_push_teste(dados: dict = None):
+    from push_service import enviar_push_teste
+    garcom = (dados or {}).get("garcom", "Garçom")
+    enviar_push_teste(garcom)
+    return {"sucesso": True, "mensagem": "Push de teste enviado"}
+
 
 # 5. GESTÃO DE MESAS (Comanda Acumulada, Status Livre/Ocupada e Zeramento)
 @router.get("/mesas")
