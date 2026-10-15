@@ -131,10 +131,10 @@
       </div>
 
       <div class="flex items-center gap-1.5">
-        <!-- Botão Testar Som no Site -->
-        <button id="btn-ativar-alarme" onclick="testarSomSite()" title="Ouvir Som da Campainha" class="flex items-center gap-1 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 px-2 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition">
-          <i data-lucide="volume-2" id="icone-btn-alarme" class="w-3.5 h-3.5 text-amber-700"></i>
-          <span id="texto-btn-alarme">Testar Som</span>
+        <!-- Botão Ativar Notificações no Celular / Web Push -->
+        <button id="btn-ativar-alarme" onclick="ativarNotificacoesGarcom()" title="Ativar Notificações e Som no Celular" class="flex items-center gap-1.5 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 px-2.5 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition cursor-pointer">
+          <i data-lucide="bell" id="icone-btn-alarme" class="w-3.5 h-3.5 text-amber-700"></i>
+          <span id="texto-btn-alarme">Ativar Notificações</span>
         </button>
 
         <!-- Botão Voltar para Mesas (visível quando estiver no atendimento de uma mesa) -->
@@ -176,6 +176,20 @@
       <button type="button" id="btn-marcar-servido-banner" onclick="marcarPrimeiroPedidoProntoServido()" class="shrink-0 bg-slate-950 hover:bg-black text-white px-3.5 py-2.5 rounded-xl text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
         <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
         <span>✓ Servido</span>
+      </button>
+    </div>
+
+    <!-- Card Informativo para Ativar Push no Celular -->
+    <div id="card-dica-push" class="hidden bg-emerald-50 border border-emerald-200 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-2xs">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <span class="text-xl shrink-0">📲</span>
+        <div class="text-xs text-emerald-950 leading-tight">
+          <span class="font-extrabold block">Avisos no Celular com Tela Bloqueada</span>
+          <span class="text-[11px] text-emerald-800 font-medium">Toque para receber alertas mesmo em segundo plano.</span>
+        </div>
+      </div>
+      <button type="button" onclick="ativarNotificacoesGarcom()" class="shrink-0 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-xs transition cursor-pointer">
+        Ativar
       </button>
     </div>
 
@@ -637,6 +651,7 @@
       atualizarBarraComanda();
       irParaViewMesas();
       lucide.createIcons();
+      verificarStatusPushInicial();
 
       // Sincronização contínua com Balcão e Cozinha a cada 3 segundos
       setInterval(sincronizarMesasApi, 3000);
@@ -1019,18 +1034,143 @@
       if (modal) modal.classList.add('hidden');
     }
 
-    function testarSomSite() {
+    // Utilitário para conversão da chave pública VAPID para Uint8Array
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    }
+
+    // Ativa Web Push (Service Worker + VAPID) + Alarme Sonoro no Celular
+    async function ativarNotificacoesGarcom() {
       desbloquearAudioMobile();
       tocarAlertaPedidoPronto(true);
+
       const btn = document.getElementById('btn-ativar-alarme');
       const txt = document.getElementById('texto-btn-alarme');
-      if (btn) btn.className = 'flex items-center gap-1 bg-emerald-100 border border-emerald-300 text-emerald-950 px-2.5 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition';
-      if (txt) txt.textContent = 'Alarme Ativo';
-      mostrarToastGarcom('🔔 Som de aviso da cozinha ativado com sucesso!');
+      const dicaPush = document.getElementById('card-dica-push');
+
+      if (txt) txt.textContent = 'Ativando...';
+
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        mostrarToastGarcom('⚠️ Este navegador não suporta Web Push. O alarme sonoro continuará ativo!');
+        if (txt) txt.textContent = '🔔 Som Ativo';
+        return;
+      }
+
+      try {
+        const permissao = await Notification.requestPermission();
+        if (permissao !== 'granted') {
+          mostrarToastGarcom('⚠️ Permissão de notificações negada no navegador.');
+          if (txt) txt.textContent = 'Permissão Negada';
+          return;
+        }
+
+        // 1. Registra o Service Worker na raiz
+        const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        await navigator.serviceWorker.ready;
+
+        // 2. Obtém a chave pública VAPID do backend
+        let vapidPublicKey = '';
+        try {
+          const resKey = await fetch(`${API_BASE}/api/vapid-public-key?_t=${Date.now()}`);
+          if (resKey.ok) {
+            const dataKey = await resKey.json();
+            vapidPublicKey = dataKey.public_key;
+          }
+        } catch (e) {}
+
+        if (!vapidPublicKey) {
+          vapidPublicKey = 'BPd9wwsaSAiyZh988WSKrGsHepD73mAOxfiwlR4MMRVHk7-vfzcnWpTfKjKuihdJqPsZkVhOl1bm2JuowQPvYes';
+        }
+
+        // 3. Cria ou reutiliza a inscrição push
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+          });
+        }
+
+        const nomeGarcom = localStorage.getItem('nalim_nome') || 'Garçom';
+
+        // 4. Salva a inscrição no banco de dados do servidor
+        await fetch(`${API_BASE}/api/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ garcom: nomeGarcom, subscription: sub })
+        });
+
+        // 5. Envia um push de teste imediato via backend
+        try {
+          fetch(`${API_BASE}/api/push-test`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ garcom: nomeGarcom })
+          });
+        } catch (e) {}
+
+        localStorage.setItem('nalim_push_enabled', 'true');
+
+        if (btn) btn.className = 'flex items-center gap-1.5 bg-emerald-100 border border-emerald-300 text-emerald-950 px-2.5 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition cursor-pointer';
+        if (txt) txt.textContent = '🔔 Notificações Ativas';
+        if (dicaPush) dicaPush.classList.add('hidden');
+
+        mostrarToastGarcom('✅ Notificações ativadas! Bloqueie a tela para testar.');
+      } catch (err) {
+        console.warn('[PUSH] Erro no registro de notificações:', err);
+        mostrarToastGarcom('🔔 Som ativado! ' + (err.message || ''));
+        if (txt) txt.textContent = '🔔 Som Ativo';
+      }
+    }
+
+    // Verifica silenciosamente se o push já está configurado ao abrir o app
+    async function verificarStatusPushInicial() {
+      const btn = document.getElementById('btn-ativar-alarme');
+      const txt = document.getElementById('texto-btn-alarme');
+      const dicaPush = document.getElementById('card-dica-push');
+
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        if (dicaPush) dicaPush.classList.add('hidden');
+        return;
+      }
+
+      if (Notification.permission === 'granted') {
+        if (btn) btn.className = 'flex items-center gap-1.5 bg-emerald-100 border border-emerald-300 text-emerald-950 px-2.5 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition cursor-pointer';
+        if (txt) txt.textContent = '🔔 Notificações Ativas';
+        if (dicaPush) dicaPush.classList.add('hidden');
+
+        // Renova silenciosamente a inscrição no background
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+          await navigator.serviceWorker.ready;
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            const nomeGarcom = localStorage.getItem('nalim_nome') || 'Garçom';
+            fetch(`${API_BASE}/api/subscribe`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ garcom: nomeGarcom, subscription: sub })
+            });
+          }
+        } catch (e) {}
+      } else {
+        if (dicaPush) dicaPush.classList.remove('hidden');
+      }
+    }
+
+    function testarSomSite() {
+      ativarNotificacoesGarcom();
     }
 
     async function testarEAtivarAlarmeMobile() {
-      testarSomSite();
+      ativarNotificacoesGarcom();
     }
 
     function mostrarToastGarcom(msg) {
