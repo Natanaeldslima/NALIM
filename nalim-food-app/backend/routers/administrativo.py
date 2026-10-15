@@ -182,9 +182,56 @@ def criar_custo_fixo(
         mes_vigencia=dados.mes_vigencia,
         categoria=dados.categoria,
         fornecedor=dados.fornecedor,
-        valor=dados.valor
+        valor=dados.valor,
+        data_vencimento=dados.data_vencimento,
+        dia_vencimento=dados.dia_vencimento,
+        encaminhar_previsao=dados.encaminhar_previsao if dados.encaminhar_previsao is not None else True
     )
     db.add(custo)
     db.commit()
     db.refresh(custo)
     return custo
+
+@router.put("/custos-fixos/{custo_id}", response_model=CustoFixoResponse)
+def atualizar_custo_fixo(
+    custo_id: int,
+    dados: CustoFixoCreate,
+    current_user: User = Depends(require_role(["gerente", "dono"])),
+    db: Session = Depends(get_db)
+):
+    custo = db.query(CustoFixo).filter(
+        CustoFixo.id == custo_id,
+        CustoFixo.tenant_id == current_user.tenant_id
+    ).first()
+    if not custo:
+        raise HTTPException(status_code=404, detail="Custo fixo não encontrado.")
+
+    custo.categoria = dados.categoria
+    custo.fornecedor = dados.fornecedor
+    custo.valor = dados.valor
+    custo.mes_vigencia = dados.mes_vigencia
+    custo.data_vencimento = dados.data_vencimento
+    custo.dia_vencimento = dados.dia_vencimento
+    custo.encaminhar_previsao = dados.encaminhar_previsao if dados.encaminhar_previsao is not None else True
+
+    db.commit()
+    db.refresh(custo)
+    return custo
+
+@router.delete("/custos-fixos/{custo_id}")
+def remover_custo_fixo(
+    custo_id: int,
+    current_user: User = Depends(require_role(["gerente", "dono"])),
+    db: Session = Depends(get_db)
+):
+    custo = db.query(CustoFixo).filter(
+        CustoFixo.id == custo_id,
+        CustoFixo.tenant_id == current_user.tenant_id
+    ).first()
+    if not custo:
+        raise HTTPException(status_code=404, detail="Custo fixo não encontrado.")
+
+    db.delete(custo)
+    db.commit()
+    return {"sucesso": True, "mensagem": "Custo fixo removido com sucesso."}
+
