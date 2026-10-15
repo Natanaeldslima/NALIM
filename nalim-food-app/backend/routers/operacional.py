@@ -409,14 +409,15 @@ def fechar_e_zerar_mesa(
 
     valor_consumido = mesa.consumo_acumulado
 
-    # Atualiza pedidos em aberto desta mesa para a forma de pagamento final
+    # Atualiza pedidos desta mesa: forma de pagamento e status no KDS para Entregue
     pedidos_mesa = db.query(Pedido).filter(
         Pedido.tenant_id == tenant_id,
-        Pedido.identificacao.like(f"%{mesa_identificador}%"),
-        Pedido.forma_pagto == "Em Aberto (Mesa)"
+        Pedido.identificacao.like(f"%{mesa_identificador}%")
     ).all()
     for p_mesa in pedidos_mesa:
         p_mesa.forma_pagto = dados.forma_pagto
+        if p_mesa.status_kds in ["Na Chapa", "Pronto"]:
+            p_mesa.status_kds = "Entregue"
 
     # ZERA A MESA COMPLETAMENTE PARA LIBERAR PARA O PRÓXIMO CLIENTE
     mesa.status = "LIVRE"
