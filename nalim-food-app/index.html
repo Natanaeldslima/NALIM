@@ -3924,11 +3924,7 @@
     }
 
     async function sincronizarKdsRealtime() {
-      let finalizados = [];
-      try {
-        finalizados = JSON.parse(localStorage.getItem('nalim_kds_finalizados') || '[]');
-      } catch (e) {}
-
+      let apiConectada = false;
       try {
         const token = localStorage.getItem('nalim_token') || authToken;
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -3936,59 +3932,41 @@
         if (res.ok) {
           const data = await res.json();
           if (data.tickets && Array.isArray(data.tickets)) {
-            let mudou = false;
-            data.tickets.forEach(tk => {
-              if (finalizados.includes(tk.id) || (tk.numero_comanda && finalizados.includes(tk.numero_comanda))) return;
-              const existente = store.kdsOrders.find(o => o.id === tk.id || (o.numero_comanda && o.numero_comanda === tk.numero_comanda));
-              if (existente) {
-                existente.id = tk.id;
-                existente.numero_comanda = tk.numero_comanda;
-                if (existente.status !== tk.status) {
-                  existente.status = tk.status;
-                  mudou = true;
-                }
-              } else {
-                store.kdsOrders.unshift({
-                  id: tk.id,
-                  numero_comanda: tk.numero_comanda,
-                  dataHora: tk.data_hora,
-                  identificacao: tk.identificacao,
-                  solicitante: tk.solicitante || (tk.canal === 'Balcão' ? 'Balcão' : 'Garçom'),
-                  canal: tk.canal || 'Salão',
-                  status: tk.status || 'Na Chapa',
-                  tempoDecorrido: 'Recente',
-                  items: tk.itens.map(it => ({
-                    nome: it.nome,
-                    qtd: it.quantidade,
-                    modificacoes: it.modificacoes
-                  }))
-                });
-                mudou = true;
-              }
-            });
-            if (mudou) renderKds();
+            apiConectada = true;
+            // A Cozinha KDS exibe exclusivamente os pedidos ativos "Na Chapa" (em preparo na cozinha)
+            const ativos = data.tickets.filter(tk => tk.status === 'Na Chapa');
+            
+            store.kdsOrders = ativos.map(tk => ({
+              id: tk.id,
+              numero_comanda: tk.numero_comanda,
+              dataHora: tk.data_hora,
+              identificacao: tk.identificacao,
+              solicitante: tk.solicitante || (tk.canal === 'Balcão' ? 'Balcão' : 'Garçom'),
+              canal: tk.canal || 'Salão',
+              status: tk.status,
+              tempoDecorrido: 'Na Chapa',
+              items: (tk.itens || []).map(it => ({
+                nome: it.nome,
+                qtd: it.quantidade,
+                modificacoes: it.modificacoes
+              }))
+            }));
+            
+            renderKds();
           }
         }
       } catch (err) {}
 
-      try {
-        const localOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
-        let mudouLocal = false;
-        localOrders.forEach(lo => {
-          if (finalizados.includes(lo.id) || (lo.numero_comanda && finalizados.includes(lo.numero_comanda))) return;
-          const existente = store.kdsOrders.find(o => o.id === lo.id || (o.numero_comanda && o.numero_comanda === lo.numero_comanda));
-          if (existente) {
-            if (existente.status !== lo.status) {
-              existente.status = lo.status;
-              mudouLocal = true;
-            }
-          } else {
-            store.kdsOrders.unshift(lo);
-            mudouLocal = true;
+      // Fallback somente se a API backend estiver offline
+      if (!apiConectada) {
+        try {
+          const localOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+          if (localOrders.length > 0) {
+            store.kdsOrders = localOrders.filter(lo => lo.status === 'Na Chapa');
+            renderKds();
           }
-        });
-        if (mudouLocal) renderKds();
-      } catch (e) {}
+        } catch (e) {}
+      }
 
       verificarPedidosProntosBalcao();
     }

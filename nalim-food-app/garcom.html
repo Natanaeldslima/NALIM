@@ -1389,6 +1389,9 @@
           const data = await res.json();
           salvoNoBackend = true;
           document.getElementById('sucesso-detalhes').textContent = `Ticket #${data.numero_comanda || 107} da ${mesaAtiva} caiu na chapa agora! Consumo acumulado: R$ ${(data.consumo_acumulado || totalRodada).toFixed(2)}`;
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          console.error('[GARÇOM] Erro da API ao adicionar itens:', res.status, errData);
         }
       } catch (err) {
         console.warn('[GARÇOM] Erro na rede / backend offline:', err);
