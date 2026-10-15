@@ -812,8 +812,10 @@
                 <tr>
                   <th class="py-2.5 px-3">CATEGORIA</th>
                   <th class="py-2.5 px-3">FORNECEDOR / DESCRIÇÃO</th>
-                  <th class="py-2.5 px-3 text-right">VALOR MENSAL (VIGENTE)</th>
-                  <th class="py-2.5 px-3">MÊS DE VIGÊNCIA</th>
+                  <th class="py-2.5 px-3 text-right">VALOR MENSAL</th>
+                  <th class="py-2.5 px-3">VENCIMENTO (BOLETO)</th>
+                  <th class="py-2.5 px-3 text-center">SAÚDE FINANCEIRA</th>
+                  <th class="py-2.5 px-3">VIGÊNCIA</th>
                   <th class="py-2.5 px-3 text-center">AÇÕES</th>
                 </tr>
               </thead>
@@ -824,7 +826,7 @@
                 <tr class="bg-slate-100 text-slate-800 font-bold border-t border-slate-200">
                   <td colspan="2" class="py-2.5 px-3 uppercase text-slate-600">Total Custos Fixos do Mês:</td>
                   <td class="py-2.5 px-3 text-right font-black text-slate-900 text-sm" id="footer-custos-total">R$ 7.300,00</td>
-                  <td colspan="2" class="py-2.5 px-3 text-slate-500 text-[11px]">Impacto no Ponto de Equilíbrio</td>
+                  <td colspan="4" class="py-2.5 px-3 text-slate-500 text-[11px]">Integrados aos pagamentos da Previsão de Caixa (Saúde Financeira)</td>
                 </tr>
               </tfoot>
             </table>
@@ -1785,6 +1787,31 @@
           <input type="number" step="0.01" id="custo-val-input" placeholder="450.00" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-black text-slate-900">
         </div>
 
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Dia do Vencimento (Boleto)</label>
+            <div class="relative">
+              <input type="number" id="custo-dia-input" min="1" max="31" placeholder="Ex: 10" required class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-black text-slate-900 pr-16">
+              <span class="absolute right-2.5 top-2.5 text-[10px] text-slate-400 font-bold">Todo dia</span>
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase mb-1">Data Específica</label>
+            <input type="date" id="custo-data-input" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-bold text-slate-800 text-xs">
+          </div>
+        </div>
+
+        <!-- Opção de Encaminhar para Previsão de Caixa (Saúde Financeira) -->
+        <div class="bg-purple-50 border border-purple-200 rounded-xl p-2.5">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="custo-previsao-chk" checked class="rounded text-purple-600 focus:ring-purple-500 w-4 h-4">
+            <span class="text-[11px] font-black text-purple-900 leading-tight">
+              Encaminhar para os pagamentos da Previsão de Caixa (Saúde Financeira)
+            </span>
+          </label>
+          <span class="text-[10px] text-purple-700 block mt-1 pl-6">O valor deste boleto será provisionado automaticamente no calendário financeiro de 21 dias.</span>
+        </div>
+
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" onclick="closeModalCustoFixo()" class="px-3 py-1.5 bg-slate-100 rounded-lg font-bold">Cancelar</button>
           <button type="submit" class="px-4 py-1.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700">Salvar Alteração</button>
@@ -2260,14 +2287,14 @@
           ],
 
           custosFixos: [
-            { id: 1, categoria: 'Estrutura', descricao: 'Aluguel Ponto Comercial (Imobiliária)', valor: 1500.00, vigencia: '2026-08' },
-            { id: 2, categoria: 'Utilidades', descricao: 'Energia Elétrica (Enel)', valor: 700.00, vigencia: '2026-08' },
-            { id: 3, categoria: 'Utilidades', descricao: 'Água e Esgoto (Sabesp)', valor: 150.00, vigencia: '2026-08' },
-            { id: 4, categoria: 'Utilidades', descricao: 'Gás Industrial (Ultragaz)', valor: 400.00, vigencia: '2026-08' },
-            { id: 5, categoria: 'Serviços', descricao: 'Internet Fibra + Software', valor: 150.00, vigencia: '2026-08' },
-            { id: 6, categoria: 'Pessoal', descricao: 'Salários e Encargos Equipe', valor: 1800.00, vigencia: '2026-08' },
-            { id: 7, categoria: 'Retirada', descricao: 'Pró-Labore Sócios', valor: 2200.00, vigencia: '2026-08' },
-            { id: 8, categoria: 'Serviços', descricao: 'Contabilidade Especializada', valor: 400.00, vigencia: '2026-08' }
+            { id: 1, categoria: 'Estrutura', descricao: 'Aluguel Ponto Comercial (Imobiliária)', valor: 1500.00, vigencia: '2026-08', dia_vencimento: 10, data_vencimento: '2026-08-10', encaminhar_previsao: true },
+            { id: 2, categoria: 'Utilidades', descricao: 'Energia Elétrica (Enel)', valor: 700.00, vigencia: '2026-08', dia_vencimento: 12, data_vencimento: '2026-08-12', encaminhar_previsao: true },
+            { id: 3, categoria: 'Utilidades', descricao: 'Água e Esgoto (Sabesp)', valor: 150.00, vigencia: '2026-08', dia_vencimento: 15, data_vencimento: '2026-08-15', encaminhar_previsao: true },
+            { id: 4, categoria: 'Utilidades', descricao: 'Gás Industrial (Ultragaz)', valor: 400.00, vigencia: '2026-08', dia_vencimento: 18, data_vencimento: '2026-08-18', encaminhar_previsao: true },
+            { id: 5, categoria: 'Serviços', descricao: 'Internet Fibra + Software', valor: 150.00, vigencia: '2026-08', dia_vencimento: 5, data_vencimento: '2026-08-05', encaminhar_previsao: true },
+            { id: 6, categoria: 'Pessoal', descricao: 'Salários e Encargos Equipe', valor: 1800.00, vigencia: '2026-08', dia_vencimento: 5, data_vencimento: '2026-08-05', encaminhar_previsao: true },
+            { id: 7, categoria: 'Retirada', descricao: 'Pró-Labore Sócios', valor: 2200.00, vigencia: '2026-08', dia_vencimento: 20, data_vencimento: '2026-08-20', encaminhar_previsao: true },
+            { id: 8, categoria: 'Serviços', descricao: 'Contabilidade Especializada', valor: 400.00, vigencia: '2026-08', dia_vencimento: 15, data_vencimento: '2026-08-15', encaminhar_previsao: true }
           ]
         },
 
@@ -2370,14 +2397,14 @@
           ],
 
           custosFixos: [
-            { id: 1, categoria: 'Estrutura', descricao: 'Aluguel Ponto Comercial (Reajustado)', valor: 1700.00, vigencia: '2026-09' },
-            { id: 2, categoria: 'Utilidades', descricao: 'Energia Elétrica (Enel)', valor: 750.00, vigencia: '2026-09' },
-            { id: 3, categoria: 'Utilidades', descricao: 'Água e Esgoto (Sabesp)', valor: 160.00, vigencia: '2026-09' },
-            { id: 4, categoria: 'Utilidades', descricao: 'Gás Industrial (Ultragaz)', valor: 420.00, vigencia: '2026-09' },
-            { id: 5, categoria: 'Serviços', descricao: 'Internet Fibra + Software', valor: 150.00, vigencia: '2026-09' },
-            { id: 6, categoria: 'Pessoal', descricao: 'Salários e Encargos Equipe', valor: 1800.00, vigencia: '2026-09' },
-            { id: 7, categoria: 'Retirada', descricao: 'Pró-Labore Sócios', valor: 2500.00, vigencia: '2026-09' },
-            { id: 8, categoria: 'Serviços', descricao: 'Contabilidade Especializada', valor: 400.00, vigencia: '2026-09' }
+            { id: 1, categoria: 'Estrutura', descricao: 'Aluguel Ponto Comercial (Reajustado)', valor: 1700.00, vigencia: '2026-09', dia_vencimento: 10, data_vencimento: '2026-09-10', encaminhar_previsao: true },
+            { id: 2, categoria: 'Utilidades', descricao: 'Energia Elétrica (Enel)', valor: 750.00, vigencia: '2026-09', dia_vencimento: 12, data_vencimento: '2026-09-12', encaminhar_previsao: true },
+            { id: 3, categoria: 'Utilidades', descricao: 'Água e Esgoto (Sabesp)', valor: 160.00, vigencia: '2026-09', dia_vencimento: 15, data_vencimento: '2026-09-15', encaminhar_previsao: true },
+            { id: 4, categoria: 'Utilidades', descricao: 'Gás Industrial (Ultragaz)', valor: 420.00, vigencia: '2026-09', dia_vencimento: 18, data_vencimento: '2026-09-18', encaminhar_previsao: true },
+            { id: 5, categoria: 'Serviços', descricao: 'Internet Fibra + Software', valor: 150.00, vigencia: '2026-09', dia_vencimento: 5, data_vencimento: '2026-09-05', encaminhar_previsao: true },
+            { id: 6, categoria: 'Pessoal', descricao: 'Salários e Encargos Equipe', valor: 1800.00, vigencia: '2026-09', dia_vencimento: 5, data_vencimento: '2026-09-05', encaminhar_previsao: true },
+            { id: 7, categoria: 'Retirada', descricao: 'Pró-Labore Sócios', valor: 2500.00, vigencia: '2026-09', dia_vencimento: 20, data_vencimento: '2026-09-20', encaminhar_previsao: true },
+            { id: 8, categoria: 'Serviços', descricao: 'Contabilidade Especializada', valor: 400.00, vigencia: '2026-09', dia_vencimento: 15, data_vencimento: '2026-09-15', encaminhar_previsao: true }
           ]
         },
 
@@ -4564,13 +4591,38 @@
       let tot = 0;
 
       data.custosFixos.forEach(c => {
-        tot += c.valor;
+        tot += (c.valor || 0);
+        const diaVenc = c.dia_vencimento || (c.data_vencimento ? parseInt(c.data_vencimento.split('-')[2] || c.data_vencimento.split('/')[0], 10) : 10);
+        const encPrevisao = (c.encaminhar_previsao !== false);
+
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 transition';
         tr.innerHTML = `
           <td class="py-2.5 px-3 font-bold text-slate-700">${c.categoria}</td>
-          <td class="py-2.5 px-3 font-medium text-slate-900">${c.descricao}</td>
+          <td class="py-2.5 px-3 font-medium text-slate-900 flex items-center gap-1.5">
+            <span class="p-1 rounded bg-slate-100 text-slate-600 text-xs">📄</span>
+            <span>${c.descricao}</span>
+          </td>
           <td class="py-2.5 px-3 text-right font-black text-slate-900">${formatarMoeda(c.valor)}</td>
+          <td class="py-2.5 px-3">
+            <div class="flex items-center gap-1.5 font-bold text-slate-800">
+              <span class="bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded text-[11px] font-black flex items-center gap-1">
+                <span>🗓️</span> Dia ${String(diaVenc).padStart(2, '0')}
+              </span>
+              ${c.data_vencimento ? `<span class="text-[10px] text-slate-400 font-medium">(${c.data_vencimento})</span>` : ''}
+            </div>
+          </td>
+          <td class="py-2.5 px-3 text-center">
+            ${encPrevisao ? `
+              <span class="inline-flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider" title="Provisionado no calendário de 21 dias da Saúde Financeira">
+                <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span> Previsto
+              </span>
+            ` : `
+              <span class="inline-flex items-center bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                Pausado
+              </span>
+            `}
+          </td>
           <td class="py-2.5 px-3"><span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold">${c.vigencia || store.activeMonth}</span></td>
           <td class="py-2.5 px-3 text-center space-x-1">
             <button onclick="editarCustoFixo(${c.id})" class="text-blue-600 hover:text-blue-800 font-bold px-2 py-0.5 bg-blue-50 rounded">Editar</button>
@@ -4589,6 +4641,9 @@
       document.getElementById('modal-custo-titulo').textContent = 'Adicionar Fornecedor / Custo Fixo';
       document.getElementById('custo-desc-input').value = '';
       document.getElementById('custo-val-input').value = '';
+      document.getElementById('custo-dia-input').value = '10';
+      document.getElementById('custo-data-input').value = '';
+      document.getElementById('custo-previsao-chk').checked = true;
       document.getElementById('modal-custo').classList.remove('hidden');
     }
     function closeModalCustoFixo() { document.getElementById('modal-custo').classList.add('hidden'); }
@@ -4602,16 +4657,32 @@
         document.getElementById('custo-cat-select').value = item.categoria;
         document.getElementById('custo-desc-input').value = item.descricao;
         document.getElementById('custo-val-input').value = item.valor;
+        document.getElementById('custo-dia-input').value = item.dia_vencimento || (item.data_vencimento ? parseInt(item.data_vencimento.split('-')[2]) : 10);
+        document.getElementById('custo-data-input').value = item.data_vencimento || '';
+        document.getElementById('custo-previsao-chk').checked = (item.encaminhar_previsao !== false);
         document.getElementById('modal-custo').classList.remove('hidden');
       }
     }
 
-    function salvarCustoFixoForm() {
+    async function salvarCustoFixoForm() {
       const data = getActiveData();
       const editId = document.getElementById('custo-edit-id').value;
       const cat = document.getElementById('custo-cat-select').value;
-      const desc = document.getElementById('custo-desc-input').value;
-      const val = parseFloat(document.getElementById('custo-val-input').value);
+      const desc = document.getElementById('custo-desc-input').value.trim();
+      const val = parseFloat(document.getElementById('custo-val-input').value) || 0;
+      const dia = parseInt(document.getElementById('custo-dia-input').value, 10) || 10;
+      let dataVenc = document.getElementById('custo-data-input').value;
+      const encaminhar = document.getElementById('custo-previsao-chk').checked;
+
+      if (!desc || val <= 0) {
+        mostrarToastPdv('⚠️ Preencha a descrição do fornecedor e um valor válido.');
+        return;
+      }
+
+      if (!dataVenc) {
+        const anoMes = store.activeMonth || '2026-10';
+        dataVenc = `${anoMes}-${String(dia).padStart(2, '0')}`;
+      }
 
       if (editId) {
         const item = data.custosFixos.find(c => c.id == editId);
@@ -4619,6 +4690,9 @@
           item.categoria = cat;
           item.descricao = desc;
           item.valor = val;
+          item.dia_vencimento = dia;
+          item.data_vencimento = dataVenc;
+          item.encaminhar_previsao = encaminhar;
         }
       } else {
         data.custosFixos.push({
@@ -4626,22 +4700,64 @@
           categoria: cat,
           descricao: desc,
           valor: val,
-          vigencia: store.activeMonth
+          vigencia: store.activeMonth,
+          dia_vencimento: dia,
+          data_vencimento: dataVenc,
+          encaminhar_previsao: encaminhar
         });
       }
+
+      // Tenta persistir no backend se logado
+      try {
+        const token = localStorage.getItem('nalim_token');
+        if (token) {
+          const payload = {
+            mes_vigencia: store.activeMonth || '2026-10',
+            categoria: cat,
+            fornecedor: desc,
+            valor: val,
+            dia_vencimento: dia,
+            data_vencimento: dataVenc,
+            encaminhar_previsao: encaminhar
+          };
+          const url = editId ? `${API_BASE}/api/administrativo/custos-fixos/${editId}` : `${API_BASE}/api/administrativo/custos-fixos`;
+          const method = editId ? 'PUT' : 'POST';
+          fetch(url, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+        }
+      } catch (e) {}
 
       renderCustos();
       renderDashboard();
       closeModalCustoFixo();
-      alert('✓ Custo fixo salvo e recalculado!');
+      mostrarToastPdv(`✓ Boleto "${desc}" (Dia ${dia} • ${formatarMoeda(val)}) salvo e encaminhado para a Previsão de Caixa!`);
     }
 
     function excluirCustoFixo(id) {
       const data = getActiveData();
       if (confirm('Deseja excluir este custo fixo?')) {
         data.custosFixos = data.custosFixos.filter(c => c.id !== id);
+
+        // Tenta remover no backend se logado
+        try {
+          const token = localStorage.getItem('nalim_token');
+          if (token) {
+            fetch(`${API_BASE}/api/administrativo/custos-fixos/${id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+          }
+        } catch (e) {}
+
         renderCustos();
         renderDashboard();
+        mostrarToastPdv('✓ Custo fixo removido com sucesso.');
       }
     }
 
@@ -5926,10 +6042,16 @@
       if (!container) return;
 
       const contas = carregarContasPagar();
-      const total = contas.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0);
-      if (totalEl) totalEl.textContent = formatarMoeda(total);
+      const custosFixosAtivos = (getActiveData() && getActiveData().custosFixos)
+        ? getActiveData().custosFixos.filter(cf => cf.encaminhar_previsao !== false)
+        : [];
 
-      if (contas.length === 0) {
+      let totalContas = contas.reduce((acc, c) => acc + (parseFloat(c.valor) || 0), 0);
+      let totalFixos = custosFixosAtivos.reduce((acc, cf) => acc + (parseFloat(cf.valor) || 0), 0);
+      
+      if (totalEl) totalEl.textContent = formatarMoeda(totalContas + totalFixos);
+
+      if (contas.length === 0 && custosFixosAtivos.length === 0) {
         container.innerHTML = `<p class="text-xs text-slate-400 p-4 text-center">Nenhuma conta agendada. Adicione os boletos e vencimentos acima.</p>`;
         return;
       }
@@ -5937,7 +6059,7 @@
       // Ordena por data de vencimento
       contas.sort((a, b) => (a.dataVencimento || '').localeCompare(b.dataVencimento || ''));
 
-      container.innerHTML = contas.map(c => {
+      let htmlContas = contas.map(c => {
         const partesData = (c.dataVencimento || '').split('-');
         const dataFmt = partesData.length === 3 ? `${partesData[2]}/${partesData[1]}/${partesData[0]}` : c.dataVencimento;
 
@@ -5963,6 +6085,41 @@
           </div>
         `;
       }).join('');
+
+      // Bloco com os Custos Fixos integrados automaticamente
+      let htmlFixos = '';
+      if (custosFixosAtivos.length > 0) {
+        htmlFixos = `
+          <div class="pt-2 mt-2 border-t border-slate-200">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[11px] font-black uppercase text-purple-900 flex items-center gap-1.5">
+                <i data-lucide="link" class="w-3.5 h-3.5 text-purple-700"></i>
+                Boletos de Custos Fixos Integrados (${custosFixosAtivos.length})
+              </span>
+              <span class="text-[10px] text-purple-700 font-bold">Total: ${formatarMoeda(totalFixos)}</span>
+            </div>
+            <div class="space-y-1.5">
+              ${custosFixosAtivos.map(cf => {
+                const dia = cf.dia_vencimento || (cf.data_vencimento ? cf.data_vencimento.split('-')[2] : '10');
+                return `
+                  <div class="flex items-center justify-between p-2 rounded-xl border border-purple-200/80 bg-purple-50/50 text-xs">
+                    <div class="flex items-center gap-2">
+                      <span class="p-1 rounded bg-white text-purple-700 text-xs shadow-2xs">📄</span>
+                      <div>
+                        <strong class="text-slate-900 font-bold block leading-tight">${cf.descricao}</strong>
+                        <span class="text-[10px] text-purple-700 font-semibold">Boleto Fixo • Todo dia ${String(dia).padStart(2, '0')} (${cf.categoria})</span>
+                      </div>
+                    </div>
+                    <span class="font-black text-rose-600 text-xs">- ${formatarMoeda(cf.valor)}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = htmlContas + htmlFixos;
       if (window.lucide) safeLucide();
     }
 
@@ -6016,6 +6173,7 @@
         let saidas = 0;
         let nomesSaidas = [];
 
+        // A) Contas avulsas agendadas
         contas.forEach(c => {
           if (!c.dataVencimento) return;
           let venceHoje = false;
@@ -6030,6 +6188,34 @@
             const v = parseFloat(c.valor) || 0;
             saidas += v;
             nomesSaidas.push(`${c.descricao} (R$ ${Math.round(v)})`);
+          }
+        });
+
+        // B) Custos Fixos com vencimento de boleto encaminhados para a Previsão de Caixa (Saúde Financeira)
+        const custosAtivos = (data && data.custosFixos && Array.isArray(data.custosFixos))
+          ? data.custosFixos
+          : ((getActiveData() && getActiveData().custosFixos) ? getActiveData().custosFixos : []);
+
+        custosAtivos.forEach(cf => {
+          if (cf.encaminhar_previsao === false) return;
+
+          let venceHoje = false;
+          const diaVenc = cf.dia_vencimento || (cf.data_vencimento ? parseInt(cf.data_vencimento.split('-')[2] || cf.data_vencimento.split('/')[0], 10) : null);
+
+          if (cf.data_vencimento === dataIso) {
+            venceHoje = true;
+          } else if (diaVenc && diaVenc === diaNum) {
+            venceHoje = true;
+          }
+
+          if (venceHoje) {
+            const descNorm = (cf.descricao || '').toLowerCase();
+            const jaAdicionado = nomesSaidas.some(n => n.toLowerCase().includes(descNorm.slice(0, 8)));
+            if (!jaAdicionado) {
+              const v = parseFloat(cf.valor) || 0;
+              saidas += v;
+              nomesSaidas.push(`📄 ${cf.descricao} (R$ ${Math.round(v)})`);
+            }
           }
         });
 
