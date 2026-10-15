@@ -65,6 +65,54 @@
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between max-w-md mx-auto shadow-2xl relative border-x border-slate-200">
 
   <!-- ============================================================== -->
+  <!-- AVISO / INFORMATIVO FIXO NO TOPO DO SITE (PEDIDO PRONTO)       -->
+  <!-- ============================================================== -->
+  <div id="alerta-site-pedido-pronto" class="hidden sticky top-0 z-50 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 px-3.5 py-2.5 shadow-xl border-b-2 border-amber-300 flex items-center justify-between gap-2 animate-pulse">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <span class="w-8 h-8 rounded-xl bg-slate-950 text-amber-300 flex items-center justify-center text-lg font-black shrink-0 shadow-md">
+        🔔
+      </span>
+      <div class="truncate">
+        <span class="block leading-none uppercase font-black text-[10px] text-slate-950 tracking-wider">COZINHA: PEDIDO PRONTO!</span>
+        <span id="alerta-site-texto" class="text-xs font-black text-amber-950 truncate block mt-0.5">Mesa 02 • Ticket #112</span>
+      </div>
+    </div>
+    <button type="button" onclick="marcarPrimeiroPedidoProntoServido()" class="shrink-0 bg-slate-950 hover:bg-black active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-black shadow-lg transition flex items-center gap-1 cursor-pointer">
+      <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+      <span>✓ Servido</span>
+    </button>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL / POPUP INFORMATIVO NO PRÓPRIO SITE                      -->
+  <!-- ============================================================== -->
+  <div id="modal-aviso-pronto" class="hidden fixed inset-0 bg-slate-900/70 z-50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-5 max-w-sm w-full shadow-2xl border-2 border-amber-400 text-center space-y-4 animate-slide-up">
+      <div class="w-16 h-16 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center text-3xl mx-auto shadow-inner border border-amber-300 animate-pulse">
+        🔔
+      </div>
+      <div>
+        <span class="text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
+          Informativo da Cozinha
+        </span>
+        <h3 class="text-lg font-black text-slate-900 mt-2">Pedido Pronto p/ Servir!</h3>
+        <p id="modal-aviso-pronto-detalhe" class="text-sm font-black text-amber-950 mt-1">
+          Mesa 02 • Ticket #112
+        </p>
+      </div>
+      <div class="pt-2 flex flex-col gap-2">
+        <button type="button" onclick="marcarPrimeiroPedidoProntoServido()" class="w-full bg-forest-600 hover:bg-forest-700 active:scale-95 text-white font-black py-3 px-4 rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+          <i data-lucide="check-circle" class="w-4 h-4"></i>
+          <span>Marcar como Entregue à Mesa</span>
+        </button>
+        <button type="button" onclick="fecharModalAvisoPronto()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-3 rounded-xl text-xs transition cursor-pointer">
+          Fechar Informativo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
   <!-- TOPO DO APP DO GARÇOM                                          -->
   <!-- ============================================================== -->
   <header class="bg-white border-b border-slate-200 px-4 py-2.5 sticky top-0 z-30 shadow-xs">
@@ -83,10 +131,10 @@
       </div>
 
       <div class="flex items-center gap-1.5">
-        <!-- Botão Testar / Ativar Alarme no Celular -->
-        <button id="btn-ativar-alarme" onclick="testarEAtivarAlarmeMobile()" title="Testar Som, Vibração e Notificações" class="flex items-center gap-1 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 px-2 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition">
-          <i data-lucide="bell" id="icone-btn-alarme" class="w-3.5 h-3.5 text-amber-700"></i>
-          <span id="texto-btn-alarme">Testar Alerta</span>
+        <!-- Botão Testar Som no Site -->
+        <button id="btn-ativar-alarme" onclick="testarSomSite()" title="Ouvir Som da Campainha" class="flex items-center gap-1 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 px-2 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition">
+          <i data-lucide="volume-2" id="icone-btn-alarme" class="w-3.5 h-3.5 text-amber-700"></i>
+          <span id="texto-btn-alarme">Testar Som</span>
         </button>
 
         <!-- Botão Voltar para Mesas (visível quando estiver no atendimento de uma mesa) -->
@@ -128,20 +176,6 @@
       <button type="button" id="btn-marcar-servido-banner" onclick="marcarPrimeiroPedidoProntoServido()" class="shrink-0 bg-slate-950 hover:bg-black text-white px-3.5 py-2.5 rounded-xl text-xs font-black shadow-lg transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
         <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
         <span>✓ Servido</span>
-      </button>
-    </div>
-
-    <!-- DICA DE ATIVAÇÃO / TESTE DO ALERTA NO CELULAR -->
-    <div id="dica-ativacao-alarme" class="bg-amber-50 border border-amber-300 text-amber-950 p-2.5 rounded-2xl text-xs flex items-center justify-between gap-2 shadow-2xs">
-      <div class="flex items-center gap-2 min-w-0">
-        <span class="text-base">🔔</span>
-        <div class="leading-tight">
-          <span class="font-black text-slate-900 block text-xs">Ativar Som & Vibração</span>
-          <span class="text-[10px] text-amber-800 font-bold block">Toque aqui para liberar áudio e vibração neste celular</span>
-        </div>
-      </div>
-      <button type="button" onclick="testarEAtivarAlarmeMobile()" class="shrink-0 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black text-[11px] px-2.5 py-1.5 rounded-xl shadow-xs transition cursor-pointer">
-        Testar Agora
       </button>
     </div>
 
@@ -754,10 +788,20 @@
       let totalLivres = 0;
       let totalOcupadas = 0;
 
+      function mesaTemPedidoPronto(nomeMesa) {
+        if (!pedidosProntosCozinha || pedidosProntosCozinha.length === 0) return false;
+        const norm = (nomeMesa || '').toLowerCase().replace(/[^0-9a-z]/g, '');
+        return pedidosProntosCozinha.some(p => {
+          const idNorm = ((p.identificacao || '') + ' ' + (p.canal || '')).toLowerCase().replace(/[^0-9a-z]/g, '');
+          return idNorm.includes(norm);
+        });
+      }
+
       listaNomesMesas.forEach(nome => {
         const mesa = mesasConsumoState[nome] || { status: 'LIVRE', total: 0, itens: [] };
         const isAtiva = (nome === mesaAtiva);
         const isOcupada = (mesa.status === 'OCUPADA' || (mesa.total && mesa.total > 0));
+        const temPronto = mesaTemPedidoPronto(nome);
 
         if (isOcupada) {
           totalOcupadas++;
@@ -771,7 +815,9 @@
 
         let classesBase = 'p-3 rounded-2xl flex flex-col justify-between items-center text-center transition active:scale-95 shadow-2xs relative cursor-pointer ';
         
-        if (isAtiva) {
+        if (temPronto) {
+          classesBase += 'ring-4 ring-amber-400 border-2 border-amber-500 bg-amber-100 text-amber-950 font-black animate-pulse shadow-md ';
+        } else if (isAtiva) {
           classesBase += 'ring-2 ring-forest-600 border-2 border-forest-600 bg-forest-50/90 text-forest-900 font-black ';
         } else if (isOcupada) {
           classesBase += 'border-2 border-amber-300 bg-amber-50/80 text-slate-800 hover:border-amber-400 ';
@@ -781,18 +827,32 @@
 
         btn.className = classesBase;
 
-        // Visualização limpa: mostra apenas se a mesa está Ocupada ou Livre (sem valores financeiros de consumo)
+        // Visualização limpa: mostra se a mesa tem Pedido Pronto, Ocupada ou Livre
+        let statusBadge = '';
+        if (temPronto) {
+          statusBadge = `<span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 animate-bounce shadow-2xs">🔔 PRONTO!</span>`;
+        } else if (isOcupada) {
+          statusBadge = `<span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">🍽️ Ocupada</span>`;
+        } else {
+          statusBadge = `<span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">🟢 Livre</span>`;
+        }
+
+        let subtitulo = '';
+        if (temPronto) {
+          subtitulo = `<span class="text-[10px] font-black text-amber-900 mt-1 block">Recolher na Chapa</span>`;
+        } else if (isOcupada) {
+          subtitulo = `<span class="text-[10px] font-bold text-amber-800 mt-1 block">Atender / Encerrar</span>`;
+        } else {
+          subtitulo = `<span class="text-[10px] font-bold text-slate-400 mt-1 block">Toque p/ Atender</span>`;
+        }
+
         btn.innerHTML = `
           <div class="w-full flex items-center justify-between gap-1 mb-1">
-            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isOcupada ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800'}">
-              ${isOcupada ? '🍽️ Ocupada' : '🟢 Livre'}
-            </span>
+            ${statusBadge}
             ${isAtiva ? '<span class="w-2 h-2 rounded-full bg-forest-600"></span>' : ''}
           </div>
           <span class="font-extrabold text-sm block leading-tight text-slate-900 my-1">${nome}</span>
-          <span class="text-[10px] font-bold ${isOcupada ? 'text-amber-800' : 'text-slate-400'} mt-1 block">
-            ${isOcupada ? 'Atender / Encerrar' : 'Toque p/ Atender'}
-          </span>
+          ${subtitulo}
         `;
 
         container.appendChild(btn);
@@ -967,32 +1027,19 @@
     }
 
     // Função de ativação e teste com 1 toque no celular
-    async function testarEAtivarAlarmeMobile() {
+    function fecharModalAvisoPronto() {
+      const modal = document.getElementById('modal-aviso-pronto');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function testarSomSite() {
       desbloquearAudioMobile();
-      ativarWakeLock();
-
-      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        try {
-          await Notification.requestPermission();
-        } catch(e) {}
-      }
-
       tocarAlertaPedidoPronto(true);
+      mostrarToastGarcom('🔔 Teste de aviso sonoro reproduzido com sucesso!');
+    }
 
-      const btnAlarme = document.getElementById('btn-ativar-alarme');
-      const txtAlarme = document.getElementById('texto-btn-alarme');
-      const icoAlarme = document.getElementById('icone-btn-alarme');
-      const dicaAlarme = document.getElementById('dica-ativacao-alarme');
-
-      if (btnAlarme) {
-        btnAlarme.className = 'flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-900 px-2 py-1.5 rounded-xl font-black text-xs shadow-2xs active:scale-95 transition';
-      }
-      if (txtAlarme) txtAlarme.textContent = 'Alarme Ativo';
-      if (icoAlarme) icoAlarme.className = 'w-3.5 h-3.5 text-emerald-600';
-      if (dicaAlarme) dicaAlarme.classList.add('hidden');
-
-      mostrarToastGarcom('✅ Som, Vibração e Tela Ativa liberados com sucesso no seu celular!');
-      safeLucide();
+    async function testarEAtivarAlarmeMobile() {
+      testarSomSite();
     }
 
     function mostrarToastGarcom(msg) {
@@ -1013,6 +1060,10 @@
       const detalhe = document.getElementById('banner-pedidos-prontos-detalhe');
       const bannerAtend = document.getElementById('banner-pedidos-prontos-atend');
       const detalheAtend = document.getElementById('banner-pedidos-prontos-detalhe-atend');
+      const alertaSite = document.getElementById('alerta-site-pedido-pronto');
+      const alertaSiteTexto = document.getElementById('alerta-site-texto');
+      const modalPronto = document.getElementById('modal-aviso-pronto');
+      const modalDetalhe = document.getElementById('modal-aviso-pronto-detalhe');
 
       let prontos = [];
 
@@ -1068,6 +1119,7 @@
         }
       } catch (e) {}
 
+      const mudouQtd = (pedidosProntosCozinha.length !== prontos.length);
       pedidosProntosCozinha = prontos;
 
       if (prontos.length > 0) {
@@ -1075,6 +1127,13 @@
         const primeiroKey = String(primeiro.numero_comanda || primeiro.id);
         const textoDetalhe = `${primeiro.identificacao} • Ticket #${primeiro.numero_comanda || primeiro.id}${prontos.length > 1 ? ` (+${prontos.length - 1} prontos p/ recolher)` : ''}`;
 
+        // Alerta fixo no topo do site
+        if (alertaSite) {
+          alertaSite.classList.remove('hidden');
+          if (alertaSiteTexto) alertaSiteTexto.textContent = textoDetalhe;
+        }
+
+        // Banners nas views do app
         if (banner) {
           banner.classList.remove('hidden');
           if (detalhe) detalhe.textContent = textoDetalhe;
@@ -1084,15 +1143,24 @@
           if (detalheAtend) detalheAtend.textContent = textoDetalhe;
         }
 
-        // Toca alerta sonoro e vibra se for um novo pedido pronto
+        // Novo pedido pronto detectado: Toca sino e abre informativo popup no site
         if (!pedidosAlertadosIds.has(primeiroKey)) {
           pedidosAlertadosIds.add(primeiroKey);
           tocarAlertaPedidoPronto();
+          if (modalDetalhe) modalDetalhe.textContent = textoDetalhe;
+          if (modalPronto) modalPronto.classList.remove('hidden');
         }
       } else {
+        if (alertaSite) alertaSite.classList.add('hidden');
         if (banner) banner.classList.add('hidden');
         if (bannerAtend) bannerAtend.classList.add('hidden');
+        fecharModalAvisoPronto();
         pedidosAlertadosIds.clear();
+      }
+
+      // Se mudou o estado de prontos, atualiza os cartões das mesas imediatamente
+      if (mudouQtd) {
+        renderGridMesas();
       }
       safeLucide();
     }
@@ -1102,6 +1170,8 @@
       const ticket = pedidosProntosCozinha[0];
       const ticketId = ticket.id;
       const numComanda = ticket.numero_comanda || ticketId;
+
+      fecharModalAvisoPronto();
 
       // 1. Remove da fila direta de pedidos prontos
       try {
@@ -1135,8 +1205,9 @@
 
       pedidosProntosCozinha = pedidosProntosCozinha.filter(t => String(t.id) !== String(ticketId) && String(t.id) !== String(numComanda) && (!t.numero_comanda || String(t.numero_comanda) !== String(numComanda)));
       verificarPedidosProntosCozinha();
+      renderGridMesas();
 
-      alert(`✓ Pedido #${numComanda} (${ticket.identificacao}) marcado como SERVIDO aos clientes!`);
+      mostrarToastGarcom(`✓ Pedido #${numComanda} (${ticket.identificacao}) entregue aos clientes!`);
     }
 
     function calcularTrocoGarcom() {
