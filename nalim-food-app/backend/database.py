@@ -53,6 +53,48 @@ def executar_migracoes(db_engine):
                     conn.commit()
             except Exception:
                 pass
+
+            try:
+                # Garante que tenants tenha as colunas para gestão SaaS Multi-tenant
+                res_tn = conn.execute(text("PRAGMA table_info(tenants)")).fetchall()
+                colunas_tn = [r[1] for r in res_tn]
+                if colunas_tn:
+                    if "telefone" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN telefone VARCHAR(30) NULL"))
+                    if "responsavel" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN responsavel VARCHAR(100) NULL"))
+                    if "email_contato" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN email_contato VARCHAR(100) NULL"))
+                    if "plano" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN plano VARCHAR(50) DEFAULT 'PRO'"))
+                    if "valor_mensalidade" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN valor_mensalidade FLOAT DEFAULT 199.0"))
+                    if "status" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN status VARCHAR(20) DEFAULT 'ATIVO'"))
+                    if "vencimento_mensalidade" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN vencimento_mensalidade VARCHAR(10) NULL"))
+                    if "observacoes" not in colunas_tn:
+                        conn.execute(text("ALTER TABLE tenants ADD COLUMN observacoes TEXT NULL"))
+                    conn.commit()
+            except Exception:
+                pass
+
+            try:
+                # Garante que configuracoes_empresa tenha as colunas de taxas de cartão
+                res_cfg = conn.execute(text("PRAGMA table_info(configuracoes_empresa)")).fetchall()
+                colunas_cfg = [r[1] for r in res_cfg]
+                if colunas_cfg:
+                    if "taxa_debito" not in colunas_cfg:
+                        conn.execute(text("ALTER TABLE configuracoes_empresa ADD COLUMN taxa_debito FLOAT DEFAULT 1.99"))
+                    if "taxa_credito_vista" not in colunas_cfg:
+                        conn.execute(text("ALTER TABLE configuracoes_empresa ADD COLUMN taxa_credito_vista FLOAT DEFAULT 3.49"))
+                    if "taxa_credito_parcelado" not in colunas_cfg:
+                        conn.execute(text("ALTER TABLE configuracoes_empresa ADD COLUMN taxa_credito_parcelado FLOAT DEFAULT 4.99"))
+                    if "repassar_taxa_cartao" not in colunas_cfg:
+                        conn.execute(text("ALTER TABLE configuracoes_empresa ADD COLUMN repassar_taxa_cartao BOOLEAN DEFAULT 0"))
+                    conn.commit()
+            except Exception:
+                pass
     except Exception:
         pass
 

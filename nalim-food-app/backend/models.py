@@ -10,6 +10,14 @@ class Tenant(Base):
     nome = Column(String(100), nullable=False)
     cnpj = Column(String(20), nullable=True)
     slug = Column(String(50), unique=True, index=True, nullable=False)
+    telefone = Column(String(30), nullable=True)
+    responsavel = Column(String(100), nullable=True)
+    email_contato = Column(String(100), nullable=True)
+    plano = Column(String(50), default="PRO")  # 'STARTER', 'PRO', 'ENTERPRISE'
+    valor_mensalidade = Column(Float, default=199.00)
+    status = Column(String(20), default="ATIVO")  # 'ATIVO', 'TRIAL', 'SUSPENSO'
+    vencimento_mensalidade = Column(String(10), nullable=True)  # 'YYYY-MM-DD'
+    observacoes = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     usuarios = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
@@ -26,11 +34,11 @@ class User(Base):
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     nome = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     senha_hash = Column(String(255), nullable=False)
-    role = Column(String(20), default="operador")  # 'dono', 'gerente', 'operador'
+    role = Column(String(20), default="operador")  # 'master', 'dono', 'gerente', 'operador'
     ativo = Column(Boolean, default=True)
 
     tenant = relationship("Tenant", back_populates="usuarios")

@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base, executar_migracoes
 from seed import seed_database
-from routers import auth, operacional, administrativo, gerencial, ifood
+from routers import auth, operacional, administrativo, gerencial, ifood, master_admin
 
 # Cria tabelas no banco de dados e executa migrações
 Base.metadata.create_all(bind=engine)
@@ -30,6 +30,7 @@ FRONTEND_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "i
 GARCOM_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "garcom.html"))
 LOGIN_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "login.html"))
 CARDAPIO_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cardapio.html"))
+ADMIN_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "admin.html"))
 SW_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sw.js"))
 
 # Auto-seed no startup
@@ -43,6 +44,7 @@ app.include_router(operacional.router)
 app.include_router(administrativo.router)
 app.include_router(gerencial.router)
 app.include_router(ifood.router)
+app.include_router(master_admin.router)
 
 NO_CACHE_HEADERS = {
     "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -87,6 +89,14 @@ def serve_cardapio():
     if os.path.exists(CARDAPIO_FILE):
         return FileResponse(CARDAPIO_FILE, headers=NO_CACHE_HEADERS)
     return {"mensagem": "Arquivo cardapio.html não encontrado."}
+
+# Rota do Portal Master SaaS (SuperAdmin / Dono do Software)
+@app.get("/admin")
+@app.get("/master")
+def serve_admin():
+    if os.path.exists(ADMIN_FILE):
+        return FileResponse(ADMIN_FILE, headers=NO_CACHE_HEADERS)
+    return {"mensagem": "Arquivo admin.html não encontrado."}
 
 @app.get("/api")
 def api_info():

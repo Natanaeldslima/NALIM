@@ -101,11 +101,57 @@ def test_full_api():
     }
     r_ifood = client.post("/api/ifood/webhook", json=webhook_payload)
     assert r_ifood.status_code == 200
-    print("[OK] Webhook iFood processou pedido automaticamente:", r_ifood.json())
+    print("\n=== 7. Testando SaaS Master SuperAdmin (nalimgestao.com.br) ===")
+    r_master = client.post("/api/auth/login", json={"email": "admin@nalimgestao.com.br", "senha": "nalim2026master"})
+    assert r_master.status_code == 200
+    token_master = r_master.json()["access_token"]
+    assert r_master.json()["role"] == "master"
+    print("[OK] SuperAdmin Master autenticado!")
+
+    h_master = {"Authorization": f"Bearer {token_master}"}
+    r_stats = client.get("/api/master/stats", headers=h_master)
+    assert r_stats.status_code == 200
+    print(f"[OK] Master Stats: {r_stats.json()['total_clientes']} clientes | MRR R$ {r_stats.json()['mrr_recorrente']}")
+
+    # Criando novo cliente restaurante pelo painel master com timestamp para idempotência
+    import time
+    ts = int(time.time())
+    novo_cliente = {
+        "nome": f"Pizzaria Bella Napoli {ts}",
+        "slug": f"bella-napoli-{ts}",
+        "responsavel": "Marco Antonio",
+        "telefone": "(11) 98888-7777",
+        "plano": "PRO",
+        "valor_mensalidade": 199.0,
+        "status": "ATIVO",
+        "vencimento_mensalidade": "10",
+        "email_dono": f"marco_{ts}@bellanapoli.com.br",
+        "senha_dono": "napoli_senha_123",
+        "clonar_cardapio_modelo": True
+    }
+    r_create_tenant = client.post("/api/master/tenants", json=novo_cliente, headers=h_master)
+    assert r_create_tenant.status_code == 200
+    tenant_criado = r_create_tenant.json()
+    tenant_id = tenant_criado["tenant_id"]
+    print(f"[OK] Novo cliente criado com sucesso! ID: {tenant_id} - Slug: {tenant_criado['slug']}")
+
+    # Testando Impersonation (login direto sem senha)
+    r_impersonate = client.post(f"/api/master/tenants/{tenant_id}/impersonate", headers=h_master)
+    assert r_impersonate.status_code == 200
+    token_impersonate = r_impersonate.json()["access_token"]
+    assert r_impersonate.json()["tenant_slug"] == tenant_criado["slug"]
+    print(f"[OK] Impersonation executado com sucesso! Token gerado para tenant {r_impersonate.json()['tenant_nome']}")
+
+    # Testando isolamento: acessando produtos da Bella Napoli com o token impersonado
+    h_cliente = {"Authorization": f"Bearer {token_impersonate}"}
+    r_prods_cliente = client.get("/api/admin/produtos", headers=h_cliente)
+    assert r_prods_cliente.status_code == 200
+    print(f"[OK] Cliente isolado acessado com sucesso! Produtos cadastrados: {len(r_prods_cliente.json())}")
 
     print("\n=======================================================")
     print("TODOS OS TESTES DO BACKEND PASSARAM COM 100% DE SUCESSO!")
     print("=======================================================")
+
 
 if __name__ == "__main__":
     test_full_api()

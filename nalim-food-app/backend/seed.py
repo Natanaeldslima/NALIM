@@ -17,9 +17,41 @@ def seed_database():
         pass
     db = SessionLocal()
 
-    # Verifica se já está populado
-    if db.query(Tenant).first():
-        print("Banco de dados já possui dados.")
+    # Garante que o usuário Master SuperAdmin exista
+    master_user = db.query(User).filter(User.role == "master").first()
+    if not master_user:
+        master_user = db.query(User).filter(User.email == "admin@nalimgestao.com.br").first()
+    if not master_user:
+        admin_master = User(
+            tenant_id=1,
+            nome="Administrador NALIM (Master)",
+            email="admin@nalimgestao.com.br",
+            senha_hash=hash_password("nalim2026master"),
+            role="master",
+            ativo=True
+        )
+        db.add(admin_master)
+        try:
+            db.commit()
+            print("✓ Usuário Master criado: admin@nalimgestao.com.br / nalim2026master")
+        except Exception as e:
+            db.rollback()
+
+    # Se já possui tenants, apenas atualiza campos SaaS nulos e finaliza
+    primeiro_tenant = db.query(Tenant).first()
+    if primeiro_tenant:
+        if not primeiro_tenant.plano:
+            primeiro_tenant.plano = "PRO"
+            primeiro_tenant.valor_mensalidade = 199.00
+            primeiro_tenant.status = "ATIVO"
+            primeiro_tenant.responsavel = "Carlos Nalim"
+            primeiro_tenant.telefone = "(11) 98765-4321"
+            primeiro_tenant.email_contato = "dono@nalim.com.br"
+            primeiro_tenant.vencimento_mensalidade = (datetime.date.today() + datetime.timedelta(days=30)).isoformat()
+            try:
+                db.commit()
+            except Exception:
+                db.rollback()
         db.close()
         return
 
@@ -29,7 +61,14 @@ def seed_database():
     tenant = Tenant(
         nome="NALIM Hamburgueria & Bar",
         cnpj="42.891.023/0001-90",
-        slug="nalim-hamburgueria"
+        slug="nalim-hamburgueria",
+        telefone="(11) 98765-4321",
+        responsavel="Carlos Nalim",
+        email_contato="dono@nalim.com.br",
+        plano="PRO",
+        valor_mensalidade=199.00,
+        status="ATIVO",
+        vencimento_mensalidade=(datetime.date.today() + datetime.timedelta(days=30)).isoformat()
     )
     db.add(tenant)
     db.flush()
