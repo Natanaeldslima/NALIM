@@ -1158,13 +1158,21 @@
                 <p class="text-[11px] text-slate-500">Saldo Projetado = Caixa Atual + Liquidação Cartões/PIX + <strong>Repasse Semanal Apps (Quartas)</strong> - Boletos/Contas Agendadas</p>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-2xs">
+                <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>Saldo em Caixa: <strong id="badge-saldo-caixa-header" class="text-emerald-950 font-black">R$ 1.850,00</strong></span>
+              </div>
+              <span class="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span> Repasse Apps Toda Quarta
               </span>
-              <button type="button" onclick="abrirModalContasPagar()" class="text-[10px] font-black bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Gerenciar Boletos e Saldo em Caixa">
+              <button type="button" onclick="abrirModalContasPagar('caixa')" class="text-[10px] font-black bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Gerenciar Saldo e Adicionar Dinheiro (Empréstimo/Aporte)">
+                <i data-lucide="coins" class="w-3.5 h-3.5"></i>
+                <span>💵 Saldo / Aporte</span>
+              </button>
+              <button type="button" onclick="abrirModalContasPagar('agendar')" class="text-[10px] font-black bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Agendar Boletos e Parcelas com PDF">
                 <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-                <span>⚙️ Agendar Contas</span>
+                <span>📅 Agendar Contas</span>
               </button>
             </div>
           </div>
@@ -5254,6 +5262,10 @@
       renderTermometroSemanal(pedidosDoMes, totFixos, diasTrabalhadosReais);
       renderDesmembramentoCanais(pedidosDoMes);
       renderPrevisaoCaixa(pedidosDoMes, data);
+      const badgeSaldoHeader = document.getElementById('badge-saldo-caixa-header');
+      if (badgeSaldoHeader) {
+        badgeSaldoHeader.textContent = formatarMoeda(carregarSaldoCaixa());
+      }
       renderNotificacoesExcecao({
         fatTotal,
         cmvTotal,
@@ -5971,22 +5983,172 @@
       if (!input) return;
       const novoSaldo = parseFloat(input.value) || 0;
       localStorage.setItem('nalim_saldo_caixa', novoSaldo.toString());
+      
+      salvarMovimentacaoCaixa({
+        id: Date.now(),
+        tipo: 'AJUSTE',
+        origem: 'Ajuste Manual / Conciliação',
+        descricao: 'Saldo calibrado manualmente pelo gestor',
+        valor: novoSaldo,
+        dataHora: new Date().toISOString()
+      });
+
+      const displaySaldo = document.getElementById('display-saldo-atual-caixa');
+      if (displaySaldo) displaySaldo.textContent = formatarMoeda(novoSaldo);
+      const badgeSaldo = document.getElementById('badge-saldo-caixa-header');
+      if (badgeSaldo) badgeSaldo.textContent = formatarMoeda(novoSaldo);
+
+      renderHistoricoMovimentacoesCaixa();
       renderDashboard();
-      alert(`✓ Saldo em caixa atualizado para ${formatarMoeda(novoSaldo)}!`);
+      mostrarToastPdv(`✓ Saldo em caixa atualizado para ${formatarMoeda(novoSaldo)}!`);
     }
 
-    function abrirModalContasPagar() {
+    function carregarMovimentacoesCaixa() {
+      try {
+        const salvas = localStorage.getItem('nalim_movimentacoes_caixa');
+        if (salvas) return JSON.parse(salvas);
+      } catch (e) {}
+      return [
+        { id: 1, tipo: 'ENTRADA', origem: 'Saldo Inicial Caixa', descricao: 'Abertura de Caixa Operacional', valor: 1850.00, dataHora: '2026-10-05T08:00:00' }
+      ];
+    }
+
+    function salvarMovimentacaoCaixa(mov) {
+      try {
+        const historico = carregarMovimentacoesCaixa();
+        historico.unshift(mov);
+        if (historico.length > 50) historico.length = 50;
+        localStorage.setItem('nalim_movimentacoes_caixa', JSON.stringify(historico));
+      } catch (e) {}
+    }
+
+    function renderHistoricoMovimentacoesCaixa() {
+      const container = document.getElementById('caixa-movimentacoes-lista');
+      if (!container) return;
+      const historico = carregarMovimentacoesCaixa();
+
+      if (historico.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 italic text-[11px] p-2 text-center">Nenhuma movimentação registrada.</p>`;
+        return;
+      }
+
+      container.innerHTML = historico.map(m => {
+        const isEntrada = m.tipo === 'ENTRADA';
+        const isAjuste = m.tipo === 'AJUSTE';
+        const dataFmt = m.dataHora ? new Date(m.dataHora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Recente';
+        const corIcone = isEntrada ? 'bg-emerald-100 text-emerald-800' : (isAjuste ? 'bg-purple-100 text-purple-800' : 'bg-rose-100 text-rose-800');
+        const simbolo = isEntrada ? '↓' : (isAjuste ? '⚙' : '↑');
+        const corValor = isEntrada ? 'text-emerald-700' : (isAjuste ? 'text-purple-700' : 'text-rose-600');
+        const sinal = isEntrada ? '+' : (isAjuste ? '=' : '-');
+
+        return `
+          <div class="flex items-center justify-between p-2 rounded-xl border border-slate-200 bg-white shadow-2xs text-[11px]">
+            <div class="flex items-center gap-2">
+              <span class="p-1 rounded-lg ${corIcone} font-black text-xs">
+                ${simbolo}
+              </span>
+              <div>
+                <strong class="text-slate-900 block font-bold">${m.origem || m.tipo}</strong>
+                <span class="text-slate-400 text-[10px]">${m.descricao || ''} • ${dataFmt}</span>
+              </div>
+            </div>
+            <span class="font-black ${corValor} text-xs">
+              ${sinal} ${formatarMoeda(m.valor)}
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function adicionarDinheiroCaixa(event) {
+      event.preventDefault();
+      const tipo = document.getElementById('entrada-caixa-tipo')?.value || 'Empréstimo Bancário';
+      const valor = parseFloat(document.getElementById('entrada-caixa-valor')?.value) || 0;
+      const desc = document.getElementById('entrada-caixa-desc')?.value.trim() || tipo;
+
+      if (valor <= 0) {
+        mostrarToastPdv('⚠️ Informe um valor válido para creditar ao caixa.');
+        return;
+      }
+
+      const saldoAtual = carregarSaldoCaixa();
+      const novoSaldo = saldoAtual + valor;
+      localStorage.setItem('nalim_saldo_caixa', novoSaldo.toString());
+
+      salvarMovimentacaoCaixa({
+        id: Date.now(),
+        tipo: 'ENTRADA',
+        origem: tipo,
+        descricao: desc,
+        valor: valor,
+        dataHora: new Date().toISOString()
+      });
+
+      const inputSaldo = document.getElementById('input-saldo-inicial-caixa');
+      if (inputSaldo) inputSaldo.value = novoSaldo.toFixed(2);
+      const displaySaldo = document.getElementById('display-saldo-atual-caixa');
+      if (displaySaldo) displaySaldo.textContent = formatarMoeda(novoSaldo);
+      const badgeSaldo = document.getElementById('badge-saldo-caixa-header');
+      if (badgeSaldo) badgeSaldo.textContent = formatarMoeda(novoSaldo);
+
+      // Limpa formulário
+      const inputValor = document.getElementById('entrada-caixa-valor');
+      const inputDesc = document.getElementById('entrada-caixa-desc');
+      if (inputValor) inputValor.value = '';
+      if (inputDesc) inputDesc.value = '';
+
+      renderHistoricoMovimentacoesCaixa();
+      renderDashboard();
+      mostrarToastPdv(`✓ ${formatarMoeda(valor)} (${tipo}) creditado com sucesso! Saldo atualizado para ${formatarMoeda(novoSaldo)}.`);
+    }
+
+    function alternarAbaContasPagar(tab = 'caixa') {
+      const btnCaixa = document.getElementById('tab-btn-gestao-saldo');
+      const btnAgendar = document.getElementById('tab-btn-agendar-boletos');
+      const conteudoCaixa = document.getElementById('tab-conteudo-gestao-saldo');
+      const conteudoAgendar = document.getElementById('tab-conteudo-agendar-boletos');
+
+      if (tab === 'caixa') {
+        if (btnCaixa) {
+          btnCaixa.className = 'px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-purple-700 text-white shadow-2xs cursor-pointer';
+        }
+        if (btnAgendar) {
+          btnAgendar.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 cursor-pointer';
+        }
+        if (conteudoCaixa) conteudoCaixa.classList.remove('hidden');
+        if (conteudoAgendar) conteudoAgendar.classList.add('hidden');
+        renderHistoricoMovimentacoesCaixa();
+      } else {
+        if (btnAgendar) {
+          btnAgendar.className = 'px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-purple-700 text-white shadow-2xs cursor-pointer';
+        }
+        if (btnCaixa) {
+          btnCaixa.className = 'px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 cursor-pointer';
+        }
+        if (conteudoCaixa) conteudoCaixa.classList.add('hidden');
+        if (conteudoAgendar) conteudoAgendar.classList.remove('hidden');
+        atualizarSimulacaoParcelas();
+      }
+      if (window.lucide) safeLucide();
+    }
+
+    function abrirModalContasPagar(tab = 'caixa') {
       const modal = document.getElementById('modal-contas-pagar');
       if (!modal) return;
+      const saldo = carregarSaldoCaixa();
       const inputSaldo = document.getElementById('input-saldo-inicial-caixa');
-      if (inputSaldo) inputSaldo.value = carregarSaldoCaixa().toFixed(2);
+      if (inputSaldo) inputSaldo.value = saldo.toFixed(2);
+      const displaySaldo = document.getElementById('display-saldo-atual-caixa');
+      if (displaySaldo) displaySaldo.textContent = formatarMoeda(saldo);
       
       const inputData = document.getElementById('conta-pagar-data');
       if (inputData && !inputData.value) {
         inputData.value = new Date().toISOString().split('T')[0];
       }
 
-      renderContasPagarLista();
+      alternarAbaContasPagar(tab);
+      atualizarSimulacaoParcelas();
+      renderHistoricoMovimentacoesCaixa();
       modal.classList.remove('hidden');
     }
 
@@ -5995,45 +6157,432 @@
       if (modal) modal.classList.add('hidden');
     }
 
+    // Variáveis temporárias para o anexo de PDF
+    let pdfBoletoAtualBase64 = null;
+    let pdfBoletoNomeAtual = null;
+
+    function tratarUploadBoletoPdf(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 8 * 1024 * 1024) {
+        mostrarToastPdv('⚠️ O arquivo é muito grande. Escolha um PDF de até 8MB.');
+        e.target.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        pdfBoletoAtualBase64 = evt.target.result;
+        pdfBoletoNomeAtual = file.name;
+        const badge = document.getElementById('conta-pagar-pdf-badge');
+        const nomeSpan = document.getElementById('conta-pagar-pdf-nome');
+        const label = document.getElementById('conta-pagar-pdf-label');
+        if (badge && nomeSpan) {
+          nomeSpan.textContent = file.name;
+          badge.classList.remove('hidden');
+          badge.classList.add('flex');
+        }
+        if (label) label.textContent = 'Alterar Arquivo';
+        mostrarToastPdv(`✓ Boleto "${file.name}" anexado com sucesso!`);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removerBoletoPdfAnexado() {
+      pdfBoletoAtualBase64 = null;
+      pdfBoletoNomeAtual = null;
+      const input = document.getElementById('conta-pagar-pdf');
+      if (input) input.value = '';
+      const badge = document.getElementById('conta-pagar-pdf-badge');
+      const label = document.getElementById('conta-pagar-pdf-label');
+      if (badge) {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
+      }
+      if (label) label.textContent = 'Selecionar Arquivo PDF';
+    }
+
+    function visualizarBoletoPdf(id) {
+      const contas = carregarContasPagar();
+      const conta = contas.find(c => String(c.id) === String(id));
+      if (!conta || !conta.pdfBoleto) {
+        mostrarToastPdv('⚠️ Esta conta não possui boleto PDF anexado.');
+        return;
+      }
+
+      const modal = document.getElementById('modal-visualizar-pdf-boleto');
+      const titulo = document.getElementById('pdf-viewer-titulo');
+      const subtitulo = document.getElementById('pdf-viewer-subtitulo');
+      const downloadBtn = document.getElementById('pdf-viewer-download-btn');
+      const frame = document.getElementById('pdf-viewer-frame');
+      const img = document.getElementById('pdf-viewer-img');
+
+      if (titulo) titulo.textContent = conta.descricao;
+      if (subtitulo) subtitulo.textContent = `Vencimento: ${conta.dataVencimento} • Valor: ${formatarMoeda(conta.valor)}`;
+      if (downloadBtn) {
+        downloadBtn.href = conta.pdfBoleto;
+        downloadBtn.download = conta.nomeArquivoPdf || `boleto_${conta.descricao.replace(/\s+/g, '_')}.pdf`;
+      }
+
+      const isImage = conta.pdfBoleto.startsWith('data:image/');
+      if (isImage) {
+        if (img) {
+          img.src = conta.pdfBoleto;
+          img.classList.remove('hidden');
+        }
+        if (frame) frame.classList.add('hidden');
+      } else {
+        if (frame) {
+          frame.src = conta.pdfBoleto;
+          frame.classList.remove('hidden');
+        }
+        if (img) img.classList.add('hidden');
+      }
+
+      if (modal) modal.classList.remove('hidden');
+      if (window.lucide) safeLucide();
+    }
+
+    function fecharModalVisualizarPdf() {
+      const modal = document.getElementById('modal-visualizar-pdf-boleto');
+      if (modal) {
+        modal.classList.add('hidden');
+        const frame = document.getElementById('pdf-viewer-frame');
+        if (frame) frame.src = '';
+      }
+    }
+
+    function atualizarSimulacaoParcelas() {
+      const preview = document.getElementById('conta-pagar-preview-parcelas');
+      if (!preview) return;
+      const valor = parseFloat(document.getElementById('conta-pagar-valor')?.value) || 0;
+      const parcelas = parseInt(document.getElementById('conta-pagar-parcelas')?.value || '1', 10);
+      const intervalo = parseInt(document.getElementById('conta-pagar-intervalo')?.value || '30', 10);
+      const dataVenc = document.getElementById('conta-pagar-data')?.value;
+
+      if (valor <= 0 || !dataVenc) {
+        preview.innerHTML = `<span class="text-slate-400 italic">Preencha o valor e a data para visualizar a simulação dos boletos.</span>`;
+        return;
+      }
+
+      const partesData = dataVenc.split('-');
+      const ano = parseInt(partesData[0], 10);
+      const mes = parseInt(partesData[1], 10) - 1;
+      const dia = parseInt(partesData[2], 10);
+      const valorParc = +(valor / parcelas).toFixed(2);
+
+      if (parcelas === 1) {
+        preview.innerHTML = `
+          <div class="flex items-center gap-2 text-purple-900 font-bold text-xs">
+            <span>📄 Boleto único de <strong>${formatarMoeda(valor)}</strong> com vencimento em <strong>${String(dia).padStart(2,'0')}/${String(mes+1).padStart(2,'0')}/${ano}</strong>.</span>
+          </div>
+        `;
+        return;
+      }
+
+      let itensHtml = [];
+      for (let i = 0; i < parcelas; i++) {
+        const dt = new Date(ano, mes, dia);
+        dt.setDate(dia + (i * intervalo));
+        const diaFmt = String(dt.getDate()).padStart(2, '0');
+        const mesFmt = String(dt.getMonth() + 1).padStart(2, '0');
+        itensHtml.push(`<strong>${i + 1}ª:</strong> ${diaFmt}/${mesFmt} (${formatarMoeda(valorParc)})`);
+      }
+
+      preview.innerHTML = `
+        <div class="space-y-1.5 text-xs">
+          <div class="flex items-center justify-between text-purple-950 font-black">
+            <span>📌 ${parcelas} Boletos de ${formatarMoeda(valorParc)} (Intervalo de ${intervalo} dias):</span>
+            <span class="text-[10px] text-purple-700 font-bold">Total: ${formatarMoeda(valor)}</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 text-[11px] text-purple-800">
+            ${itensHtml.map(h => `<span class="bg-purple-100/80 px-2 py-0.5 rounded-lg border border-purple-200/60 font-semibold">${h}</span>`).join('')}
+          </div>
+        </div>
+      `;
+    }
+
     function adicionarContaPagar(event) {
       event.preventDefault();
       const desc = document.getElementById('conta-pagar-desc')?.value.trim();
-      const valor = parseFloat(document.getElementById('conta-pagar-valor')?.value) || 0;
+      const valorTotal = parseFloat(document.getElementById('conta-pagar-valor')?.value) || 0;
       const dataVenc = document.getElementById('conta-pagar-data')?.value;
       const cat = document.getElementById('conta-pagar-cat')?.value || 'Insumos';
       const recorrente = document.getElementById('conta-pagar-recorrente')?.checked || false;
+      const parcelas = parseInt(document.getElementById('conta-pagar-parcelas')?.value || '1', 10);
+      const intervaloDias = parseInt(document.getElementById('conta-pagar-intervalo')?.value || '30', 10);
 
-      if (!desc || valor <= 0 || !dataVenc) {
-        alert('Preencha a descrição, valor válido e a data de vencimento da conta.');
+      if (!desc || valorTotal <= 0 || !dataVenc) {
+        mostrarToastPdv('⚠️ Preencha a descrição, valor válido e a data do primeiro vencimento.');
         return;
       }
 
       const contas = carregarContasPagar();
-      contas.push({
-        id: Date.now(),
-        descricao: desc,
-        valor: valor,
-        dataVencimento: dataVenc,
-        categoria: cat,
-        recorrente: recorrente
-      });
+      const valorPorParcela = +(valorTotal / parcelas).toFixed(2);
+      
+      const partesData = dataVenc.split('-');
+      const ano = parseInt(partesData[0], 10);
+      const mes = parseInt(partesData[1], 10) - 1;
+      const dia = parseInt(partesData[2], 10);
+
+      for (let i = 0; i < parcelas; i++) {
+        const dataParcela = new Date(ano, mes, dia);
+        dataParcela.setDate(dia + (i * intervaloDias));
+        const anoP = dataParcela.getFullYear();
+        const mesP = String(dataParcela.getMonth() + 1).padStart(2, '0');
+        const diaP = String(dataParcela.getDate()).padStart(2, '0');
+        const dataIso = `${anoP}-${mesP}-${diaP}`;
+
+        const descParcela = parcelas > 1 ? `${desc} (${i + 1}/${parcelas})` : desc;
+
+        contas.push({
+          id: Date.now() + i,
+          descricao: descParcela,
+          valor: valorPorParcela,
+          dataVencimento: dataIso,
+          categoria: cat,
+          recorrente: (parcelas === 1 ? recorrente : false),
+          parcelaAtual: i + 1,
+          totalParcelas: parcelas,
+          intervaloDias: intervaloDias,
+          pdfBoleto: pdfBoletoAtualBase64 || null,
+          nomeArquivoPdf: pdfBoletoNomeAtual || null
+        });
+      }
 
       salvarContasPagar(contas);
-      renderContasPagarLista();
-      renderDashboard();
 
       // Limpa formulário
       document.getElementById('conta-pagar-desc').value = '';
       document.getElementById('conta-pagar-valor').value = '';
-      alert(`✓ Conta "${desc}" de ${formatarMoeda(valor)} agendada com sucesso!`);
+      removerBoletoPdfAnexado();
+      atualizarSimulacaoParcelas();
+
+      renderDashboard();
+
+      if (parcelas > 1) {
+        mostrarToastPdv(`✓ ${parcelas} boletos de ${formatarMoeda(valorPorParcela)} (a cada ${intervaloDias} dias) agendados com sucesso!`);
+      } else {
+        mostrarToastPdv(`✓ Boleto "${desc}" de ${formatarMoeda(valorTotal)} agendado com sucesso!`);
+      }
     }
 
     function removerContaPagar(id) {
       let contas = carregarContasPagar();
-      contas = contas.filter(c => c.id !== id);
+      contas = contas.filter(c => String(c.id) !== String(id));
       salvarContasPagar(contas);
-      renderContasPagarLista();
       renderDashboard();
+      mostrarToastPdv('✓ Conta removida do fluxo de caixa.');
+    }
+
+    function removerContaPagarEAtualizarModal(id, dataIso) {
+      removerContaPagar(id);
+      abrirDetalhesDiaPrevisao(dataIso);
+    }
+
+    function fecharModalDetalhesDiaPrevisao() {
+      const modal = document.getElementById('modal-detalhes-dia-previsao');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function abrirDetalhesDiaPrevisao(dataIso) {
+      const modal = document.getElementById('modal-detalhes-dia-previsao');
+      if (!modal) return;
+
+      const contas = carregarContasPagar();
+      const partes = dataIso.split('-');
+      const ano = parseInt(partes[0], 10);
+      const mes = parseInt(partes[1], 10);
+      const dia = parseInt(partes[2], 10);
+
+      const dtObj = new Date(ano, mes - 1, dia);
+      const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+      const diaSemanaNome = diasSemana[dtObj.getDay()];
+      const dataFmt = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`;
+      const isQuarta = (dtObj.getDay() === 3);
+
+      // 1. Entradas
+      let entradasVendas = 550.00;
+      if (dtObj.getDay() === 5 || dtObj.getDay() === 6) entradasVendas = 1250.00;
+      else if (dtObj.getDay() === 0) entradasVendas = 980.00;
+
+      const pedidosDia = (store.pedidos || []).filter(p => p.dataIso === dataIso);
+      if (pedidosDia.length > 0) {
+        const somaReal = pedidosDia.reduce((a, b) => a + (b.total || 0), 0);
+        entradasVendas = Math.max(entradasVendas, somaReal);
+      }
+
+      const repasseApps = isQuarta ? 2850.00 : 0.00;
+      const totalEntradasDia = entradasVendas + repasseApps;
+
+      // 2. Contas / Boletos do dia
+      const boletosDoDia = [];
+
+      // A) Contas agendadas
+      contas.forEach(c => {
+        if (!c.dataVencimento) return;
+        let vence = false;
+        if (c.dataVencimento === dataIso) vence = true;
+        else if (c.recorrente) {
+          const diaV = parseInt(c.dataVencimento.split('-')[2] || c.dataVencimento.split('/')[0], 10);
+          if (diaV === dia) vence = true;
+        }
+        if (vence) {
+          boletosDoDia.push({
+            id: c.id,
+            tipo: 'boleto',
+            descricao: c.descricao,
+            categoria: c.categoria || 'Geral',
+            valor: parseFloat(c.valor) || 0,
+            pdfBoleto: c.pdfBoleto || null,
+            nomeArquivoPdf: c.nomeArquivoPdf || null,
+            recorrente: c.recorrente,
+            parcela: c.totalParcelas ? `${c.parcelaAtual || 1}/${c.totalParcelas}` : null,
+            intervaloDias: c.intervaloDias
+          });
+        }
+      });
+
+      // B) Custos Fixos integrados
+      const custosAtivos = (getActiveData() && getActiveData().custosFixos)
+        ? getActiveData().custosFixos.filter(cf => cf.encaminhar_previsao !== false)
+        : [];
+
+      custosAtivos.forEach(cf => {
+        let vence = false;
+        const diaV = cf.dia_vencimento || (cf.data_vencimento ? parseInt(cf.data_vencimento.split('-')[2] || cf.data_vencimento.split('/')[0], 10) : null);
+        if (cf.data_vencimento === dataIso) vence = true;
+        else if (diaV && diaV === dia) vence = true;
+
+        if (vence) {
+          const descNorm = (cf.descricao || '').toLowerCase();
+          const jaExiste = boletosDoDia.some(b => b.descricao.toLowerCase().includes(descNorm.slice(0, 8)));
+          if (!jaExiste) {
+            boletosDoDia.push({
+              id: `cf_${cf.id}`,
+              tipo: 'custo_fixo',
+              descricao: cf.descricao,
+              categoria: cf.categoria || 'Custo Fixo',
+              valor: parseFloat(cf.valor) || 0,
+              pdfBoleto: null,
+              recorrente: true,
+              parcela: null
+            });
+          }
+        }
+      });
+
+      const totalSaidasDia = boletosDoDia.reduce((a, b) => a + b.valor, 0);
+      const resultadoDia = totalEntradasDia - totalSaidasDia;
+
+      // Renderiza no modal
+      const tituloEl = document.getElementById('detalhe-dia-titulo');
+      if (tituloEl) tituloEl.textContent = `${diaSemanaNome}, ${dataFmt}`;
+
+      const entEl = document.getElementById('detalhe-dia-entradas-total');
+      if (entEl) entEl.textContent = `+ ${formatarMoeda(totalEntradasDia)}`;
+
+      const saiEl = document.getElementById('detalhe-dia-saidas-total');
+      if (saiEl) saiEl.textContent = `- ${formatarMoeda(totalSaidasDia)}`;
+      
+      const resEl = document.getElementById('detalhe-dia-resultado-balanco');
+      if (resEl) {
+        resEl.textContent = `${resultadoDia >= 0 ? '+' : ''}${formatarMoeda(resultadoDia)}`;
+        resEl.className = `font-black text-sm ${resultadoDia >= 0 ? 'text-emerald-700' : 'text-rose-600'}`;
+      }
+
+      // Lista de Entradas
+      const entradasListaEl = document.getElementById('detalhe-dia-entradas-lista');
+      if (entradasListaEl) {
+        let htmlEntradas = `
+          <div class="flex items-center justify-between p-2.5 rounded-xl border border-emerald-100 bg-emerald-50/50 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="p-1 rounded bg-white text-emerald-700 text-xs shadow-2xs font-bold">🏪</span>
+              <div>
+                <strong class="text-slate-900 font-bold block">Vendas Balcão, Salão & Delivery Direto</strong>
+                <span class="text-[10px] text-emerald-700 font-semibold">Projeção diária operacional</span>
+              </div>
+            </div>
+            <span class="font-black text-emerald-700">+ ${formatarMoeda(entradasVendas)}</span>
+          </div>
+        `;
+        if (isQuarta) {
+          htmlEntradas += `
+            <div class="flex items-center justify-between p-2.5 rounded-xl border border-purple-200 bg-purple-50/70 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="p-1 rounded bg-white text-purple-700 text-xs shadow-2xs font-bold">📦</span>
+                <div>
+                  <strong class="text-purple-950 font-black block">Repasse Marketplace Apps (iFood & 99Food)</strong>
+                  <span class="text-[10px] text-purple-700 font-semibold">Crédito semanal oficial de quarta-feira</span>
+                </div>
+              </div>
+              <span class="font-black text-purple-800 text-sm">+ ${formatarMoeda(repasseApps)}</span>
+            </div>
+          `;
+        }
+        entradasListaEl.innerHTML = htmlEntradas;
+      }
+
+      // Lista de Boletos
+      const boletosListaEl = document.getElementById('detalhe-dia-boletos-lista');
+      const countBoletosEl = document.getElementById('detalhe-dia-boletos-count');
+      if (countBoletosEl) countBoletosEl.textContent = boletosDoDia.length;
+
+      if (boletosListaEl) {
+        if (boletosDoDia.length === 0) {
+          boletosListaEl.innerHTML = `
+            <div class="p-6 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 space-y-1">
+              <span class="text-2xl">🎉</span>
+              <p class="text-xs font-bold text-slate-700">Nenhum boleto ou conta agendada para hoje!</p>
+              <p class="text-[10px] text-slate-400">Você não possui saídas financeiras programadas para este dia.</p>
+            </div>
+          `;
+        } else {
+          boletosListaEl.innerHTML = boletosDoDia.map(b => `
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-2xl border border-slate-200 bg-white hover:border-purple-300 shadow-2xs gap-2 transition text-xs">
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <strong class="text-slate-900 font-extrabold text-xs">${b.descricao}</strong>
+                  <span class="text-[9px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold">${b.categoria}</span>
+                  ${b.parcela ? `<span class="text-[9px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-extrabold">Boleto ${b.parcela}</span>` : ''}
+                  ${b.recorrente ? `<span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-extrabold">Recorrente</span>` : ''}
+                </div>
+                <div class="text-[10px] text-slate-400">
+                  ${b.tipo === 'custo_fixo' ? 'Boleto vinculado aos Custos Fixos da Empresa' : 'Boleto agendado'}
+                </div>
+              </div>
+              <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+                <span class="font-black text-rose-600 text-sm">- ${formatarMoeda(b.valor)}</span>
+                ${b.pdfBoleto ? `
+                  <button type="button" onclick="visualizarBoletoPdf('${b.id}')" class="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Abrir e Visualizar PDF do Boleto">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                    <span>Ver Boleto PDF</span>
+                  </button>
+                ` : ''}
+                ${b.tipo !== 'custo_fixo' ? `
+                  <button type="button" onclick="removerContaPagarEAtualizarModal('${b.id}', '${dataIso}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg transition cursor-pointer" title="Excluir este boleto">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      // Prepara botão de agendar para esse dia
+      const btnAgendarDia = document.getElementById('btn-detalhe-dia-agendar');
+      if (btnAgendarDia) {
+        btnAgendarDia.onclick = () => {
+          fecharModalDetalhesDiaPrevisao();
+          abrirModalContasPagar('agendar');
+          const inputData = document.getElementById('conta-pagar-data');
+          if (inputData) inputData.value = dataIso;
+          atualizarSimulacaoParcelas();
+        };
+      }
+
+      modal.classList.remove('hidden');
+      if (window.lucide) safeLucide();
     }
 
     function renderContasPagarLista() {
@@ -6250,10 +6799,13 @@
           : (dp.isQuartaRepasse ? 'bg-purple-50/40 border-purple-200' : 'bg-slate-50/60 border-slate-200');
 
         return `
-          <div class="p-3 rounded-2xl border ${cardBg} shadow-2xs flex flex-col justify-between space-y-2.5 transition hover:shadow-xs">
+          <div onclick="abrirDetalhesDiaPrevisao('${dp.dataIso}')" class="p-3 rounded-2xl border ${cardBg} shadow-2xs flex flex-col justify-between space-y-2.5 transition hover:shadow-md hover:border-purple-400 hover:scale-[1.02] cursor-pointer group select-none" title="Clique para ver todos os detalhes e boletos a pagar deste dia">
             <div>
               <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                <span class="font-black text-xs text-slate-900">${dp.diaSemana} • ${dp.diaFormatado}</span>
+                <span class="font-black text-xs text-slate-900 group-hover:text-purple-700 transition flex items-center gap-1">
+                  ${dp.diaSemana} • ${dp.diaFormatado}
+                  <i data-lucide="chevron-right" class="w-3 h-3 text-slate-400 group-hover:text-purple-600 transition"></i>
+                </span>
                 ${dp.isQuartaRepasse ? '<span class="text-[9px] font-black bg-purple-100 text-purple-900 border border-purple-200 px-1.5 py-0.2 rounded-full">📦 Apps</span>' : ''}
               </div>
 
@@ -6282,10 +6834,15 @@
               </div>
             </div>
 
-            <!-- Saldo Projetado Acumulado -->
-            <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
-              <span class="text-[9px] font-bold text-slate-400 uppercase">Saldo:</span>
-              <strong class="text-xs font-black ${saldoCor}">${dp.saldoProjetado >= 0 ? '+' : ''}${formatarMoeda(dp.saldoProjetado)}</strong>
+            <!-- Saldo Projetado Acumulado & Dica de Clique -->
+            <div>
+              <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+                <span class="text-[9px] font-bold text-slate-400 uppercase">Saldo:</span>
+                <strong class="text-xs font-black ${saldoCor}">${dp.saldoProjetado >= 0 ? '+' : ''}${formatarMoeda(dp.saldoProjetado)}</strong>
+              </div>
+              <div class="pt-1 text-center">
+                <span class="text-[9px] font-bold text-purple-600 opacity-0 group-hover:opacity-100 transition">Ver o que pagar →</span>
+              </div>
             </div>
           </div>
         `;
@@ -7246,6 +7803,25 @@ _Painel Estratégico NALIM Food Service_`;
         topHoje.textContent = `R$ ${(valAtual + totalPago).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
       }
 
+      // Se pagamento em Dinheiro ou PIX, soma diretamente ao saldo disponível de caixa em tempo real
+      if (formaPagtoMesaPdv === 'Dinheiro' || formaPagtoMesaPdv === 'PIX') {
+        const saldoAtual = carregarSaldoCaixa();
+        const novoSaldo = saldoAtual + totalPago;
+        localStorage.setItem('nalim_saldo_caixa', novoSaldo.toString());
+        salvarMovimentacaoCaixa({
+          id: Date.now(),
+          tipo: 'ENTRADA',
+          origem: `Venda Mesa (${formaPagtoMesaPdv})`,
+          descricao: `Fechamento ${mesaExtratoAtiva} • Total: ${formatarMoeda(totalPago)}`,
+          valor: totalPago,
+          dataHora: new Date().toISOString()
+        });
+        const badgeSaldo = document.getElementById('badge-saldo-caixa-header');
+        if (badgeSaldo) badgeSaldo.textContent = formatarMoeda(novoSaldo);
+        const displaySaldo = document.getElementById('display-saldo-atual-caixa');
+        if (displaySaldo) displaySaldo.textContent = formatarMoeda(novoSaldo);
+      }
+
       // Zera a mesa localmente
       mesasPdvState[mesaExtratoAtiva] = {
         status: 'LIVRE',
@@ -7600,68 +8176,126 @@ _Painel Estratégico NALIM Food Service_`;
     </div>
   </div>
 
-  <!-- MODAL: GESTÃO DE CONTAS A PAGAR & SALDO DE CAIXA (FEATURE 4 & MELHORIA 9) -->
+  <!-- MODAL: GESTÃO DE CAIXA & AGENDAMENTO DE CONTAS -->
   <div id="modal-contas-pagar" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4 max-h-[92vh] flex flex-col">
       <div class="flex justify-between items-center pb-3 border-b border-slate-100 shrink-0">
         <div class="flex items-center gap-2.5">
-          <span class="p-2 rounded-xl bg-purple-100 text-purple-800">
+          <span class="p-2.5 rounded-2xl bg-purple-100 text-purple-800">
             <i data-lucide="wallet" class="w-5 h-5"></i>
           </span>
           <div>
-            <h3 class="font-extrabold text-slate-900 text-base">Gestão de Caixa & Contas a Pagar</h3>
-            <p class="text-xs text-slate-400">Agende vencimentos, boletos e despesas para alimentar a Previsão de Liquidez de 15 Dias</p>
+            <h3 class="font-extrabold text-slate-900 text-base">Gestão de Caixa & Agendamento de Contas</h3>
+            <p class="text-xs text-slate-400">Adicione dinheiro (empréstimos/aportes), controle o saldo disponível e agende boletos parcelados</p>
           </div>
         </div>
-        <button type="button" onclick="fecharModalContasPagar()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+        <button type="button" onclick="fecharModalContasPagar()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
-      <!-- Saldo Atual em Caixa/Conta -->
-      <div class="bg-purple-50/70 border border-purple-200 rounded-2xl p-4 shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div>
-          <span class="text-[11px] font-black uppercase text-purple-900 tracking-wider block">Saldo Disponível em Conta / Caixa Hoje</span>
-          <span class="text-xs text-purple-700">Ponto de partida para a projeção de liquidez dos próximos 15 dias.</span>
-        </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <div class="relative flex-1 sm:w-40">
-            <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">R$</span>
-            <input type="number" step="0.01" id="input-saldo-inicial-caixa" value="1850.00" class="w-full bg-white border border-purple-300 rounded-xl pl-9 pr-3 py-2 text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500">
+      <!-- Abas de Navegação -->
+      <div class="flex items-center gap-2 border-b border-slate-200 pb-2 shrink-0">
+        <button type="button" id="tab-btn-gestao-saldo" onclick="alternarAbaContasPagar('caixa')" class="px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-1.5 bg-purple-700 text-white shadow-2xs cursor-pointer">
+          <i data-lucide="coins" class="w-4 h-4"></i>
+          <span>💵 Saldo & Adicionar Dinheiro</span>
+        </button>
+        <button type="button" id="tab-btn-agendar-boletos" onclick="alternarAbaContasPagar('agendar')" class="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 cursor-pointer">
+          <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+          <span>📅 Agendar Boletos / Contas</span>
+        </button>
+      </div>
+
+      <!-- CONTEÚDO DA ABA 1: SALDO & ADICIONAR DINHEIRO -->
+      <div id="tab-conteudo-gestao-saldo" class="space-y-4 flex-1 overflow-y-auto custom-scroll pr-1">
+        <!-- Card de Saldo Atual em Destaque -->
+        <div class="bg-gradient-to-br from-purple-50 via-purple-50/50 to-white border border-purple-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-[11px] font-black uppercase text-purple-900 tracking-wider">Saldo Disponível em Caixa / Conta Hoje</span>
+            </div>
+            <div class="text-2xl font-black text-slate-900" id="display-saldo-atual-caixa">R$ 1.850,00</div>
+            <p class="text-[11px] text-purple-700 font-medium">Saldo sincronizado em tempo real com vendas no balcão (Dinheiro/PIX) e entradas financeiras.</p>
           </div>
-          <button type="button" onclick="salvarSaldoCaixa()" class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-black rounded-xl transition shadow-2xs shrink-0 cursor-pointer">
-            Atualizar
-          </button>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <div class="relative flex-1 sm:w-36">
+              <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">R$</span>
+              <input type="number" step="0.01" id="input-saldo-inicial-caixa" value="1850.00" class="w-full bg-white border border-purple-300 rounded-xl pl-9 pr-3 py-2 text-sm font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+            <button type="button" onclick="salvarSaldoCaixa()" class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white text-xs font-black rounded-xl transition shadow-2xs shrink-0 cursor-pointer" title="Calibrar ou ajustar o saldo diretamente">
+              Ajustar
+            </button>
+          </div>
+        </div>
+
+        <!-- Formulário para Adicionar Dinheiro / Entrada de Caixa -->
+        <form onsubmit="adicionarDinheiroCaixa(event)" class="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-4 space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <h4 class="font-black text-emerald-950 text-xs uppercase flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i>
+              <span>Adicionar Dinheiro ao Caixa (Aporte / Empréstimo / Suprimento)</span>
+            </h4>
+            <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">+ Entrada de Fundos</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Tipo de Entrada</label>
+              <select id="entrada-caixa-tipo" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+                <option value="Empréstimo Bancário">Empréstimo Bancário (Giro/Pronampe)</option>
+                <option value="Aporte de Sócios">Aporte dos Sócios (Capital Social)</option>
+                <option value="Suprimento de Troco">Suprimento de Troco / Caixa</option>
+                <option value="Outras Entradas">Outras Entradas em Dinheiro/Conta</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Valor a Injetar (R$)</label>
+              <input type="number" step="0.01" id="entrada-caixa-valor" placeholder="0,00" min="0.01" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-black text-emerald-800 text-sm focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div class="sm:col-span-5">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Descrição / Origem dos Recursos</label>
+              <input type="text" id="entrada-caixa-desc" placeholder="Ex: Empréstimo Capital de Giro Bradesco" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500">
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-1">
+            <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+              <span>Creditar Entrada no Saldo de Caixa</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Histórico das Últimas Entradas / Movimentações -->
+        <div class="space-y-2">
+          <span class="text-[11px] font-black uppercase text-slate-500 block">Histórico Recente de Entradas no Caixa</span>
+          <div id="caixa-movimentacoes-lista" class="space-y-1.5 max-h-40 overflow-y-auto custom-scroll pr-1 text-xs">
+            <!-- Renderizado dinamicamente -->
+          </div>
         </div>
       </div>
 
-      <!-- Formulário de Nova Conta a Pagar -->
-      <form onsubmit="adicionarContaPagar(event)" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shrink-0 text-xs">
-        <h4 class="font-black text-slate-900 text-xs uppercase flex items-center gap-1.5">
-          <i data-lucide="calendar-plus" class="w-4 h-4 text-purple-700"></i>
-          <span>Agendar Novo Vencimento / Boleto</span>
-        </h4>
+      <!-- CONTEÚDO DA ABA 2: AGENDAR BOLETOS / CONTAS A PAGAR -->
+      <div id="tab-conteudo-agendar-boletos" class="space-y-4 flex-1 overflow-y-auto custom-scroll pr-1 hidden">
+        <form onsubmit="adicionarContaPagar(event)" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <h4 class="font-black text-slate-900 text-xs uppercase flex items-center gap-1.5">
+              <i data-lucide="calendar-plus" class="w-4 h-4 text-purple-700"></i>
+              <span>Agendar Novo Vencimento / Boleto Parcelado</span>
+            </h4>
+            <span class="text-[10px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">Previsão 21 Dias</span>
+          </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
-          <div class="sm:col-span-6">
-            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Descrição da Conta / Fornecedor</label>
-            <input type="text" id="conta-pagar-desc" placeholder="Ex: Aluguel Ponto, Fornecedor Carnes, DAS MEI" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
-          </div>
-          <div class="sm:col-span-3">
-            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Valor (R$)</label>
-            <input type="number" step="0.01" id="conta-pagar-valor" placeholder="0,00" min="0.01" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-black text-slate-900 focus:ring-2 focus:ring-purple-500">
-          </div>
-          <div class="sm:col-span-3">
-            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Data Vencimento</label>
-            <input type="date" id="conta-pagar-data" required class="w-full bg-white border border-slate-300 rounded-xl p-2 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
-          </div>
-        </div>
-
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-          <div class="flex items-center gap-4 w-full sm:w-auto">
-            <div>
-              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Categoria</label>
-              <select id="conta-pagar-cat" class="bg-white border border-slate-300 rounded-xl p-2 text-xs font-bold text-slate-800">
+          <!-- Linha 1: Descrição e Categoria -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-8">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Descrição da Conta / Fornecedor</label>
+              <input type="text" id="conta-pagar-desc" placeholder="Ex: Distribuidora Carnes & Queijos, Aluguel, DAS MEI" required class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Categoria Financeira</label>
+              <select id="conta-pagar-cat" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:ring-2 focus:ring-purple-500">
                 <option value="Insumos">Insumos / Mercadorias</option>
                 <option value="Ocupação">Ocupação / Aluguel</option>
                 <option value="Pessoal">Pessoal / Pró-Labore</option>
@@ -7670,35 +8304,193 @@ _Painel Estratégico NALIM Food Service_`;
                 <option value="Outros">Outras Despesas</option>
               </select>
             </div>
-            <label class="flex items-center gap-1.5 cursor-pointer mt-4">
-              <input type="checkbox" id="conta-pagar-recorrente" checked class="rounded text-purple-600 focus:ring-purple-500">
-              <span class="text-[11px] font-bold text-slate-700">Recorrente Mensal</span>
-            </label>
           </div>
-          <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer mt-2 sm:mt-0">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            <span>Agendar Conta</span>
-          </button>
-        </div>
-      </form>
 
-      <!-- Lista de Contas Cadastradas -->
-      <div class="space-y-2 flex-1 overflow-hidden flex flex-col">
-        <div class="flex justify-between items-center shrink-0">
-          <span class="text-xs font-black text-slate-800 uppercase tracking-wider">Vencimentos Programados</span>
-          <div class="text-xs font-bold text-slate-500">
-            Total Programado: <strong class="text-rose-600 font-black text-sm" id="contas-pagar-total-agendado">R$ 0,00</strong>
+          <!-- Linha 2: Valor Total, 1º Vencimento, Parcelas, Intervalo -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Valor Total (R$)</label>
+              <input type="number" step="0.01" id="conta-pagar-valor" placeholder="0,00" min="0.01" required oninput="atualizarSimulacaoParcelas()" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-black text-slate-900 focus:ring-2 focus:ring-purple-500">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">1º Vencimento</label>
+              <input type="date" id="conta-pagar-data" required onchange="atualizarSimulacaoParcelas()" class="w-full bg-white border border-slate-300 rounded-xl p-2 font-bold text-slate-800 focus:ring-2 focus:ring-purple-500">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Boletos / Parcelas</label>
+              <select id="conta-pagar-parcelas" onchange="atualizarSimulacaoParcelas()" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:ring-2 focus:ring-purple-500">
+                <option value="1">1x (Boleto Único / À vista)</option>
+                <option value="2">2x (2 Boletos)</option>
+                <option value="3">3x (3 Boletos)</option>
+                <option value="4">4x (4 Boletos)</option>
+                <option value="5">5x (5 Boletos)</option>
+                <option value="6">6x (6 Boletos)</option>
+                <option value="10">10x (10 Boletos)</option>
+                <option value="12">12x (12 Boletos)</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Tempo / Intervalo</label>
+              <select id="conta-pagar-intervalo" onchange="atualizarSimulacaoParcelas()" class="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 text-xs focus:ring-2 focus:ring-purple-500">
+                <option value="30">30 dias (Mensal 30/60/90...)</option>
+                <option value="45">45 dias (A cada 45 dias)</option>
+                <option value="60">60 dias (Bimestral 60/120...)</option>
+                <option value="15">15 dias (Quinzenal)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Linha 3: Anexo de PDF do Boleto -->
+          <div class="p-3 bg-purple-50/50 border border-purple-200/80 rounded-xl space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <span class="block text-[11px] font-black text-purple-950 uppercase">Anexar Boleto em PDF / Imagem</span>
+                <span class="text-[10px] text-purple-700">Anexe a fatura ou código de barras para consulta rápida no calendário</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <input type="file" id="conta-pagar-pdf" accept="application/pdf,image/*" onchange="tratarUploadBoletoPdf(event)" class="hidden">
+                <label for="conta-pagar-pdf" class="cursor-pointer px-3 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 font-extrabold text-xs flex items-center gap-1.5 transition shadow-2xs">
+                  <i data-lucide="file-up" class="w-4 h-4 text-purple-700"></i>
+                  <span id="conta-pagar-pdf-label">Selecionar Arquivo PDF</span>
+                </label>
+                <div id="conta-pagar-pdf-badge" class="hidden items-center gap-1.5 bg-white border border-purple-300 text-purple-900 px-2.5 py-1 rounded-xl text-xs font-bold">
+                  <span id="conta-pagar-pdf-nome" class="max-w-[150px] truncate">arquivo.pdf</span>
+                  <button type="button" onclick="removerBoletoPdfAnexado()" class="text-purple-400 hover:text-rose-600 font-black ml-1 text-sm">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Linha 4: Simulação de Parcelas e Recorrência -->
+          <div class="p-3 bg-purple-50/70 border border-purple-200 rounded-xl" id="conta-pagar-preview-parcelas">
+            <span class="text-slate-400 italic">Preencha o valor e a data para visualizar a simulação dos boletos.</span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" id="conta-pagar-recorrente" class="rounded text-purple-600 focus:ring-purple-500">
+              <span class="text-[11px] font-bold text-slate-700">Repetir todo mês (somente se boleto único)</span>
+            </label>
+            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-purple-700 hover:bg-purple-800 text-white font-extrabold rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Agendar Boletos no Fluxo de Caixa</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex justify-between items-center shrink-0">
+        <span class="text-[11px] text-slate-400 font-medium">💡 Clique em qualquer card do calendário financeiro para conferir o que pagar no dia.</span>
+        <button type="button" onclick="fecharModalContasPagar()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DETALHAMENTO DE CONTAS E ENTRADAS DO DIA NA PREVISÃO DE CAIXA -->
+  <div id="modal-detalhes-dia-previsao" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-slide-up space-y-4 max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <span class="p-2.5 rounded-2xl bg-purple-100 text-purple-800">
+            <i data-lucide="calendar" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 id="detalhe-dia-titulo" class="font-extrabold text-slate-900 text-base">Quarta-feira, 07/10/2026</h3>
+            <p class="text-xs text-slate-400">Detalhamento de entradas, boletos e saídas financeiras programadas para este dia</p>
           </div>
         </div>
-        <div class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-1" id="contas-pagar-lista">
-          <!-- Renderizado dinamicamente -->
+        <button type="button" onclick="fecharModalDetalhesDiaPrevisao()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Resumo Financeiro do Dia (Cards) -->
+      <div class="grid grid-cols-3 gap-2 shrink-0">
+        <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3">
+          <span class="text-[10px] font-bold text-emerald-800 uppercase block">Entradas do Dia</span>
+          <strong id="detalhe-dia-entradas-total" class="text-emerald-700 font-black text-sm block mt-0.5">+ R$ 0,00</strong>
+        </div>
+        <div class="bg-rose-50/70 border border-rose-200 rounded-xl p-3">
+          <span class="text-[10px] font-bold text-rose-800 uppercase block">Boletos / Saídas</span>
+          <strong id="detalhe-dia-saidas-total" class="text-rose-600 font-black text-sm block mt-0.5">- R$ 0,00</strong>
+        </div>
+        <div class="bg-purple-50/70 border border-purple-200 rounded-xl p-3">
+          <span class="text-[10px] font-bold text-purple-900 uppercase block">Balanço do Dia</span>
+          <strong id="detalhe-dia-resultado-balanco" class="font-black text-sm block mt-0.5">R$ 0,00</strong>
         </div>
       </div>
 
-      <div class="pt-3 border-t border-slate-100 flex justify-end shrink-0">
-        <button type="button" onclick="fecharModalContasPagar()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
-          Concluir & Atualizar Previsão
+      <!-- Seção: Boletos & Contas a Pagar (O que deve ser pago no dia) -->
+      <div class="space-y-3 flex-1 overflow-y-auto custom-scroll pr-1">
+        <div>
+          <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 mb-2">
+            <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600"></i>
+              <span>O QUE DEVE SER PAGO HOJE (<span id="detalhe-dia-boletos-count">0</span>)</span>
+            </h4>
+            <span class="text-[10px] text-slate-400 font-bold">Vencimentos deste dia</span>
+          </div>
+          <div id="detalhe-dia-boletos-lista" class="space-y-2">
+            <!-- Renderizado dinamicamente -->
+          </div>
+        </div>
+
+        <!-- Seção: Entradas Previstas -->
+        <div class="pt-2">
+          <div class="flex items-center justify-between pb-1.5 border-b border-slate-100 mb-2">
+            <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+              <i data-lucide="arrow-down-left" class="w-4 h-4 text-emerald-600"></i>
+              <span>RECEBIMENTOS & ENTRADAS PREVISTAS</span>
+            </h4>
+            <span class="text-[10px] text-slate-400 font-bold">Créditos em conta</span>
+          </div>
+          <div id="detalhe-dia-entradas-lista" class="space-y-2">
+            <!-- Renderizado dinamicamente -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Rodapé -->
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-between shrink-0">
+        <button type="button" id="btn-detalhe-dia-agendar" class="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-black rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="calendar-plus" class="w-4 h-4 text-purple-700"></i>
+          <span>Agendar Boleto Para Este Dia</span>
         </button>
+        <button type="button" onclick="fecharModalDetalhesDiaPrevisao()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition cursor-pointer">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: VISUALIZAR BOLETO EM PDF -->
+  <div id="modal-visualizar-pdf-boleto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-5 shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] space-y-3">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-2">
+          <span class="p-2 rounded-xl bg-purple-100 text-purple-800">
+            <i data-lucide="file-text" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 id="pdf-viewer-titulo" class="font-extrabold text-slate-900 text-base">Visualizar Boleto Anexado</h3>
+            <p id="pdf-viewer-subtitulo" class="text-xs text-slate-400">Boleto e comprovante da conta a pagar</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a id="pdf-viewer-download-btn" href="#" download="boleto.pdf" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Baixar Arquivo</span>
+          </a>
+          <button type="button" onclick="fecharModalVisualizarPdf()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+      <div class="flex-1 bg-slate-100 rounded-2xl overflow-hidden min-h-[450px] flex items-center justify-center p-2">
+        <iframe id="pdf-viewer-frame" class="w-full h-full rounded-xl border border-slate-200 bg-white min-h-[450px]" src=""></iframe>
+        <img id="pdf-viewer-img" class="max-w-full max-h-[70vh] object-contain rounded-xl hidden" src="" />
       </div>
     </div>
   </div>
