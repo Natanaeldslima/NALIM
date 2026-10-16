@@ -1,7 +1,7 @@
 import datetime
 import json
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Header, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Header, Request, status, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, Produto, Insumo, Pedido, ItemPedido, FechamentoCaixa, Mesa, ConfiguracaoEmpresa, Tenant
@@ -559,9 +559,30 @@ def registrar_fechamento_caixa(
 
 # 8. Cardápio Público para Clientes Finais (Delivery / WhatsApp)
 @router.get("/public/cardapio")
-def listar_cardapio_publico(db: Session = Depends(get_db)):
-    produtos = db.query(Produto).filter(Produto.ativo == True).all()
-    insumos_extras = db.query(Insumo).filter(Insumo.preco_venda_extra > 0).all()
+def listar_cardapio_publico(
+    tenant: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    tenant_obj = None
+    if tenant:
+        if tenant.isdigit():
+            tenant_obj = db.query(Tenant).filter(Tenant.id == int(tenant)).first()
+        if not tenant_obj:
+            tenant_obj = db.query(Tenant).filter(Tenant.slug == tenant).first()
+
+    if not tenant_obj:
+        tenant_obj = db.query(Tenant).first()
+
+    tenant_id = tenant_obj.id if tenant_obj else 1
+
+    produtos = db.query(Produto).filter(
+        Produto.tenant_id == tenant_id,
+        Produto.ativo == True
+    ).all()
+    insumos_extras = db.query(Insumo).filter(
+        Insumo.tenant_id == tenant_id,
+        Insumo.preco_venda_extra > 0
+    ).all()
 
     cardapio = []
     for p in produtos:
@@ -582,19 +603,38 @@ def listar_cardapio_publico(db: Session = Depends(get_db)):
         "preco_extra": i.preco_venda_extra
     } for i in insumos_extras]
 
-    return {"produtos": cardapio, "extras": extras}
+    return {
+        "restaurante": {
+            "id": tenant_obj.id if tenant_obj else 1,
+            "nome": tenant_obj.nome if tenant_obj else "NALIM Food",
+            "slug": tenant_obj.slug if tenant_obj else "nalim",
+            "telefone": tenant_obj.telefone if tenant_obj else ""
+        },
+        "produtos": cardapio,
+        "extras": extras
+    }
 
 # 9. Criar Pedido Público vindo do Cardápio Digital (sem autenticação)
 @router.post("/public/pedidos")
 def criar_pedido_publico(
     dados: PedidoCreate,
+    tenant: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     if not dados.itens:
         raise HTTPException(status_code=400, detail="O pedido deve conter ao menos um item.")
 
-    tenant = db.query(Tenant).first()
-    tenant_id = tenant.id if tenant else 1
+    tenant_obj = None
+    if tenant:
+        if tenant.isdigit():
+            tenant_obj = db.query(Tenant).filter(Tenant.id == int(tenant)).first()
+        if not tenant_obj:
+            tenant_obj = db.query(Tenant).filter(Tenant.slug == tenant).first()
+
+    if not tenant_obj:
+        tenant_obj = db.query(Tenant).first()
+
+    tenant_id = tenant_obj.id if tenant_obj else 1
 
     ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == tenant_id).order_by(Pedido.id.desc()).first()
     numero_comanda = (ultimo_pedido.numero_comanda + 1) if ultimo_pedido and ultimo_pedido.numero_comanda else 101

@@ -23,7 +23,7 @@ def login(dados: LoginRequest, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "role": user.role,
         "nome": user.nome,
-        "tenant_slug": user.tenant.slug
+        "tenant_slug": user.tenant.slug if user.tenant else "master"
     }
 
 @router.post("/token", response_model=TokenResponse)
@@ -41,7 +41,7 @@ def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
         "token_type": "bearer",
         "role": user.role,
         "nome": user.nome,
-        "tenant_slug": user.tenant.slug
+        "tenant_slug": user.tenant.slug if user.tenant else "master"
     }
 
 @router.get("/me", response_model=UserResponse)
