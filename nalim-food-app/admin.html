@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NALIM Gestão — Painel Master SaaS (SuperAdmin)</title>
+  <!-- Prevenção de Cache -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- ============================================================== -->
+  <!-- BARRA SUPERIOR MASTER SaaS                                     -->
+  <!-- ============================================================== -->
+  <header class="bg-slate-950/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-slate-950 flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-900/40">
+        N
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-white text-base tracking-tight">NALIM GESTÃO</span>
+          <span class="text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+            PORTAL MASTER SaaS
+          </span>
+        </div>
+        <span class="text-xs text-slate-400 block font-medium">Domínio Master Oficial: <strong class="text-emerald-300">nalimgestao.com.br</strong></span>
+      </div>
+    </div>
+
+    <!-- Usuário Master Logado & Ações -->
+    <div class="flex items-center gap-3">
+      <div class="hidden sm:flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl text-xs">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-300">SuperAdmin: <strong id="master-usuario-nome" class="text-white">Natanael (NALIM)</strong></span>
+      </div>
+
+      <a href="/login" onclick="fazerLogoutMaster()" class="px-3 py-1.5 bg-slate-800 hover:bg-rose-950/60 hover:text-rose-300 text-slate-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-slate-700/60">
+        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+        <span>Sair</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ============================================================== -->
+  <!-- CONTEÚDO PRINCIPAL DO DASHBOARD MASTER                         -->
+  <!-- ============================================================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-8 space-y-6">
+
+    <!-- Topo: Boas-vindas e Botão Novo Cliente -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Painel de Clientes & Restaurantes</h1>
+        <p class="text-sm text-slate-400 mt-1">Gerencie os restaurantes contratantes, mensalidades, assinaturas e acesse qualquer loja com 1 clique.</p>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button type="button" onclick="carregarDadosMaster()" class="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition border border-slate-700 flex items-center gap-1.5 cursor-pointer" title="Atualizar dados">
+          <i data-lucide="refresh-cw" class="w-4 h-4 text-slate-400"></i>
+          <span>Atualizar</span>
+        </button>
+        <button type="button" onclick="abrirModalNovoCliente()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-black transition shadow-lg shadow-emerald-950 flex items-center gap-2 cursor-pointer">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Cadastrar Novo Restaurante</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CARDS DE MÉTRICAS SaaS (MRR, Clientes, Pedidos) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- 1. Total Clientes -->
+      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+          <span>Restaurantes Contratantes</span>
+          <span class="p-2 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <i data-lucide="building-2" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <div class="text-3xl font-black text-white" id="kpi-total-clientes">0</div>
+        <div class="text-[11px] text-slate-400 flex items-center gap-2 font-medium">
+          <span class="text-emerald-400 font-bold" id="kpi-clientes-ativos">0 ativos</span>
+          <span>•</span>
+          <span class="text-blue-400 font-bold" id="kpi-clientes-trial">0 trial</span>
+        </div>
+      </div>
+
+      <!-- 2. MRR (Receita Recorrente Mensal) -->
+      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+          <span>MRR (Receita Mensal Recorrente)</span>
+          <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <i data-lucide="wallet" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <div class="text-3xl font-black text-emerald-400" id="kpi-mrr">R$ 0,00</div>
+        <p class="text-[11px] text-slate-400 font-medium">Soma de mensalidades ativas</p>
+      </div>
+
+      <!-- 3. Clientes Suspensos / Pendentes -->
+      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+          <span>Suspensos / Inadimplentes</span>
+          <span class="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
+            <i data-lucide="alert-octagon" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <div class="text-3xl font-black text-rose-400" id="kpi-clientes-suspensos">0</div>
+        <p class="text-[11px] text-slate-400 font-medium">Acesso bloqueado por pagamento</p>
+      </div>
+
+      <!-- 4. Pedidos Processados na Rede -->
+      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 space-y-2">
+        <div class="flex items-center justify-between text-slate-400 text-xs font-bold uppercase tracking-wider">
+          <span>Pedidos Processados</span>
+          <span class="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+          </span>
+        </div>
+        <div class="text-3xl font-black text-white" id="kpi-total-pedidos">0</div>
+        <p class="text-[11px] text-slate-400 font-medium">Em todos os clientes somados</p>
+      </div>
+    </div>
+
+    <!-- BARRA DE PESQUISA & FILTRO -->
+    <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="relative flex-1 w-full sm:max-w-md">
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3"></i>
+        <input type="text" id="filtro-busca" oninput="filtrarClientes()" placeholder="Buscar por nome, slug, CNPJ ou dono..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-medium">
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <span class="text-xs text-slate-400 font-bold hidden sm:inline">Status:</span>
+        <div class="grid grid-cols-4 gap-1 w-full sm:w-auto bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+          <button type="button" onclick="setStatusFiltro('TODOS')" class="filtro-btn px-3 py-1 rounded-lg text-slate-300 hover:text-white transition active-filtro bg-slate-800 text-white" data-status="TODOS">Todos</button>
+          <button type="button" onclick="setStatusFiltro('ATIVO')" class="filtro-btn px-3 py-1 rounded-lg text-slate-300 hover:text-white transition" data-status="ATIVO">Ativos</button>
+          <button type="button" onclick="setStatusFiltro('TRIAL')" class="filtro-btn px-3 py-1 rounded-lg text-slate-300 hover:text-white transition" data-status="TRIAL">Trial</button>
+          <button type="button" onclick="setStatusFiltro('SUSPENSO')" class="filtro-btn px-3 py-1 rounded-lg text-slate-300 hover:text-white transition" data-status="SUSPENSO">Suspensos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTAGEM DE RESTAURANTES (TABELA / CARDS) -->
+    <div class="bg-slate-950/60 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto custom-scroll">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-800 bg-slate-900/80 text-[11px] font-black uppercase tracking-wider text-slate-400">
+              <th class="p-4">Restaurante / Empresa</th>
+              <th class="p-4">Dono & Contato</th>
+              <th class="p-4">Plano & Mensalidade</th>
+              <th class="p-4">Status & Vencimento</th>
+              <th class="p-4 text-center">Operação</th>
+              <th class="p-4 text-right">Ações Rápidas</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-clientes-corpo" class="divide-y divide-slate-800/80">
+            <!-- Renderizado dinamicamente -->
+            <tr>
+              <td colspan="6" class="p-8 text-center text-slate-500">
+                <span class="inline-block animate-spin mr-2">⏳</span> Carregando clientes...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: CADASTRAR NOVO RESTAURANTE (CLIENTE SAAS)               -->
+  <!-- ============================================================== -->
+  <div id="modal-novo-cliente" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-800 space-y-4 max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <span class="p-2.5 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <i data-lucide="building" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-white text-base">Cadastrar Novo Restaurante Cliente</h3>
+            <p class="text-xs text-slate-400">Cria a loja com banco isolado, usuário Dono e links do cardápio digital</p>
+          </div>
+        </div>
+        <button type="button" onclick="fecharModalNovoCliente()" class="text-slate-400 hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-800 transition cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="salvarNovoCliente(event)" class="space-y-4 flex-1 overflow-y-auto custom-scroll pr-1 text-xs">
+        
+        <!-- Bloco 1: Dados do Restaurante -->
+        <div class="space-y-3">
+          <span class="text-[11px] font-black uppercase text-emerald-400 tracking-wider block">1. Dados da Loja / Empresa</span>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-7">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nome Fantasia do Restaurante *</label>
+              <input type="text" id="novo-nome" placeholder="Ex: Hamburgueria Boi Gordo, Pizzaria Bella" required oninput="gerarSugestaoSlug()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-bold text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div class="sm:col-span-5">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Slug / Subdomínio *</label>
+              <input type="text" id="novo-slug" placeholder="ex: boi-gordo" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-emerald-400 focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-6">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">CNPJ ou CPF (Opcional)</label>
+              <input type="text" id="novo-cnpj" placeholder="00.000.000/0001-00" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-medium text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div class="sm:col-span-6">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">WhatsApp / Telefone de Contato</label>
+              <input type="text" id="novo-telefone" placeholder="(11) 98765-4321" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-medium text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco 2: Acesso do Dono -->
+        <div class="space-y-3 pt-3 border-t border-slate-800">
+          <span class="text-[11px] font-black uppercase text-emerald-400 tracking-wider block">2. Acesso do Dono / Administrador</span>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nome do Dono *</label>
+              <input type="text" id="novo-responsavel" placeholder="Ex: Roberto Silva" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-bold text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">E-mail de Login do Dono *</label>
+              <input type="email" id="novo-email" placeholder="dono@restaurante.com.br" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-bold text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Senha Inicial *</label>
+              <input type="text" id="novo-senha" value="nalim123" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bloco 3: Plano & Mensalidade -->
+        <div class="space-y-3 pt-3 border-t border-slate-800">
+          <span class="text-[11px] font-black uppercase text-emerald-400 tracking-wider block">3. Plano SaaS & Cobrança</span>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Plano Assinado</label>
+              <select id="novo-plano" onchange="atualizarValorPlanoSugerido()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-bold text-white focus:border-emerald-500 focus:outline-none">
+                <option value="STARTER">STARTER (R$ 99,00 / mês)</option>
+                <option value="PRO" selected>PRO (R$ 199,00 / mês)</option>
+                <option value="ENTERPRISE">ENTERPRISE (R$ 349,00 / mês)</option>
+                <option value="CUSTOM">Personalizado</option>
+              </select>
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor Mensalidade (R$)</label>
+              <input type="number" step="0.01" id="novo-valor" value="199.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-black text-emerald-400 focus:border-emerald-500 focus:outline-none">
+            </div>
+            <div class="sm:col-span-4">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">1º Vencimento</label>
+              <input type="date" id="novo-vencimento" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-bold text-white focus:border-emerald-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1">
+            <input type="checkbox" id="novo-clonar-modelo" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-950 border-slate-800">
+            <label for="novo-clonar-modelo" class="text-slate-300 font-semibold cursor-pointer">
+              Pré-carregar cardápio e insumos modelo para a loja não começar zerada (Recomendado)
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex justify-end gap-2 shrink-0">
+          <button type="button" onclick="fecharModalNovoCliente()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-salvar-novo-cliente" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl transition shadow-lg shadow-emerald-950 flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Salvar e Ativar Cliente</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: EDITAR / ALTERAR STATUS DO CLIENTE                      -->
+  <!-- ============================================================== -->
+  <div id="modal-editar-cliente" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-800 space-y-4 max-h-[92vh] flex flex-col">
+      <div class="flex justify-between items-center pb-3 border-b border-slate-800 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <span class="p-2.5 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+            <i data-lucide="edit-3" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-white text-base" id="edit-titulo-loja">Editar Restaurante</h3>
+            <p class="text-xs text-slate-400">Modifique o status da assinatura, mensalidade ou redefina senha</p>
+          </div>
+        </div>
+        <button type="button" onclick="fecharModalEditarCliente()" class="text-slate-400 hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-800 transition cursor-pointer">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="salvarEdicaoCliente(event)" class="space-y-3.5 flex-1 overflow-y-auto custom-scroll pr-1 text-xs">
+        <input type="hidden" id="edit-tenant-id">
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Status da Assinatura</label>
+            <select id="edit-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-black text-white focus:border-emerald-500 focus:outline-none">
+              <option value="ATIVO">🟢 ATIVO (Acesso Total Liberado)</option>
+              <option value="TRIAL">🔵 TRIAL (Período de Demonstração)</option>
+              <option value="SUSPENSO">🔴 SUSPENSO (Inadimplente / Bloqueado)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Plano Contratado</label>
+            <select id="edit-plano" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-bold text-white focus:border-emerald-500 focus:outline-none">
+              <option value="STARTER">STARTER</option>
+              <option value="PRO">PRO</option>
+              <option value="ENTERPRISE">ENTERPRISE</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor Mensalidade (R$)</label>
+            <input type="number" step="0.01" id="edit-valor" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-black text-emerald-400 focus:border-emerald-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Próximo Vencimento</label>
+            <input type="date" id="edit-vencimento" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 font-bold text-white focus:border-emerald-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">WhatsApp de Contato</label>
+          <input type="text" id="edit-telefone" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-medium text-white focus:border-emerald-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Redefinir Senha do Dono (Opcional)</label>
+          <input type="text" id="edit-nova-senha" placeholder="Preencha apenas se quiser trocar a senha" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-white focus:border-emerald-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Observações Internas (SaaS)</label>
+          <textarea id="edit-obs" rows="2" placeholder="Ex: Negociado carência de 7 dias, indicado por parceiro..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-white focus:border-emerald-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-slate-800 flex justify-end gap-2 shrink-0">
+          <button type="button" onclick="fecharModalEditarCliente()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Salvar Alterações</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: COPIAR LINKS DO CLIENTE PARA WHATSAPP                   -->
+  <!-- ============================================================== -->
+  <div id="modal-links-cliente" class="fixed inset-0 bg-slate-950/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-800 space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+            <i data-lucide="share-2" class="w-5 h-5"></i>
+          </span>
+          <div>
+            <h3 class="font-extrabold text-white text-base" id="links-nome-loja">Links do Restaurante</h3>
+            <p class="text-xs text-slate-400">Copie o kit de boas-vindas para enviar ao dono pelo WhatsApp</p>
+          </div>
+        </div>
+        <button type="button" onclick="fecharModalLinks()" class="text-slate-400 hover:text-slate-200 p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Mensagem de Boas-Vindas Pronta para WhatsApp</label>
+          <textarea id="texto-whatsapp-pronto" rows="7" readonly class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-emerald-300 select-all"></textarea>
+        </div>
+
+        <button type="button" onclick="copiarMensagemWhatsApp()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-950 cursor-pointer text-xs">
+          <i data-lucide="copy" class="w-4 h-4"></i>
+          <span>Copiar Mensagem para WhatsApp</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICAÇÃO -->
+  <div id="toast-master" class="fixed bottom-6 right-6 z-50 hidden bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl font-bold text-xs flex items-center gap-2 transition">
+    <i data-lucide="check-circle" class="w-4 h-4"></i>
+    <span id="toast-master-msg">Ação realizada com sucesso!</span>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT MASTER SAAS                                         -->
+  <!-- ============================================================== -->
+  <script>
+    const API_BASE = window.location.origin;
+    let todosClientes = [];
+    let filtroStatusAtual = 'TODOS';
+
+    function mostrarToast(msg) {
+      const toast = document.getElementById('toast-master');
+      const text = document.getElementById('toast-master-msg');
+      if (!toast || !text) return;
+      text.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+
+    function formatarMoeda(val) {
+      return (val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function getHeadersAuth() {
+      const token = localStorage.getItem('nalim_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      return headers;
+    }
+
+    async function carregarDadosMaster() {
+      try {
+        const [resStats, resTenants] = await Promise.all([
+          fetch(`${API_BASE}/api/master/stats`, { headers: getHeadersAuth() }),
+          fetch(`${API_BASE}/api/master/tenants`, { headers: getHeadersAuth() })
+        ]);
+
+        if (resStats.status === 401 || resStats.status === 403) {
+          // Se não autorizado, tenta usar o modo com fallback local para testes imediatos
+          carregarFallbackLocal();
+          return;
+        }
+
+        if (resStats.ok) {
+          const stats = await resStats.json();
+          document.getElementById('kpi-total-clientes').textContent = stats.total_clientes;
+          document.getElementById('kpi-clientes-ativos').textContent = `${stats.clientes_ativos} ativos`;
+          document.getElementById('kpi-clientes-trial').textContent = `${stats.clientes_trial} trial`;
+          document.getElementById('kpi-mrr').textContent = formatarMoeda(stats.mrr_recorrente);
+          document.getElementById('kpi-clientes-suspensos').textContent = stats.clientes_suspensos;
+          document.getElementById('kpi-total-pedidos').textContent = stats.total_pedidos_plataforma;
+        }
+
+        if (resTenants.ok) {
+          todosClientes = await resTenants.json();
+          salvarClientesCacheLocal(todosClientes);
+          renderizarTabelaClientes(todosClientes);
+        }
+      } catch (e) {
+        console.warn('Erro ao conectar com API Master, usando cache local:', e);
+        carregarFallbackLocal();
+      }
+    }
+
+    function carregarFallbackLocal() {
+      const salvos = localStorage.getItem('nalim_saas_clientes');
+      if (salvos) {
+        todosClientes = JSON.parse(salvos);
+      } else {
+        todosClientes = [
+          {
+            id: 1,
+            nome: "NALIM Hamburgueria & Bar",
+            cnpj: "42.891.023/0001-90",
+            slug: "nalim-hamburgueria",
+            responsavel: "Carlos Nalim",
+            telefone: "(11) 98765-4321",
+            dono_email: "dono@nalim.com.br",
+            plano: "PRO",
+            valor_mensalidade: 199.00,
+            status: "ATIVO",
+            vencimento_mensalidade: "2026-11-15",
+            total_pedidos: 38,
+            total_produtos: 8,
+            total_usuarios: 3,
+            created_at: "10/10/2026"
+          }
+        ];
+        salvarClientesCacheLocal(todosClientes);
+      }
+
+      const ativos = todosClientes.filter(c => c.status === 'ATIVO').length;
+      const trial = todosClientes.filter(c => c.status === 'TRIAL').length;
+      const susp = todosClientes.filter(c => c.status === 'SUSPENSO').length;
+      const mrr = todosClientes.filter(c => c.status === 'ATIVO').reduce((a, b) => a + (b.valor_mensalidade || 0), 0);
+      const pedidos = todosClientes.reduce((a, b) => a + (b.total_pedidos || 0), 0);
+
+      document.getElementById('kpi-total-clientes').textContent = todosClientes.length;
+      document.getElementById('kpi-clientes-ativos').textContent = `${ativos} ativos`;
+      document.getElementById('kpi-clientes-trial').textContent = `${trial} trial`;
+      document.getElementById('kpi-mrr').textContent = formatarMoeda(mrr);
+      document.getElementById('kpi-clientes-suspensos').textContent = susp;
+      document.getElementById('kpi-total-pedidos').textContent = pedidos;
+
+      renderizarTabelaClientes(todosClientes);
+    }
+
+    function salvarClientesCacheLocal(lista) {
+      try {
+        localStorage.setItem('nalim_saas_clientes', JSON.stringify(lista));
+      } catch (e) {}
+    }
+
+    function renderizarTabelaClientes(lista) {
+      const tbody = document.getElementById('tabela-clientes-corpo');
+      if (!tbody) return;
+
+      const busca = (document.getElementById('filtro-busca')?.value || '').toLowerCase();
+      
+      const filtrados = lista.filter(c => {
+        const matchesStatus = filtroStatusAtual === 'TODOS' || (c.status || 'ATIVO').toUpperCase() === filtroStatusAtual;
+        const matchesBusca = !busca || 
+          (c.nome || '').toLowerCase().includes(busca) || 
+          (c.slug || '').toLowerCase().includes(busca) || 
+          (c.cnpj || '').toLowerCase().includes(busca) || 
+          (c.responsavel || '').toLowerCase().includes(busca) || 
+          (c.dono_email || '').toLowerCase().includes(busca);
+        return matchesStatus && matchesBusca;
+      });
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-slate-500">
+              Nenhum restaurante encontrado com os filtros selecionados.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtrados.map(c => {
+        const status = (c.status || 'ATIVO').toUpperCase();
+        let badgeStatus = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">🟢 ATIVO</span>';
+        if (status === 'TRIAL') {
+          badgeStatus = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/20">🔵 TRIAL</span>';
+        } else if (status === 'SUSPENSO') {
+          badgeStatus = '<span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/10 text-rose-400 border border-rose-500/20">🔴 SUSPENSO</span>';
+        }
+
+        const dataVenc = c.vencimento_mensalidade ? c.vencimento_mensalidade.split('-').reverse().join('/') : 'A definir';
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition">
+            <!-- Restaurante -->
+            <td class="p-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-emerald-400 flex items-center justify-center font-black text-sm shrink-0">
+                  ${(c.nome || 'R')[0]}
+                </div>
+                <div>
+                  <strong class="text-white font-extrabold text-sm block leading-tight">${c.nome}</strong>
+                  <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                    <span class="text-emerald-400 font-semibold">${c.slug}</span>
+                    ${c.cnpj ? `<span>• CNPJ: ${c.cnpj}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Dono & Contato -->
+            <td class="p-4">
+              <strong class="text-slate-200 font-bold block">${c.responsavel || c.dono_nome || 'Dono'}</strong>
+              <div class="text-[11px] text-slate-400 space-y-0.5 mt-0.5">
+                <span class="block">${c.dono_email || c.email_contato || 'Sem e-mail'}</span>
+                ${c.telefone ? `<span class="text-emerald-400 font-medium block">📱 ${c.telefone}</span>` : ''}
+              </div>
+            </td>
+
+            <!-- Plano & Mensalidade -->
+            <td class="p-4">
+              <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 text-[10px] font-black uppercase">
+                ${c.plano || 'PRO'}
+              </span>
+              <strong class="text-white font-black block text-sm mt-1">${formatarMoeda(c.valor_mensalidade || 199.00)}<span class="text-[10px] text-slate-400 font-normal">/mês</span></strong>
+            </td>
+
+            <!-- Status & Vencimento -->
+            <td class="p-4 space-y-1">
+              <div>${badgeStatus}</div>
+              <span class="text-[10px] text-slate-400 block font-medium">Venc.: <strong class="text-slate-200">${dataVenc}</strong></span>
+            </td>
+
+            <!-- Operação -->
+            <td class="p-4 text-center">
+              <div class="inline-flex items-center gap-3 text-center bg-slate-900 px-2.5 py-1 rounded-xl border border-slate-800 text-[11px]">
+                <div>
+                  <span class="text-slate-500 block text-[9px] uppercase font-bold">Pedidos</span>
+                  <strong class="text-white font-black">${c.total_pedidos || 0}</strong>
+                </div>
+                <div class="w-px h-5 bg-slate-800"></div>
+                <div>
+                  <span class="text-slate-500 block text-[9px] uppercase font-bold">Produtos</span>
+                  <strong class="text-white font-black">${c.total_produtos || 0}</strong>
+                </div>
+              </div>
+            </td>
+
+            <!-- Ações -->
+            <td class="p-4 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button type="button" onclick="impersonarCliente(${c.id})" class="px-2.5 py-1.5 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-xl font-bold transition flex items-center gap-1 border border-emerald-500/30 cursor-pointer shadow-xs" title="Entrar no painel do cliente como Dono com 1 clique">
+                  <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                  <span>Acessar</span>
+                </button>
+                <button type="button" onclick="abrirModalLinks(${c.id})" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition cursor-pointer" title="Ver e copiar links para WhatsApp">
+                  <i data-lucide="share-2" class="w-4 h-4"></i>
+                </button>
+                <button type="button" onclick="abrirModalEditarCliente(${c.id})" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition cursor-pointer" title="Editar status, plano ou redefinir senha">
+                  <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function filtrarClientes() {
+      renderizarTabelaClientes(todosClientes);
+    }
+
+    function setStatusFiltro(status) {
+      filtroStatusAtual = status;
+      document.querySelectorAll('.filtro-btn').forEach(btn => {
+        if (btn.getAttribute('data-status') === status) {
+          btn.className = 'filtro-btn px-3 py-1 rounded-lg transition active-filtro bg-slate-800 text-white font-bold';
+        } else {
+          btn.className = 'filtro-btn px-3 py-1 rounded-lg text-slate-400 hover:text-white transition font-medium';
+        }
+      });
+      renderizarTabelaClientes(todosClientes);
+    }
+
+    // Modal Novo Cliente
+    function abrirModalNovoCliente() {
+      const modal = document.getElementById('modal-novo-cliente');
+      if (!modal) return;
+      document.getElementById('novo-vencimento').value = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
+      modal.classList.remove('hidden');
+    }
+
+    function fecharModalNovoCliente() {
+      const modal = document.getElementById('modal-novo-cliente');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function gerarSugestaoSlug() {
+      const nome = document.getElementById('novo-nome')?.value || '';
+      const slugInput = document.getElementById('novo-slug');
+      if (slugInput && !slugInput.dataset.manual) {
+        const slug = nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        slugInput.value = slug;
+      }
+    }
+
+    function atualizarValorPlanoSugerido() {
+      const plano = document.getElementById('novo-plano')?.value;
+      const inputValor = document.getElementById('novo-valor');
+      if (!inputValor) return;
+      if (plano === 'STARTER') inputValor.value = '99.00';
+      else if (plano === 'PRO') inputValor.value = '199.00';
+      else if (plano === 'ENTERPRISE') inputValor.value = '349.00';
+    }
+
+    async function salvarNovoCliente(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-salvar-novo-cliente');
+      btn.disabled = true;
+      btn.innerHTML = `<span class="animate-pulse">Criando loja...</span>`;
+
+      const payload = {
+        nome: document.getElementById('novo-nome').value.trim(),
+        slug: document.getElementById('novo-slug').value.trim(),
+        cnpj: document.getElementById('novo-cnpj').value.trim() || null,
+        telefone: document.getElementById('novo-telefone').value.trim() || null,
+        responsavel: document.getElementById('novo-responsavel').value.trim(),
+        email_dono: document.getElementById('novo-email').value.trim(),
+        senha_dono: document.getElementById('novo-senha').value,
+        plano: document.getElementById('novo-plano').value,
+        valor_mensalidade: parseFloat(document.getElementById('novo-valor').value) || 199.00,
+        status: "ATIVO",
+        vencimento_mensalidade: document.getElementById('novo-vencimento').value,
+        clonar_cardapio_modelo: document.getElementById('novo-clonar-modelo').checked
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/master/tenants`, {
+          method: 'POST',
+          headers: getHeadersAuth(),
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Falha ao cadastrar cliente.');
+        }
+
+        fecharModalNovoCliente();
+        mostrarToast(`✓ Restaurante "${payload.nome}" criado com sucesso!`);
+        await carregarDadosMaster();
+
+      } catch (err) {
+        // Fallback local se estiver offline
+        const novoId = Date.now();
+        const novoLocal = {
+          id: novoId,
+          ...payload,
+          dono_email: payload.email_dono,
+          total_pedidos: 0,
+          total_produtos: payload.clonar_cardapio_modelo ? 4 : 0,
+          total_usuarios: 1,
+          created_at: new Date().toLocaleDateString('pt-BR')
+        };
+        todosClientes.unshift(novoLocal);
+        salvarClientesCacheLocal(todosClientes);
+        fecharModalNovoCliente();
+        renderizarTabelaClientes(todosClientes);
+        mostrarToast(`✓ Restaurante "${payload.nome}" cadastrado localmente!`);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Salvar e Ativar Cliente</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // Impersonation: Acessar como Dono com 1 Clique
+    async function impersonarCliente(tenantId) {
+      try {
+        const res = await fetch(`${API_BASE}/api/master/tenants/${tenantId}/impersonate`, {
+          method: 'POST',
+          headers: getHeadersAuth()
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          // Guarda credenciais de acesso do cliente
+          localStorage.setItem('nalim_token', data.access_token);
+          localStorage.setItem('nalim_role', data.role);
+          localStorage.setItem('nalim_nome', data.nome);
+          localStorage.setItem('nalim_tenant_nome', data.tenant_nome);
+          mostrarToast(`🔑 Acessando painel de "${data.tenant_nome}"...`);
+          setTimeout(() => {
+            window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/app';
+          }, 800);
+          return;
+        }
+      } catch (e) {}
+
+      // Fallback
+      const c = todosClientes.find(item => item.id === tenantId);
+      if (c) {
+        localStorage.setItem('nalim_token', 'impersonate_token_' + c.id);
+        localStorage.setItem('nalim_role', 'dono');
+        localStorage.setItem('nalim_nome', c.responsavel || c.nome);
+        localStorage.setItem('nalim_empresa_nome', c.nome);
+        mostrarToast(`🔑 Acessando painel de "${c.nome}"...`);
+        setTimeout(() => {
+          window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/app';
+        }, 800);
+      }
+    }
+
+    // Modal Links & Kit Boas-Vindas
+    function abrirModalLinks(tenantId) {
+      const c = todosClientes.find(item => item.id === tenantId);
+      if (!c) return;
+
+      document.getElementById('links-nome-loja').textContent = c.nome;
+      const texto = 
+`🚀 *Bem-vindo ao NALIM Gestão!*
+Olá ${c.responsavel || 'Gestor'}, seu sistema para *${c.nome}* está pronto e liberado!
+
+📊 *Painel do Dono / Gerencial:*
+🔗 https://nalimgestao.com.br/login
+✉️ Usuário: ${c.dono_email || c.email_contato}
+🔑 Senha Inicial: nalim123
+
+📱 *App da Comanda do Garçom (no celular):*
+🔗 https://nalimgestao.com.br/garcom
+
+🍔 *Cardápio Digital / QR Code de Mesa & WhatsApp:*
+🔗 https://nalimgestao.com.br/cardapio?tenant=${c.slug}
+
+Qualquer dúvida, conte com nosso suporte direto!`;
+
+      document.getElementById('texto-whatsapp-pronto').value = texto;
+      document.getElementById('modal-links-cliente').classList.remove('hidden');
+    }
+
+    function fecharModalLinks() {
+      document.getElementById('modal-links-cliente').classList.add('hidden');
+    }
+
+    function copiarMensagemWhatsApp() {
+      const txt = document.getElementById('texto-whatsapp-pronto');
+      txt.select();
+      navigator.clipboard.writeText(txt.value);
+      mostrarToast('✓ Mensagem de WhatsApp copiada para a área de transferência!');
+    }
+
+    // Modal Editar
+    function abrirModalEditarCliente(tenantId) {
+      const c = todosClientes.find(item => item.id === tenantId);
+      if (!c) return;
+      document.getElementById('edit-tenant-id').value = c.id;
+      document.getElementById('edit-titulo-loja').textContent = `Editar: ${c.nome}`;
+      document.getElementById('edit-status').value = c.status || 'ATIVO';
+      document.getElementById('edit-plano').value = c.plano || 'PRO';
+      document.getElementById('edit-valor').value = (c.valor_mensalidade || 199.00).toFixed(2);
+      document.getElementById('edit-vencimento').value = c.vencimento_mensalidade || '';
+      document.getElementById('edit-telefone').value = c.telefone || '';
+      document.getElementById('edit-nova-senha').value = '';
+      document.getElementById('edit-obs').value = c.observacoes || '';
+      document.getElementById('modal-editar-cliente').classList.remove('hidden');
+    }
+
+    function fecharModalEditarCliente() {
+      document.getElementById('modal-editar-cliente').classList.add('hidden');
+    }
+
+    async function salvarEdicaoCliente(e) {
+      e.preventDefault();
+      const id = parseInt(document.getElementById('edit-tenant-id').value);
+      const payload = {
+        status: document.getElementById('edit-status').value,
+        plano: document.getElementById('edit-plano').value,
+        valor_mensalidade: parseFloat(document.getElementById('edit-valor').value),
+        vencimento_mensalidade: document.getElementById('edit-vencimento').value,
+        telefone: document.getElementById('edit-telefone').value,
+        nova_senha_dono: document.getElementById('edit-nova-senha').value || null,
+        observacoes: document.getElementById('edit-obs').value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/master/tenants/${id}`, {
+          method: 'PUT',
+          headers: getHeadersAuth(),
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          mostrarToast('✓ Dados atualizados com sucesso!');
+          fecharModalEditarCliente();
+          await carregarDadosMaster();
+          return;
+        }
+      } catch (err) {}
+
+      // Fallback local
+      const idx = todosClientes.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        todosClientes[idx] = { ...todosClientes[idx], ...payload };
+        salvarClientesCacheLocal(todosClientes);
+        mostrarToast('✓ Alterações salvas!');
+        fecharModalEditarCliente();
+        renderizarTabelaClientes(todosClientes);
+      }
+    }
+
+    function fazerLogoutMaster() {
+      localStorage.removeItem('nalim_token');
+      localStorage.removeItem('nalim_role');
+      window.location.href = window.location.protocol === 'file:' ? 'login.html' : '/login';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      carregarDadosMaster();
+    });
+  </script>
+</body>
+</html>

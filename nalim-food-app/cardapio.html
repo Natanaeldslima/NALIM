@@ -579,6 +579,8 @@
   <!-- ============================================================== -->
   <script>
     const API_BASE = window.location.origin;
+    const urlParamsTenant = new URLSearchParams(window.location.search);
+    const tenantParam = urlParamsTenant.get('tenant') || '';
 
     // Configurações do Restaurante
     let lojaConfig = {
@@ -703,9 +705,22 @@
     async function carregarProdutos() {
       // 1. Tenta carregar do backend caso esteja online
       try {
-        const res = await fetch(`${API_BASE}/api/operacional/public/cardapio`);
+        const queryTenant = tenantParam ? `?tenant=${encodeURIComponent(tenantParam)}` : '';
+        const res = await fetch(`${API_BASE}/api/operacional/public/cardapio${queryTenant}`);
         if (res.ok) {
           const data = await res.json();
+          if (data.restaurante) {
+            if (data.restaurante.nome) {
+              lojaConfig.nome = data.restaurante.nome;
+              const topNome = document.getElementById('loja-nome');
+              if (topNome) topNome.textContent = data.restaurante.nome;
+              document.title = `${data.restaurante.nome} — Cardápio Digital`;
+            }
+            if (data.restaurante.telefone) {
+              const telLimpo = data.restaurante.telefone.replace(/\D/g, '');
+              if (telLimpo) lojaConfig.whatsapp = telLimpo;
+            }
+          }
           if (data.produtos && data.produtos.length > 0) {
             produtos = data.produtos.map(p => ({
               codigo: p.codigo,
@@ -1242,7 +1257,8 @@
           }))
         };
 
-        const res = await fetch(`${API_BASE}/api/operacional/public/pedidos`, {
+        const queryTenant = tenantParam ? `?tenant=${encodeURIComponent(tenantParam)}` : '';
+        const res = await fetch(`${API_BASE}/api/operacional/public/pedidos${queryTenant}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payloadApi)

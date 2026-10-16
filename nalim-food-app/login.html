@@ -247,6 +247,12 @@
         localStorage.setItem('nalim_nome', data.nome);
         localStorage.setItem('nalim_email', email);
 
+        // Se for Master SuperAdmin, vai direto para o painel de clientes SaaS
+        if (data.role === 'master') {
+          window.location.href = window.location.protocol === 'file:' ? 'admin.html' : '/admin';
+          return;
+        }
+
         // Se for operador acessando de celular/mobile, pode ir pro garçom, ou para a versão PC se estiver no computador
         if (data.role === 'operador') {
           const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -263,6 +269,7 @@
       } catch (err) {
         // Fallback para login direto com contas padrão caso o backend esteja em modo local / sem servidor
         const testUsers = {
+          'admin@nalimgestao.com.br': { role: 'master', nome: 'Administrador NALIM (Master)', senha: 'nalim2026master' },
           'dono@nalim.com.br': { role: 'dono', nome: 'Carlos Nalim', senha: 'dono123' },
           'gerente@nalim.com.br': { role: 'gerente', nome: 'Mariana Silva', senha: 'gerente123' },
           'operador@nalim.com.br': { role: 'operador', nome: 'Pedro Lucas', senha: 'operador123' }
@@ -273,7 +280,9 @@
           localStorage.setItem('nalim_role', u.role);
           localStorage.setItem('nalim_nome', u.nome);
           localStorage.setItem('nalim_email', email);
-          if (u.role === 'operador' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+          if (u.role === 'master') {
+            window.location.href = window.location.protocol === 'file:' ? 'admin.html' : '/admin';
+          } else if (u.role === 'operador' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
             window.location.href = window.location.protocol === 'file:' ? 'garcom.html' : '/garcom';
           } else {
             window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/app';
