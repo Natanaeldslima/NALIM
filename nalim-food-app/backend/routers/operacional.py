@@ -30,6 +30,11 @@ def get_tenant_id_permissive(authorization: Optional[str] = Header(None), db: Se
     first_tenant = db.query(Tenant).first()
     return first_tenant.id if first_tenant else 1
 
+def obter_data_hora_brasilia() -> datetime.datetime:
+    """Retorna datetime no fuso horário oficial de Brasília (UTC-3) para evitar deslocamento de data em servidores em nuvem."""
+    fuso_br = datetime.timezone(datetime.timedelta(hours=-3))
+    return datetime.datetime.now(fuso_br).replace(tzinfo=None)
+
 # 1. Cardápio Limpo para Atendimento (SEM CMV, SEM LUCRO)
 @router.get("/cardapio")
 def listar_cardapio_operacional(
@@ -90,7 +95,7 @@ def criar_pedido(
     novo_pedido = Pedido(
         tenant_id=tenant_id,
         numero_comanda=numero_comanda,
-        data_hora=datetime.datetime.utcnow(),
+        data_hora=obter_data_hora_brasilia(),
         canal=dados.canal,
         identificacao=identificacao_final,
         solicitante=solicitante_final,
@@ -170,6 +175,8 @@ def listar_todos_pedidos(
             "canal": p.canal,
             "identificacao": p.identificacao,
             "forma_pagto": p.forma_pagto,
+            "solicitante": p.solicitante or "Balcão",
+            "vendedor": p.solicitante or "Balcão",
             "status_kds": p.status_kds,
             "valor_bruto": round(p.valor_bruto or 0.0, 2),
             "cmv_total": round(p.cmv_total or 0.0, 2),
@@ -345,7 +352,8 @@ def adicionar_itens_mesa(
         itens_acumulados = []
 
     subtotal_rodada = 0.0
-    agora_hora = datetime.datetime.now().strftime("%H:%M")
+    agora_br = obter_data_hora_brasilia()
+    agora_hora = agora_br.strftime("%H:%M")
 
     for it in dados.itens:
         prod = db.query(Produto).filter(
@@ -370,7 +378,7 @@ def adicionar_itens_mesa(
     mesa.itens_json = json.dumps(itens_acumulados, ensure_ascii=False)
     mesa.status = "OCUPADA"
     if not mesa.aberta_em:
-        mesa.aberta_em = datetime.datetime.utcnow()
+        mesa.aberta_em = agora_br
 
     # Gera Pedido automático no KDS para a cozinha produzir a rodada imediatamente
     ultimo_pedido = db.query(Pedido).filter(Pedido.tenant_id == tenant_id).order_by(Pedido.id.desc()).first()
@@ -381,7 +389,7 @@ def adicionar_itens_mesa(
     pedido_kds = Pedido(
         tenant_id=tenant_id,
         numero_comanda=numero_comanda,
-        data_hora=datetime.datetime.utcnow(),
+        data_hora=agora_br,
         canal="Salão",
         identificacao=f"{mesa.numero} (Salão)",
         solicitante=solicitante_final,
@@ -443,16 +451,27 @@ def fechar_e_zerar_mesa(
         raise HTTPException(status_code=404, detail="Mesa não encontrada.")
 
     valor_consumido = mesa.consumo_acumulado
+    vendedor_final = dados.vendedor or dados.solicitante or "Garçom"
 
-    # Atualiza pedidos desta mesa: forma de pagamento e status no KDS para Entregue
+    # Atualiza pedidos desta mesa: forma de pagamento, vendedor/atendente e status no KDS para Entregue
     pedidos_mesa = db.query(Pedido).filter(
         Pedido.tenant_id == tenant_id,
         Pedido.identificacao.like(f"%{mesa_identificador}%")
-    ).all()
-    for p_mesa in pedidos_mesa:
+    ).order_by(Pedido.id.desc()).all()
+
+    # Prioriza pedidos que estavam em aberto nesta mesa
+    pedidos_em_aberto = [p for p in pedidos_mesa if p.forma_pagto == "Em Aberto (Mesa)"]
+    pedidos_alvo = pedidos_em_aberto if pedidos_em_aberto else pedidos_mesa
+
+    agora_br = obter_data_hora_brasilia()
+    for p_mesa in pedidos_alvo:
         p_mesa.forma_pagto = dados.forma_pagto
+        if vendedor_final and (not p_mesa.solicitante or p_mesa.solicitante in ["Balcão", "Garçom"]):
+            p_mesa.solicitante = vendedor_final
         if p_mesa.status_kds in ["Na Chapa", "Pronto"]:
             p_mesa.status_kds = "Entregue"
+        if not p_mesa.data_hora:
+            p_mesa.data_hora = agora_br
 
     # ZERA A MESA COMPLETAMENTE PARA LIBERAR PARA O PRÓXIMO CLIENTE
     mesa.status = "LIVRE"
@@ -469,7 +488,9 @@ def fechar_e_zerar_mesa(
         "consumo_fechado": round(valor_consumido, 2),
         "valor_total_pago": round(dados.valor_total_pago, 2),
         "forma_pagto": dados.forma_pagto,
-        "mensagem": f"{mesa_identificador} fechada e zerada com sucesso! Mesa livre para novos clientes."
+        "vendedor": vendedor_final,
+        "pedidos_atualizados": len(pedidos_alvo),
+        "mensagem": f"{mesa_identificador} fechada e recebida em {dados.forma_pagto}! Mesa livre para novos clientes."
     }
 
 # 6. CONFIGURAÇÃO DE TAXAS E JUROS DA MÁQUINA DE CARTÃO
