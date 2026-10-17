@@ -2284,11 +2284,11 @@
         { id: 3, data: '2026-10-03', item_nome: 'Batata Palito Congelada', quantidade: 0.6, custo_unitario: 11.00, motivo: 'descarte', observacao: 'Descarte no óleo' }
       ],
 
-      usuarios: JSON.parse(localStorage.getItem('nalim_usuarios') || 'null') || [
+      usuarios: (JSON.parse(localStorage.getItem('nalim_usuarios') || 'null') || [
         { id: 1, nome: 'Carlos Nalim', email: 'dono@nalim.com.br', senha: 'dono123', perfil: 'dono', cargo: 'Proprietário & Administrador Geral' },
         { id: 2, nome: 'Mariana Silva', email: 'gerente@nalim.com.br', senha: 'gerente123', perfil: 'gerente', cargo: 'Gerente Administrativa' },
         { id: 3, nome: 'Pedro Lucas', email: 'operador@nalim.com.br', senha: 'operador123', perfil: 'operador', cargo: 'Operador de Caixa & Garçom' }
-      ],
+      ]).filter(u => u.perfil !== 'master' && u.email !== 'admin@nalimgestao.com.br' && !(u.nome || '').toLowerCase().includes('(master)')),
 
       meses: {
         '2026-08': {
@@ -3006,24 +3006,31 @@
       const tbody = document.getElementById('tbody-equipe');
       if (!tbody) return;
 
+      // Filtra estritamente apenas os membros da equipe da loja (nunca exibe o Administrador Master da plataforma)
+      const membrosEquipe = (store.usuarios || []).filter(u => 
+        u.perfil !== 'master' && 
+        u.email !== 'admin@nalimgestao.com.br' && 
+        !(u.nome || '').toLowerCase().includes('(master)')
+      );
+
       const totalEl = document.getElementById('kpi-equipe-total');
       const opEl = document.getElementById('kpi-equipe-operadores');
       const gerEl = document.getElementById('kpi-equipe-gerentes');
       const donEl = document.getElementById('kpi-equipe-donos');
 
       let ops = 0, gers = 0, dons = 0;
-      store.usuarios.forEach(u => {
+      membrosEquipe.forEach(u => {
         if (u.perfil === 'operador') ops++;
         else if (u.perfil === 'gerente') gers++;
         else if (u.perfil === 'dono') dons++;
       });
 
-      if (totalEl) totalEl.textContent = store.usuarios.length;
+      if (totalEl) totalEl.textContent = membrosEquipe.length;
       if (opEl) opEl.textContent = ops;
       if (gerEl) gerEl.textContent = gers;
       if (donEl) donEl.textContent = dons;
 
-      tbody.innerHTML = store.usuarios.map(u => {
+      tbody.innerHTML = membrosEquipe.map(u => {
         const perfilConfig = {
           dono: { badge: 'bg-emerald-100 text-emerald-800 border-emerald-200', label: 'Dono / Geral', icon: 'crown', perm: 'Acesso total (DRE, Metas, Gestão de Usuários)' },
           gerente: { badge: 'bg-blue-100 text-blue-800 border-blue-200', label: 'Administrativo', icon: 'sliders', perm: 'Fichas Técnicas, Custos, Insumos & Simulador iFood' },
@@ -3123,7 +3130,12 @@
         if (res.ok) {
           const list = await res.json();
           if (list && list.length > 0) {
-            store.usuarios = list.map(u => ({
+            const equipeFiltrada = list.filter(u => 
+              u.role !== 'master' && 
+              u.email !== 'admin@nalimgestao.com.br' && 
+              !(u.nome || '').toLowerCase().includes('(master)')
+            );
+            store.usuarios = equipeFiltrada.map(u => ({
               id: u.id,
               nome: u.nome,
               cargo: u.cargo || '',
