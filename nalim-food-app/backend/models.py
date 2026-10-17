@@ -39,6 +39,7 @@ class User(Base):
     email = Column(String(100), unique=True, index=True, nullable=False)
     senha_hash = Column(String(255), nullable=False)
     role = Column(String(20), default="operador")  # 'master', 'dono', 'gerente', 'operador'
+    cargo = Column(String(100), nullable=True, default="Colaborador")
     ativo = Column(Boolean, default=True)
 
     tenant = relationship("Tenant", back_populates="usuarios")

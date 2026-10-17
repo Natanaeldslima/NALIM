@@ -95,6 +95,16 @@ def executar_migracoes(db_engine):
                     conn.commit()
             except Exception:
                 pass
+
+            try:
+                # Garante que usuarios tenha a coluna cargo
+                res_usr = conn.execute(text("PRAGMA table_info(usuarios)")).fetchall()
+                colunas_usr = [r[1] for r in res_usr]
+                if colunas_usr and "cargo" not in colunas_usr:
+                    conn.execute(text("ALTER TABLE usuarios ADD COLUMN cargo VARCHAR(100) DEFAULT 'Colaborador'"))
+                    conn.commit()
+            except Exception:
+                pass
     except Exception:
         pass
 

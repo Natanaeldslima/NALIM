@@ -37,6 +37,34 @@ def seed_database():
         except Exception as e:
             db.rollback()
 
+    # Garante que o garçom João (natanaelsilvalimax@gmail.com) exista e consiga logar
+    u_garcom = db.query(User).filter(User.email.in_(["natanaelsilvalimax@gmail.com", "natanaelsilvalimax@gmail.con"])).first()
+    if u_garcom:
+        u_garcom.email = "natanaelsilvalimax@gmail.com"
+        u_garcom.senha_hash = hash_password("123456")
+        u_garcom.nome = "João"
+        u_garcom.cargo = "Garçom"
+        u_garcom.role = "operador"
+        u_garcom.ativo = True
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+    else:
+        db.add(User(
+            tenant_id=1,
+            nome="João",
+            email="natanaelsilvalimax@gmail.com",
+            senha_hash=hash_password("123456"),
+            role="operador",
+            cargo="Garçom",
+            ativo=True
+        ))
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+
     # Se já possui tenants, apenas atualiza campos SaaS nulos e finaliza
     primeiro_tenant = db.query(Tenant).first()
     if primeiro_tenant:
