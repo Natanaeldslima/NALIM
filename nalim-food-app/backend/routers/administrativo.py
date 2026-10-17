@@ -1,4 +1,5 @@
 from typing import List, Optional
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from database import get_db
@@ -234,4 +235,164 @@ def remover_custo_fixo(
     db.delete(custo)
     db.commit()
     return {"sucesso": True, "mensagem": "Custo fixo removido com sucesso."}
+
+# =========================================================================
+# 5. Gestão de Equipe & Colaboradores (Garçons, Gerentes, Operadores)
+# =========================================================================
+
+class ColaboradorCreateInput(BaseModel):
+    nome: str
+    email: str
+    senha: str
+    role: str = "operador"  # 'dono', 'gerente', 'operador'
+    cargo: Optional[str] = "Colaborador"
+
+class ColaboradorUpdateInput(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[str] = None
+    senha: Optional[str] = None
+    role: Optional[str] = None
+    cargo: Optional[str] = None
+    ativo: Optional[bool] = None
+
+@router.get("/usuarios")
+def listar_colaboradores(
+    current_user: User = Depends(require_role(["dono", "gerente"])),
+    db: Session = Depends(get_db)
+):
+    """Lista todos os colaboradores da equipe da loja logada."""
+    usuarios = db.query(User).filter(
+        User.tenant_id == current_user.tenant_id,
+        User.ativo == True
+    ).order_by(User.id.asc()).all()
+
+    return [
+        {
+            "id": u.id,
+            "nome": u.nome,
+            "email": u.email,
+            "role": u.role,
+            "cargo": getattr(u, 'cargo', None) or ('Proprietário' if u.role == 'dono' else 'Gerente' if u.role == 'gerente' else 'Garçom / Atendimento'),
+            "ativo": u.ativo
+        }
+        for u in usuarios
+    ]
+
+@router.post("/usuarios")
+def criar_colaborador(
+    dados: ColaboradorCreateInput,
+    current_user: User = Depends(require_role(["dono"])),
+    db: Session = Depends(get_db)
+):
+    """Cadastra um novo colaborador (garçom, gerente ou operador) no banco de dados."""
+    email_clean = dados.email.strip().lower()
+    
+    # Valida e-mail existente
+    existente = db.query(User).filter(User.email == email_clean).first()
+    if existente:
+        raise HTTPException(status_code=400, detail="Este e-mail de acesso já está cadastrado no sistema.")
+
+    from auth import hash_password
+    novo_usuario = User(
+        tenant_id=current_user.tenant_id,
+        nome=dados.nome.strip(),
+        email=email_clean,
+        senha_hash=hash_password(dados.senha),
+        role=dados.role,
+        cargo=dados.cargo or "Colaborador",
+        ativo=True
+    )
+    db.add(novo_usuario)
+    db.commit()
+    db.refresh(novo_usuario)
+
+    return {
+        "sucesso": True,
+        "mensagem": f"Colaborador '{novo_usuario.nome}' cadastrado com sucesso!",
+        "usuario": {
+            "id": novo_usuario.id,
+            "nome": novo_usuario.nome,
+            "email": novo_usuario.email,
+            "role": novo_usuario.role,
+            "cargo": novo_usuario.cargo
+        }
+    }
+
+@router.put("/usuarios/{user_id}")
+def atualizar_colaborador(
+    user_id: int,
+    dados: ColaboradorUpdateInput,
+    current_user: User = Depends(require_role(["dono"])),
+    db: Session = Depends(get_db)
+):
+    """Atualiza dados, perfil ou senha de um colaborador."""
+    usuario = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_user.tenant_id
+    ).first()
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Colaborador não encontrado.")
+
+    if dados.nome is not None:
+        usuario.nome = dados.nome.strip()
+
+    if dados.email is not None:
+        email_clean = dados.email.strip().lower()
+        existente = db.query(User).filter(User.email == email_clean, User.id != user_id).first()
+        if existente:
+            raise HTTPException(status_code=400, detail="Já existe outro colaborador com este e-mail.")
+        usuario.email = email_clean
+
+    if dados.senha and dados.senha.strip() and not dados.senha.startswith("••••"):
+        from auth import hash_password
+        usuario.senha_hash = hash_password(dados.senha.strip())
+
+    if dados.role is not None:
+        usuario.role = dados.role
+
+    if dados.cargo is not None:
+        usuario.cargo = dados.cargo
+
+    if dados.ativo is not None:
+        usuario.ativo = dados.ativo
+
+    db.commit()
+    db.refresh(usuario)
+
+    return {
+        "sucesso": True,
+        "mensagem": f"Colaborador '{usuario.nome}' atualizado com sucesso!",
+        "usuario": {
+            "id": usuario.id,
+            "nome": usuario.nome,
+            "email": usuario.email,
+            "role": usuario.role,
+            "cargo": usuario.cargo
+        }
+    }
+
+@router.delete("/usuarios/{user_id}")
+def remover_colaborador(
+    user_id: int,
+    current_user: User = Depends(require_role(["dono"])),
+    db: Session = Depends(get_db)
+):
+    """Desativa um colaborador da equipe."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Não é permitido remover a própria conta do Proprietário.")
+
+    usuario = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_user.tenant_id
+    ).first()
+
+    if not usuario:
+        raise HTTPException(status_code=404, detail="Colaborador não encontrado.")
+
+    usuario.ativo = False
+    db.commit()
+
+    return {"sucesso": True, "mensagem": f"Colaborador '{usuario.nome}' desativado com sucesso."}
+
 
