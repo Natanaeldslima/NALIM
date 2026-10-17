@@ -147,24 +147,6 @@
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </button>
         </form>
-
-        <!-- Atalhos Rápidos para Teste -->
-        <div class="mt-6 pt-5 border-t border-slate-100 space-y-2">
-          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block text-center">
-            Ou escolha um perfil para testar:
-          </span>
-          <div class="grid grid-cols-3 gap-1.5 text-center">
-            <button type="button" onclick="loginRapidoPerfil('dono')" class="p-2 rounded-xl border border-slate-200 hover:border-forest-500 hover:bg-forest-50 transition text-[11px] font-extrabold text-slate-800">
-              👑 Dono
-            </button>
-            <button type="button" onclick="loginRapidoPerfil('gerente')" class="p-2 rounded-xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition text-[11px] font-extrabold text-slate-800">
-              👔 Gerente
-            </button>
-            <button type="button" onclick="loginRapidoPerfil('operador')" class="p-2 rounded-xl border border-slate-200 hover:border-amber-500 hover:bg-amber-50 transition text-[11px] font-extrabold text-slate-800">
-              📱 Garçom
-            </button>
-          </div>
-        </div>
       </div>
 
       <div class="text-center pt-4">
@@ -179,27 +161,6 @@
   <!-- Script de Autenticação e Redirecionamento -->
   <script>
     const API_BASE = window.location.origin;
-
-    function loginRapidoPerfil(role) {
-      const users = {
-        dono: { email: 'dono@nalim.com.br', senha: 'dono123', nome: 'Carlos Nalim' },
-        gerente: { email: 'gerente@nalim.com.br', senha: 'gerente123', nome: 'Mariana Silva' },
-        operador: { email: 'operador@nalim.com.br', senha: 'operador123', nome: 'Pedro Lucas' }
-      };
-      const u = users[role];
-      if (!u) return;
-
-      localStorage.setItem('nalim_token', 'local_token_' + role);
-      localStorage.setItem('nalim_role', role);
-      localStorage.setItem('nalim_nome', u.nome);
-      localStorage.setItem('nalim_email', u.email);
-
-      if (role === 'operador' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        window.location.href = window.location.protocol === 'file:' ? 'garcom.html' : '/garcom';
-      } else {
-        window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/app';
-      }
-    }
 
     function preencherLogin(email, senha) {
       document.getElementById('input-email').value = email;
@@ -217,7 +178,11 @@
     }
 
     async function executarLogin() {
-      const email = document.getElementById('input-email').value.trim();
+      let email = document.getElementById('input-email').value.trim();
+      if (email.endsWith('.con')) {
+        email = email.slice(0, -4) + '.com';
+        document.getElementById('input-email').value = email;
+      }
       const senha = document.getElementById('input-senha').value;
       const erroBox = document.getElementById('login-erro');
       const erroMsg = document.getElementById('login-erro-msg');

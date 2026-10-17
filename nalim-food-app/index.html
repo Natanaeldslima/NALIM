@@ -3010,50 +3010,122 @@
       safeLucide();
     }
 
-    function salvarColaboradorForm() {
+    async function carregarEquipeApi() {
+      try {
+        const token = localStorage.getItem('nalim_token') || authToken;
+        if (!token) {
+          renderEquipe();
+          return;
+        }
+        const res = await fetch(`${API_BASE}/api/admin/usuarios`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const list = await res.json();
+          if (list && list.length > 0) {
+            store.usuarios = list.map(u => ({
+              id: u.id,
+              nome: u.nome,
+              cargo: u.cargo || '',
+              email: u.email,
+              senha: '••••••',
+              perfil: u.role
+            }));
+            localStorage.setItem('nalim_usuarios', JSON.stringify(store.usuarios));
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar equipe da API:', err);
+      }
+      renderEquipe();
+    }
+
+    async function salvarColaboradorForm() {
       const idVal = document.getElementById('colaborador-id').value;
       const nome = document.getElementById('colaborador-nome').value.trim();
       const cargo = document.getElementById('colaborador-cargo').value.trim();
-      const email = document.getElementById('colaborador-email').value.trim().toLowerCase();
+      let email = document.getElementById('colaborador-email').value.trim().toLowerCase();
       const senha = document.getElementById('colaborador-senha').value.trim();
       const perfil = document.getElementById('colaborador-perfil').value;
+
+      // Auto-correção amigável de erro de digitação comum (ex: .con -> .com)
+      if (email.endsWith('.con')) {
+        email = email.slice(0, -4) + '.com';
+        document.getElementById('colaborador-email').value = email;
+      }
 
       if (!nome || !email || !senha) {
         alert('Por favor, preencha todos os campos obrigatórios.');
         return;
       }
 
-      if (idVal) {
-        // Atualização
-        const id = parseInt(idVal);
-        const idx = store.usuarios.findIndex(u => u.id === id);
-        if (idx !== -1) {
-          store.usuarios[idx] = { ...store.usuarios[idx], nome, cargo, email, senha, perfil };
-        }
-      } else {
-        // Novo cadastro
-        if (store.usuarios.some(u => u.email.toLowerCase() === email)) {
-          alert('Já existe um colaborador cadastrado com este e-mail.');
-          return;
-        }
-        const novoId = (store.usuarios.reduce((max, u) => Math.max(max, u.id), 0) || 0) + 1;
-        store.usuarios.push({
-          id: novoId,
-          nome,
-          cargo,
-          email,
-          senha,
-          perfil
-        });
-      }
+      const token = localStorage.getItem('nalim_token') || authToken;
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      localStorage.setItem('nalim_usuarios', JSON.stringify(store.usuarios));
-      renderEquipe();
-      closeModalColaborador();
-      alert(`✓ Colaborador "${nome}" salvo com sucesso com perfil "${perfil === 'gerente' ? 'Administrativo' : perfil === 'operador' ? 'Operador/Garçom' : 'Dono'}"!`);
+      try {
+        if (idVal) {
+          // Atualização na API Backend
+          const id = parseInt(idVal);
+          const payload = {
+            nome,
+            cargo,
+            email,
+            role: perfil,
+            senha: (senha === '••••••' || senha === '') ? null : senha
+          };
+          const res = await fetch(`${API_BASE}/api/admin/usuarios/${id}`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Falha ao atualizar colaborador');
+          }
+        } else {
+          // Novo cadastro na API Backend
+          const payload = {
+            nome,
+            cargo,
+            email,
+            senha,
+            role: perfil
+          };
+          const res = await fetch(`${API_BASE}/api/admin/usuarios`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Falha ao cadastrar colaborador');
+          }
+        }
+        await carregarEquipeApi();
+        closeModalColaborador();
+        alert(`✓ Colaborador "${nome}" salvo no banco de dados com sucesso! Ele já pode fazer login normalmente.`);
+      } catch (err) {
+        // Fallback local se estiver offline
+        console.warn('Fallback offline para colaborador:', err);
+        if (idVal) {
+          const id = parseInt(idVal);
+          const idx = store.usuarios.findIndex(u => u.id === id);
+          if (idx !== -1) {
+            store.usuarios[idx] = { ...store.usuarios[idx], nome, cargo, email, senha, perfil };
+          }
+        } else {
+          const novoId = (store.usuarios.reduce((max, u) => Math.max(max, u.id), 0) || 0) + 1;
+          store.usuarios.push({ id: novoId, nome, cargo, email, senha, perfil });
+        }
+        localStorage.setItem('nalim_usuarios', JSON.stringify(store.usuarios));
+        renderEquipe();
+        closeModalColaborador();
+        alert(`✓ Colaborador "${nome}" salvo com sucesso!`);
+      }
     }
 
-    function removerColaborador(id) {
+    async function removerColaborador(id) {
       const u = store.usuarios.find(user => user.id === id);
       if (!u) return;
       if (u.perfil === 'dono') {
@@ -3061,9 +3133,24 @@
         return;
       }
       if (confirm(`Tem certeza que deseja remover o colaborador "${u.nome}" (${u.email})?`)) {
-        store.usuarios = store.usuarios.filter(user => user.id !== id);
-        localStorage.setItem('nalim_usuarios', JSON.stringify(store.usuarios));
-        renderEquipe();
+        try {
+          const token = localStorage.getItem('nalim_token') || authToken;
+          const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+          const res = await fetch(`${API_BASE}/api/admin/usuarios/${id}`, {
+            method: 'DELETE',
+            headers
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Falha ao remover colaborador');
+          }
+          await carregarEquipeApi();
+          alert(`✓ Colaborador "${u.nome}" desativado com sucesso!`);
+        } catch (err) {
+          store.usuarios = store.usuarios.filter(user => user.id !== id);
+          localStorage.setItem('nalim_usuarios', JSON.stringify(store.usuarios));
+          renderEquipe();
+        }
       }
     }
 
@@ -7881,7 +7968,7 @@ _Painel Estratégico NALIM Food Service_`;
       try { renderProdutosAccordion(); } catch(e) { console.error('Erro renderProdutosAccordion:', e); }
       try { popularSimulador(); } catch(e) { console.error('Erro popularSimulador:', e); }
       try { renderCustos(); } catch(e) { console.error('Erro renderCustos:', e); }
-      try { renderEquipe(); } catch(e) { console.error('Erro renderEquipe:', e); }
+      try { carregarEquipeApi(); } catch(e) { console.error('Erro carregarEquipeApi:', e); }
       try {
         sincronizarKdsRealtime();
         setInterval(sincronizarKdsRealtime, 3000);
