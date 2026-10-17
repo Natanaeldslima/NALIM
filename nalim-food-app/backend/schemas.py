@@ -213,6 +213,8 @@ class FecharMesaRequest(BaseModel):
     parcelas: int = 1
     taxa_aplicada: float = 0.0
     valor_total_pago: float
+    solicitante: Optional[str] = None
+    vendedor: Optional[str] = None
 
 class ConfigTaxasCartaoInput(BaseModel):
     taxa_debito: float = 1.99
