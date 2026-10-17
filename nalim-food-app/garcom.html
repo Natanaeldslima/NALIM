@@ -1515,6 +1515,8 @@
       btn.disabled = true;
       btn.innerHTML = `<span class="animate-pulse">FINALIZANDO & ZERANDO MESA...</span>`;
 
+      const nomeGarcom = localStorage.getItem('nalim_nome') || 'Pedro Lucas (Garçom)';
+
       try {
         const headers = { 'Content-Type': 'application/json' };
         if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
@@ -1526,10 +1528,31 @@
             forma_pagto: formaPagtoMesa,
             parcelas: parc,
             taxa_aplicada: 0.0,
-            valor_total_pago: totalPago
+            valor_total_pago: totalPago,
+            solicitante: nomeGarcom,
+            vendedor: nomeGarcom
           })
         });
       } catch (e) {}
+
+      // Atualiza pedidos reais em cache local garantindo sincronização imediata
+      try {
+        let pReais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
+        if (Array.isArray(pReais)) {
+          let mudouLocal = false;
+          pReais.forEach(pr => {
+            if (pr.identificacao && pr.identificacao.includes(mesaAtiva) && pr.pagto === 'Em Aberto (Mesa)') {
+              pr.pagto = formaPagtoMesa;
+              pr.solicitante = nomeGarcom;
+              pr.vendedor = nomeGarcom;
+              mudouLocal = true;
+            }
+          });
+          if (mudouLocal) {
+            localStorage.setItem('nalim_pedidos_reais', JSON.stringify(pReais));
+          }
+        }
+      } catch (errLocal) {}
 
       mesasConsumoState[mesaAtiva] = {
         status: 'LIVRE',
