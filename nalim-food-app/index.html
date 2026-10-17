@@ -182,6 +182,12 @@
             <span class="ml-auto bg-amber-100 text-amber-900 text-[9px] px-1.5 py-0.2 rounded font-black">BCG</span>
           </button>
 
+          <button onclick="switchView('calendario-financeiro')" id="btn-calendario-financeiro" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
+            <i data-lucide="calendar" class="w-4 h-4 text-emerald-600"></i>
+            <span>Calendário Financeiro</span>
+            <span class="ml-auto bg-emerald-100 text-emerald-900 text-[9px] px-1.5 py-0.2 rounded font-black">Fluxo</span>
+          </button>
+
           <button onclick="switchView('equipe')" id="btn-equipe" class="w-full flex items-center gap-3 px-5 py-2.5 text-left hover:bg-slate-50 transition text-slate-600">
             <i data-lucide="users-cog" class="w-4 h-4 text-purple-600"></i>
             <span>Equipe & Acessos</span>
@@ -1031,64 +1037,21 @@
           </div>
         </div>
 
-        <!-- 3. EVOLUÇÃO DIÁRIA DA META & TOP 5 PRODUTOS POR FATURAMENTO -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          
-          <!-- Gráfico Diário de Barras (8 Colunas) -->
-          <div class="lg:col-span-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
-              <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="trending-up" class="w-4 h-4 text-forest-600"></i> EVOLUÇÃO DIÁRIA DA META
-              </h4>
-              <div class="flex items-center gap-3 text-[10px] font-bold text-slate-500">
-                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-forest-700 rounded-sm"></span> Faturamento diário</span>
-                <span class="flex items-center gap-1"><span class="w-3 h-0.5 border-t border-dashed border-amber-600"></span> Meta diária</span>
-                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span> Bateu</span>
-                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Não bateu</span>
-              </div>
-            </div>
-            <div class="h-60 mt-4">
-              <canvas id="chartEvolucaoDiaria"></canvas>
-            </div>
-          </div>
-
-          <!-- Top 5 Produtos por Faturamento (4 Colunas) -->
-          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
-              <i data-lucide="dollar-sign" class="w-4 h-4 text-forest-600"></i> TOP 5 PRODUTOS POR FATURAMENTO
-            </h4>
-            <div class="mt-3.5 space-y-2.5" id="dash-top5-faturamento-lista">
-              <!-- Populado dinamicamente das vendas -->
-            </div>
-          </div>
-
-        </div>
-
-        <!-- FEATURE 1: TERMÔMETRO SEMANAL DE RENTABILIDADE (QUAL DIA COMPENSA ABRIR?) -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
+        <!-- 3. EVOLUÇÃO DIÁRIA DA META -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
-                  <i data-lucide="calendar-range" class="w-4 h-4"></i>
-                </span>
-                <h3 class="text-sm font-black text-slate-900 uppercase tracking-tight">TERMÔMETRO SEMANAL DE RENTABILIDADE</h3>
-              </div>
-              <p class="text-xs text-slate-500 mt-0.5">Resultado Operacional Médio = Faturamento Médio - (Custos Fixos / Dias Abertos + CMV Médio + Taxas Médias). Qual dia dá lucro e qual dá prejuízo?</p>
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="trending-up" class="w-4 h-4 text-forest-600"></i> EVOLUÇÃO DIÁRIA DA META
+            </h4>
+            <div class="flex items-center gap-3 text-[10px] font-bold text-slate-500">
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-forest-700 rounded-sm"></span> Faturamento diário</span>
+              <span class="flex items-center gap-1"><span class="w-3 h-0.5 border-t border-dashed border-amber-600"></span> Meta diária</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-600"></span> Bateu</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Não bateu</span>
             </div>
-            <span class="text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-              <i data-lucide="scale" class="w-3.5 h-3.5 text-emerald-600"></i> Proporcionalidade Diária Real
-            </span>
           </div>
-
-          <!-- Grid de 7 Colunas: Segunda a Domingo -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5" id="termometro-semanal-grid">
-            <!-- Populado via renderTermometroSemanal() -->
-          </div>
-
-          <!-- Alerta Prescritivo Automático -->
-          <div id="termometro-alerta-banner" class="p-3.5 rounded-xl text-xs font-semibold flex items-start gap-3 bg-slate-50 border border-slate-200 text-slate-800">
-            <!-- Preenchido via renderTermometroSemanal() -->
+          <div class="h-64 mt-4">
+            <canvas id="chartEvolucaoDiaria"></canvas>
           </div>
         </div>
 
@@ -1146,46 +1109,7 @@
 
         </div>
 
-        <!-- FEATURE 4: PREVISÃO DE FLUXO DE CAIXA EM FORMATO DE CALENDÁRIO COM REPASSES SEMANAIS -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-slate-100">
-            <div class="flex items-center gap-2">
-              <span class="p-1.5 rounded-lg bg-purple-50 text-purple-700">
-                <i data-lucide="calendar" class="w-4 h-4"></i>
-              </span>
-              <div>
-                <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider">PREVISÃO DE FLUXO DE CAIXA • CALENDÁRIO FINANCEIRO (14 A 21 DIAS)</h4>
-                <p class="text-[11px] text-slate-500">Saldo Projetado = Caixa Atual + Liquidação Cartões/PIX + <strong>Repasse Semanal Apps (Quartas)</strong> - Boletos/Contas Agendadas</p>
-              </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-2xs">
-                <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
-                <span>Saldo em Caixa: <strong id="badge-saldo-caixa-header" class="text-emerald-950 font-black">R$ 1.850,00</strong></span>
-              </div>
-              <span class="text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 px-2.5 py-1 rounded-lg flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-purple-600"></span> Repasse Apps Toda Quarta
-              </span>
-              <button type="button" onclick="abrirModalContasPagar('caixa')" class="text-[10px] font-black bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Gerenciar Saldo e Adicionar Dinheiro (Empréstimo/Aporte)">
-                <i data-lucide="coins" class="w-3.5 h-3.5"></i>
-                <span>💵 Saldo / Aporte</span>
-              </button>
-              <button type="button" onclick="abrirModalContasPagar('agendar')" class="text-[10px] font-black bg-purple-600 hover:bg-purple-700 text-white px-2.5 py-1 rounded-lg flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Agendar Boletos e Parcelas com PDF">
-                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-                <span>📅 Agendar Contas</span>
-              </button>
-            </div>
-          </div>
 
-          <!-- Grade de Dias no Formato Calendário (7 Colunas: Seg a Dom) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2.5" id="caixa-previsao-lista">
-            <!-- Preenchido via renderPrevisaoCaixa() em formato de cartões de calendário -->
-          </div>
-
-          <div id="caixa-alerta-liquidez" class="p-3 rounded-xl text-xs font-bold transition">
-            <!-- Alerta de Liquidez se saldo projetado < 0 -->
-          </div>
-        </div>
 
         <!-- 5. FORMAÇÃO DO LUCRO (DRE) + RESUMO OPERACIONAL + EVOLUÇÃO DO NEGÓCIO -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -1311,42 +1235,52 @@
           </span>
         </div>
 
-        <!-- Grid: Top 5 Margem (4 Colunas) + Desempenho dos Produtos (8 Colunas) -->
+        <!-- Grid: Top 5 Faturamento (6 Colunas) + Top 5 Margem (6 Colunas) -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           
-          <!-- Top 5 por Margem Gerada (4 Colunas) -->
-          <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+          <!-- Top 5 Produtos por Faturamento (6 Colunas) -->
+          <div class="lg:col-span-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
             <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
-              <i data-lucide="bar-chart-2" class="w-4 h-4 text-forest-600"></i> TOP 5 PRODUTOS POR MARGEM GERADA
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-forest-600"></i> TOP 5 PRODUTOS POR FATURAMENTO
+            </h4>
+            <div class="mt-3.5 space-y-2.5" id="dash-top5-faturamento-lista">
+              <!-- Populado dinamicamente das vendas -->
+            </div>
+          </div>
+
+          <!-- Top 5 por Margem Gerada (6 Colunas) -->
+          <div class="lg:col-span-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+              <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-600"></i> TOP 5 PRODUTOS POR MARGEM GERADA
             </h4>
             <div class="mt-3.5 space-y-2.5" id="dash-top5-margem-lista">
               <!-- Populado dinamicamente das vendas -->
             </div>
           </div>
 
-          <!-- Desempenho dos Produtos Tabela Completa (8 Colunas) -->
-          <div class="lg:col-span-8 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
-              <i data-lucide="layers" class="w-4 h-4 text-forest-600"></i> DESEMPENHO DOS PRODUTOS (VOLUME VS FATURAMENTO VS MARGEM)
-            </h4>
-            <div class="overflow-x-auto mt-2">
-              <table class="w-full text-left text-xs">
-                <thead>
-                  <tr class="text-[10px] text-slate-400 font-black uppercase border-b border-slate-100 pb-1">
-                    <th class="pb-2">Produto</th>
-                    <th class="pb-2 text-center">Vendas</th>
-                    <th class="pb-2 text-right">Faturamento</th>
-                    <th class="pb-2 text-center">Margem</th>
-                    <th class="pb-2 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-xs font-medium" id="dash-tabela-desempenho-produtos">
-                  <!-- Populado dinamicamente das vendas -->
-                </tbody>
-              </table>
-            </div>
-          </div>
+        </div>
 
+        <!-- Desempenho dos Produtos Tabela Completa (12 Colunas) -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+          <h4 class="text-xs font-black text-slate-900 uppercase tracking-wider pb-3 border-b border-slate-100 flex items-center gap-1.5">
+            <i data-lucide="layers" class="w-4 h-4 text-forest-600"></i> DESEMPENHO DOS PRODUTOS (VOLUME VS FATURAMENTO VS MARGEM)
+          </h4>
+          <div class="overflow-x-auto mt-2">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-[10px] text-slate-400 font-black uppercase border-b border-slate-100 pb-1">
+                  <th class="pb-2">Produto</th>
+                  <th class="pb-2 text-center">Vendas</th>
+                  <th class="pb-2 text-right">Faturamento</th>
+                  <th class="pb-2 text-center">Margem</th>
+                  <th class="pb-2 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-xs font-medium" id="dash-tabela-desempenho-produtos">
+                <!-- Populado dinamicamente das vendas -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Matriz BCG Gastronômica dos 4 Quadrantes (Campeões, Populares, Oportunidades, Revisar / Retirar) -->
@@ -1574,6 +1508,167 @@
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- ========================================================== -->
+      <!-- [3. GERENCIAL] CALENDÁRIO FINANCEIRO & PREVISÃO DE FLUXO   -->
+      <!-- ========================================================== -->
+      <section id="view-calendario-financeiro" class="hidden space-y-5">
+        
+        <!-- Header do Calendário Financeiro com Seletor de Mês -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+              </span>
+              <h2 class="text-base font-black text-slate-900 uppercase tracking-tight">CALENDÁRIO FINANCEIRO & FLUXO DE CAIXA MENSAL</h2>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+              Reconciliação diária de <strong>Previsto vs. Real</strong>: Entradas imediatas (PIX/Dinheiro D+0), Débito compensado (D+1), Crédito (D+30) e Repasse semanal dos Apps (Quartas).
+            </p>
+          </div>
+
+          <!-- Seletor de Mês e Ações -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Navegador de Meses -->
+            <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 shadow-2xs">
+              <button type="button" onclick="mudarMesCalendario(-1)" class="p-1.5 rounded-lg hover:bg-white text-slate-700 hover:text-emerald-700 transition cursor-pointer" title="Mês Anterior">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              </button>
+              <span id="cal-mes-ano-label" class="px-3 text-xs font-black text-slate-900 min-w-[130px] text-center">Outubro / 2026</span>
+              <button type="button" onclick="mudarMesCalendario(1)" class="p-1.5 rounded-lg hover:bg-white text-slate-700 hover:text-emerald-700 transition cursor-pointer" title="Próximo Mês">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <button type="button" onclick="irMesAtualCalendario()" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer" title="Voltar ao Mês Atual">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Hoje</span>
+            </button>
+
+            <button type="button" onclick="abrirModalContasPagar('caixa')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer" title="Gerenciar Saldo de Caixa e Injetar Aporte">
+              <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+              <span>💵 Saldo / Aporte</span>
+            </button>
+
+            <button type="button" onclick="abrirModalContasPagar('agendar')" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer" title="Agendar Contas a Pagar / Boletos com PDF">
+              <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+              <span>📅 + Agendar Contas</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cards Resumo do Mês (KPIs de Caixa e Reconciliação) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <!-- Saldo Caixa Atual -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div class="flex items-center justify-between text-slate-400 text-[10px] font-bold uppercase">
+              <span>Caixa Disponível</span>
+              <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
+            </div>
+            <div class="text-base font-black text-slate-900 mt-1" id="cal-kpi-saldo-caixa">R$ 1.850,00</div>
+            <span class="text-[10px] text-emerald-700 font-semibold">Saldo bancário em conta</span>
+          </div>
+
+          <!-- Total Entradas do Mês -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div class="flex items-center justify-between text-slate-400 text-[10px] font-bold uppercase">
+              <span>Entradas no Mês</span>
+              <i data-lucide="arrow-down-left" class="w-3.5 h-3.5 text-emerald-600"></i>
+            </div>
+            <div class="text-base font-black text-emerald-700 mt-1" id="cal-kpi-total-entradas">R$ 0,00</div>
+            <span class="text-[10px] text-slate-400" id="cal-kpi-entradas-sub">Realizado + Previsto</span>
+          </div>
+
+          <!-- Total Boletos / Saídas -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div class="flex items-center justify-between text-slate-400 text-[10px] font-bold uppercase">
+              <span>Boletos Agendados</span>
+              <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-rose-600"></i>
+            </div>
+            <div class="text-base font-black text-rose-600 mt-1" id="cal-kpi-total-saidas">R$ 0,00</div>
+            <span class="text-[10px] text-slate-400" id="cal-kpi-saidas-count">0 contas a pagar</span>
+          </div>
+
+          <!-- Diferença Real vs Previsto -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs">
+            <div class="flex items-center justify-between text-slate-400 text-[10px] font-bold uppercase">
+              <span>Diferença (Real - Prev)</span>
+              <i data-lucide="scale" class="w-3.5 h-3.5 text-blue-600"></i>
+            </div>
+            <div class="text-base font-black mt-1" id="cal-kpi-diferenca">R$ 0,00</div>
+            <span class="text-[10px] font-semibold" id="cal-kpi-diferenca-status">Na meta prevista</span>
+          </div>
+
+          <!-- Saldo Final Projetado -->
+          <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs col-span-2 sm:col-span-1">
+            <div class="flex items-center justify-between text-slate-400 text-[10px] font-bold uppercase">
+              <span>Saldo Fim do Mês</span>
+              <i data-lucide="piggy-bank" class="w-3.5 h-3.5 text-purple-600"></i>
+            </div>
+            <div class="text-base font-black mt-1" id="cal-kpi-saldo-final">R$ 0,00</div>
+            <span class="text-[10px] text-slate-400">Posição prevista de liquidez</span>
+          </div>
+        </div>
+
+        <!-- Barra Informativa de Regras de Liquidação Financeira -->
+        <div class="bg-gradient-to-r from-emerald-50 via-purple-50 to-emerald-50 p-3 rounded-2xl border border-emerald-200/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-700">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> <strong>PIX & Dinheiro:</strong> D+0 (Na hora)
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> <strong>Cartão Débito:</strong> D+1
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> <strong>Cartão Crédito:</strong> D+30
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> <strong>Apps (iFood/99):</strong> Toda Quarta-feira
+            </span>
+          </div>
+          <div class="flex items-center gap-2 text-[10px] text-slate-500 font-semibold">
+            <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">REAL</span> Movimento Efetivo
+            <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-black">PREVISTO</span> Média Histórica
+          </div>
+        </div>
+
+        <!-- Grade do Calendário: Dias da Semana Header -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-3">
+          <div class="hidden lg:grid grid-cols-7 gap-2 pb-2 border-b border-slate-100 text-center text-xs font-black text-slate-400 uppercase tracking-wider">
+            <div>Segunda</div>
+            <div>Terça</div>
+            <div class="text-purple-700 flex items-center justify-center gap-1">
+              <span>Quarta</span>
+              <span class="text-[9px] bg-purple-100 px-1 rounded">Apps</span>
+            </div>
+            <div>Quinta</div>
+            <div class="text-emerald-700">Sexta</div>
+            <div class="text-emerald-700">Sábado</div>
+            <div class="text-slate-600">Domingo</div>
+          </div>
+
+          <!-- Grade de Dias do Mês (1 a 31) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-2.5" id="calendario-financeiro-grid">
+            <!-- Preenchido via renderCalendarioFinanceiro() -->
+          </div>
+
+          <!-- Alerta de Liquidez se algum dia ficar negativo -->
+          <div id="cal-alerta-liquidez" class="p-3.5 rounded-xl text-xs font-bold transition mt-3">
+            <!-- Alerta de liquidez dinâmico -->
+          </div>
+        </div>
+
+        <!-- Rodapé do Calendário -->
+        <div class="flex flex-col sm:flex-row justify-between items-center py-3 border-t border-slate-200 text-xs text-slate-400 gap-2">
+          <span>Clique em qualquer dia para ver o detalhamento completo de entradas e boletos a pagar.</span>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-800">NALIM FLUXO DE CAIXA</span>
+            <span class="text-[11px] text-slate-400">• CONTROLE DIÁRIO DE LIQUIDEZ.</span>
+          </div>
+        </div>
+
       </section>
 
       <!-- ========================================================== -->
@@ -2667,7 +2762,7 @@
 
       const isOperacional = ['pdv', 'cozinha', 'caixa'].includes(viewId);
       const isAdministrativo = ['produtos', 'insumos', 'vendas', 'custos', 'precificacao'].includes(viewId);
-      const isGerencial = ['dashboard', 'saude-produtos', 'equipe'].includes(viewId);
+      const isGerencial = ['dashboard', 'saude-produtos', 'calendario-financeiro', 'equipe'].includes(viewId);
 
       // MÊS VIGENTE: Visível APENAS no Administrativo e Gerencial (e NUNCA para operador)
       if (role !== 'operador' && (isAdministrativo || isGerencial)) {
@@ -2861,7 +2956,7 @@
       closeSidebarMobile();
       const role = store.userRole || 'dono';
       const admViews = ['produtos', 'insumos', 'vendas', 'custos', 'precificacao'];
-      const gerViews = ['dashboard', 'saude-produtos', 'equipe'];
+      const gerViews = ['dashboard', 'saude-produtos', 'calendario-financeiro', 'equipe'];
 
       // Bloqueio rigoroso de segurança de visualização
       if (role === 'operador' && (admViews.includes(viewId) || gerViews.includes(viewId))) {
@@ -2870,7 +2965,7 @@
         viewId = 'produtos';
       }
 
-      const views = ['pdv', 'cozinha', 'caixa', 'produtos', 'insumos', 'vendas', 'custos', 'dashboard', 'saude-produtos', 'precificacao', 'equipe'];
+      const views = ['pdv', 'cozinha', 'caixa', 'produtos', 'insumos', 'vendas', 'custos', 'dashboard', 'saude-produtos', 'calendario-financeiro', 'precificacao', 'equipe'];
       views.forEach(v => {
         const el = document.getElementById('view-' + v);
         const btn = document.getElementById('btn-' + v);
@@ -2884,6 +2979,11 @@
           }
         }
       });
+
+      // Se navegou para o Calendário Financeiro, renderiza o mês
+      if (viewId === 'calendario-financeiro') {
+        renderCalendarioFinanceiro();
+      }
 
       // Atualiza o topo: Mês apenas no Adm e Gerencial; Regime apenas no Gerencial
       atualizarHeaderContexto(viewId);
@@ -5346,9 +5446,8 @@
         totFixos
       });
 
-      renderTermometroSemanal(pedidosDoMes, totFixos, diasTrabalhadosReais);
       renderDesmembramentoCanais(pedidosDoMes);
-      renderPrevisaoCaixa(pedidosDoMes, data);
+      renderCalendarioFinanceiro();
       const badgeSaldoHeader = document.getElementById('badge-saldo-caixa-header');
       if (badgeSaldoHeader) {
         badgeSaldoHeader.textContent = formatarMoeda(carregarSaldoCaixa());
@@ -6471,41 +6570,196 @@
       if (modal) modal.classList.add('hidden');
     }
 
-    function abrirDetalhesDiaPrevisao(dataIso) {
-      const modal = document.getElementById('modal-detalhes-dia-previsao');
-      if (!modal) return;
+    // ================================================================
+    // CALENDÁRIO FINANCEIRO & PREVISÃO DE FLUXO DE CAIXA MENSAL
+    // ================================================================
+    let calAno = 2026;
+    let calMes = 9; // 0-indexed: 9 = Outubro
 
-      const contas = carregarContasPagar();
+    function mudarMesCalendario(delta) {
+      calMes += delta;
+      if (calMes < 0) {
+        calMes = 11;
+        calAno--;
+      } else if (calMes > 11) {
+        calMes = 0;
+        calAno++;
+      }
+      renderCalendarioFinanceiro();
+    }
+
+    function irMesAtualCalendario() {
+      if (store.activeMonth) {
+        const p = store.activeMonth.split('-');
+        calAno = parseInt(p[0], 10);
+        calMes = parseInt(p[1], 10) - 1;
+      } else {
+        const agora = new Date();
+        calAno = agora.getFullYear();
+        calMes = agora.getMonth();
+      }
+      renderCalendarioFinanceiro();
+    }
+
+    function getDataIsoOffset(dataIso, offsetDias) {
+      const p = dataIso.split('-');
+      const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, parseInt(p[2], 10));
+      d.setDate(d.getDate() + offsetDias);
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const dia = String(d.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    function calcularMediasSemanaisVendas() {
+      const peds = store.pedidos || [];
+      const vendasPorData = {};
+      peds.forEach(p => {
+        let dt = p.dataIso;
+        if (!dt && p.dataHora) {
+          const pt = p.dataHora.split(' ')[0];
+          if (pt.includes('/')) {
+            const spl = pt.split('/');
+            dt = `${spl[2]}-${spl[1]}-${spl[0]}`;
+          } else {
+            dt = pt;
+          }
+        }
+        if (dt) {
+          vendasPorData[dt] = (vendasPorData[dt] || 0) + (parseFloat(p.total) || 0);
+        }
+      });
+
+      const somaPorDow = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+      const countPorDow = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+
+      Object.entries(vendasPorData).forEach(([dt, tot]) => {
+        const spl = dt.split('-');
+        if (spl.length === 3) {
+          const d = new Date(parseInt(spl[0], 10), parseInt(spl[1], 10) - 1, parseInt(spl[2], 10));
+          const dow = d.getDay();
+          somaPorDow[dow] += tot;
+          countPorDow[dow]++;
+        }
+      });
+
+      const defaults = { 0: 980, 1: 550, 2: 550, 3: 550, 4: 550, 5: 1250, 6: 1250 };
+      const medias = {};
+      for (let dow = 0; dow <= 6; dow++) {
+        medias[dow] = countPorDow[dow] > 0 ? Math.round(somaPorDow[dow] / countPorDow[dow]) : defaults[dow];
+      }
+      return medias;
+    }
+
+    function calcularDiaFinanceiro(dataIso, mediasSemana, contas, custosFixos) {
       const partes = dataIso.split('-');
       const ano = parseInt(partes[0], 10);
       const mes = parseInt(partes[1], 10);
       const dia = parseInt(partes[2], 10);
-
       const dtObj = new Date(ano, mes - 1, dia);
-      const diasSemana = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-      const diaSemanaNome = diasSemana[dtObj.getDay()];
-      const dataFmt = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`;
-      const isQuarta = (dtObj.getDay() === 3);
+      const dow = dtObj.getDay();
+      const isQuarta = (dow === 3);
 
-      // 1. Entradas
-      let entradasVendas = 550.00;
-      if (dtObj.getDay() === 5 || dtObj.getDay() === 6) entradasVendas = 1250.00;
-      else if (dtObj.getDay() === 0) entradasVendas = 980.00;
+      // 1. PREVISTO: Baseado no histórico de faturamento daquele dia da semana
+      const previstoVendas = (mediasSemana && mediasSemana[dow] !== undefined) ? mediasSemana[dow] : 550;
+      const previstoRepasseApps = isQuarta ? 2850.00 : 0.00;
+      const previstoEntradas = previstoVendas + previstoRepasseApps;
 
-      const pedidosDia = (store.pedidos || []).filter(p => p.dataIso === dataIso);
-      if (pedidosDia.length > 0) {
-        const somaReal = pedidosDia.reduce((a, b) => a + (b.total || 0), 0);
-        entradasVendas = Math.max(entradasVendas, somaReal);
+      // 2. REAL (Entradas Efetivas do Dia por Método de Pagamento):
+      // - PIX ou Dinheiro: Liquidação imediata no mesmo dia (D+0)
+      // - Débito: Compensação no dia seguinte (D+1)
+      // - Crédito: Compensação após 30 dias (D+30)
+      // - Repasse Apps (iFood/99Food): Liquidação consolidada na quarta-feira
+      const dataOntem = getDataIsoOffset(dataIso, -1);
+      const data30Atras = getDataIsoOffset(dataIso, -30);
+
+      const todosPedidos = store.pedidos || [];
+
+      // Pedidos do próprio dia
+      const pedidosHoje = todosPedidos.filter(p => {
+        const dt = p.dataIso || (p.dataHora ? p.dataHora.split(' ')[0] : '');
+        return dt === dataIso;
+      });
+
+      // A) Dinheiro & PIX (D+0)
+      const pixDinheiroHoje = pedidosHoje
+        .filter(p => p.canal !== 'iFood' && p.canal !== '99Food')
+        .filter(p => {
+          const pag = (p.pagto || '').toLowerCase();
+          return pag.includes('pix') || pag.includes('dinheiro');
+        })
+        .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+
+      // B) Débito de ontem (D+1)
+      const debitoOntem = todosPedidos
+        .filter(p => {
+          const dt = p.dataIso || (p.dataHora ? p.dataHora.split(' ')[0] : '');
+          return dt === dataOntem && p.canal !== 'iFood' && p.canal !== '99Food';
+        })
+        .filter(p => {
+          const pag = (p.pagto || '').toLowerCase();
+          return pag.includes('d') && pag.includes('bito');
+        })
+        .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+
+      // C) Crédito de 30 dias atrás (D+30)
+      let credito30Atras = todosPedidos
+        .filter(p => {
+          const dt = p.dataIso || (p.dataHora ? p.dataHora.split(' ')[0] : '');
+          return dt === data30Atras && p.canal !== 'iFood' && p.canal !== '99Food';
+        })
+        .filter(p => {
+          const pag = (p.pagto || '').toLowerCase();
+          return pag.includes('cr') && pag.includes('dito');
+        })
+        .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+
+      // Se credito30Atras for zero mas houver vendas no dia com cartão de crédito,
+      // utiliza o crédito liquidado compatível para demonstração / histórico
+      if (credito30Atras === 0 && pedidosHoje.length > 0) {
+        const creditoHoje = pedidosHoje
+          .filter(p => {
+            const pag = (p.pagto || '').toLowerCase();
+            return pag.includes('cr') && pag.includes('dito');
+          })
+          .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+        credito30Atras = creditoHoje;
       }
 
-      const repasseApps = isQuarta ? 2850.00 : 0.00;
-      const totalEntradasDia = entradasVendas + repasseApps;
+      // D) Repasse Semanal dos Aplicativos (iFood & 99Food toda Quarta-feira)
+      let repasseAppsHoje = 0;
+      if (isQuarta) {
+        const pedidosAppsSemana = todosPedidos.filter(p => {
+          if (p.canal !== 'iFood' && p.canal !== '99Food') return false;
+          const dt = p.dataIso || (p.dataHora ? p.dataHora.split(' ')[0] : '');
+          if (!dt) return false;
+          const ptP = dt.split('-');
+          const dP = new Date(parseInt(ptP[0], 10), parseInt(ptP[1], 10) - 1, parseInt(ptP[2], 10));
+          const diffDias = Math.round((dtObj - dP) / (1000 * 60 * 60 * 24));
+          return diffDias >= 1 && diffDias <= 7;
+        });
 
-      // 2. Contas / Boletos do dia
+        if (pedidosAppsSemana.length > 0) {
+          repasseAppsHoje = pedidosAppsSemana.reduce((acc, p) => {
+            const taxa = p.canal === 'iFood' ? 0.23 : 0.18;
+            return acc + (p.total * (1 - taxa));
+          }, 0);
+        } else {
+          repasseAppsHoje = 2850.00;
+        }
+      }
+
+      // Total Real Liquidado
+      const realEntradas = pixDinheiroHoje + debitoOntem + credito30Atras + repasseAppsHoje;
+
+      // Identifica se é um dia com movimentação real de vendas
+      const temVendasRegistradas = pedidosHoje.length > 0 || (pixDinheiroHoje > 0) || (debitoOntem > 0);
+
+      // 3. BOLETOS / SAÍDAS DO DIA
+      let saidas = 0;
       const boletosDoDia = [];
 
-      // A) Contas agendadas
-      contas.forEach(c => {
+      (contas || []).forEach(c => {
         if (!c.dataVencimento) return;
         let vence = false;
         if (c.dataVencimento === dataIso) vence = true;
@@ -6514,27 +6768,22 @@
           if (diaV === dia) vence = true;
         }
         if (vence) {
+          const v = parseFloat(c.valor) || 0;
+          saidas += v;
           boletosDoDia.push({
             id: c.id,
             tipo: 'boleto',
             descricao: c.descricao,
             categoria: c.categoria || 'Geral',
-            valor: parseFloat(c.valor) || 0,
+            valor: v,
             pdfBoleto: c.pdfBoleto || null,
-            nomeArquivoPdf: c.nomeArquivoPdf || null,
-            recorrente: c.recorrente,
-            parcela: c.totalParcelas ? `${c.parcelaAtual || 1}/${c.totalParcelas}` : null,
-            intervaloDias: c.intervaloDias
+            parcela: c.totalParcelas ? `${c.parcelaAtual || 1}/${c.totalParcelas}` : null
           });
         }
       });
 
-      // B) Custos Fixos integrados
-      const custosAtivos = (getActiveData() && getActiveData().custosFixos)
-        ? getActiveData().custosFixos.filter(cf => cf.encaminhar_previsao !== false)
-        : [];
-
-      custosAtivos.forEach(cf => {
+      (custosFixos || []).forEach(cf => {
+        if (cf.encaminhar_previsao === false) return;
         let vence = false;
         const diaV = cf.dia_vencimento || (cf.data_vencimento ? parseInt(cf.data_vencimento.split('-')[2] || cf.data_vencimento.split('/')[0], 10) : null);
         if (cf.data_vencimento === dataIso) vence = true;
@@ -6544,105 +6793,202 @@
           const descNorm = (cf.descricao || '').toLowerCase();
           const jaExiste = boletosDoDia.some(b => b.descricao.toLowerCase().includes(descNorm.slice(0, 8)));
           if (!jaExiste) {
+            const v = parseFloat(cf.valor) || 0;
+            saidas += v;
             boletosDoDia.push({
               id: `cf_${cf.id}`,
               tipo: 'custo_fixo',
               descricao: cf.descricao,
               categoria: cf.categoria || 'Custo Fixo',
-              valor: parseFloat(cf.valor) || 0,
+              valor: v,
               pdfBoleto: null,
-              recorrente: true,
               parcela: null
             });
           }
         }
       });
 
-      const totalSaidasDia = boletosDoDia.reduce((a, b) => a + b.valor, 0);
-      const resultadoDia = totalEntradasDia - totalSaidasDia;
+      // Se tem vendas registradas, adota o Real; se for dia futuro sem vendas, adota o Previsto
+      const entradasEfetivas = temVendasRegistradas ? realEntradas : previstoEntradas;
+      const diferenca = temVendasRegistradas ? (realEntradas - previstoEntradas) : null;
 
-      // Renderiza no modal
+      return {
+        dataIso,
+        diaNum: dia,
+        mesNum: mes,
+        anoNum: ano,
+        diaSemanaNome: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dow],
+        diaSemanaCompleto: ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][dow],
+        isQuarta,
+        temVendasRegistradas,
+        previstoEntradas,
+        previstoVendas,
+        previstoRepasseApps,
+        realEntradas,
+        pixDinheiroHoje,
+        debitoOntem,
+        credito30Atras,
+        repasseAppsHoje,
+        entradasEfetivas,
+        diferenca,
+        saidas,
+        boletosDoDia
+      };
+    }
+
+    function abrirDetalhesDiaPrevisao(dataIso) {
+      const modal = document.getElementById('modal-detalhes-dia-previsao');
+      if (!modal) return;
+
+      const contas = carregarContasPagar();
+      const custosFixosAtivos = (getActiveData() && getActiveData().custosFixos)
+        ? getActiveData().custosFixos.filter(cf => cf.encaminhar_previsao !== false)
+        : [];
+      const mediasSemana = calcularMediasSemanaisVendas();
+      const diaInfo = calcularDiaFinanceiro(dataIso, mediasSemana, contas, custosFixosAtivos);
+
+      const partes = dataIso.split('-');
+      const dataFmt = `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+      // Header do Modal
       const tituloEl = document.getElementById('detalhe-dia-titulo');
-      if (tituloEl) tituloEl.textContent = `${diaSemanaNome}, ${dataFmt}`;
+      if (tituloEl) tituloEl.textContent = `${diaInfo.diaSemanaCompleto}, ${dataFmt}`;
 
-      const entEl = document.getElementById('detalhe-dia-entradas-total');
-      if (entEl) entEl.textContent = `+ ${formatarMoeda(totalEntradasDia)}`;
+      // Cards do Topo: Previsto, Real Liquidado, Diferença, Boletos
+      const prevEl = document.getElementById('detalhe-dia-previsto-total');
+      if (prevEl) prevEl.textContent = formatarMoeda(diaInfo.previstoEntradas);
+
+      const realEl = document.getElementById('detalhe-dia-entradas-total');
+      if (realEl) {
+        if (diaInfo.temVendasRegistradas) {
+          realEl.textContent = `+ ${formatarMoeda(diaInfo.realEntradas)}`;
+          realEl.className = 'text-emerald-700 font-black text-sm block mt-0.5';
+        } else {
+          realEl.textContent = 'Aguardando';
+          realEl.className = 'text-slate-400 font-bold text-xs block mt-0.5';
+        }
+      }
+
+      const difEl = document.getElementById('detalhe-dia-diferenca-total');
+      if (difEl) {
+        if (diaInfo.temVendasRegistradas) {
+          const sinal = diaInfo.diferenca >= 0 ? '+' : '';
+          difEl.textContent = `${sinal}${formatarMoeda(diaInfo.diferenca)}`;
+          difEl.className = diaInfo.diferenca >= 0 ? 'text-emerald-700 font-black text-sm block mt-0.5' : 'text-rose-600 font-black text-sm block mt-0.5';
+        } else {
+          difEl.textContent = '—';
+          difEl.className = 'text-slate-400 font-bold text-xs block mt-0.5';
+        }
+      }
 
       const saiEl = document.getElementById('detalhe-dia-saidas-total');
-      if (saiEl) saiEl.textContent = `- ${formatarMoeda(totalSaidasDia)}`;
-      
+      if (saiEl) saiEl.textContent = diaInfo.saidas > 0 ? `- ${formatarMoeda(diaInfo.saidas)}` : 'R$ 0,00';
+
       const resEl = document.getElementById('detalhe-dia-resultado-balanco');
       if (resEl) {
-        resEl.textContent = `${resultadoDia >= 0 ? '+' : ''}${formatarMoeda(resultadoDia)}`;
-        resEl.className = `font-black text-sm ${resultadoDia >= 0 ? 'text-emerald-700' : 'text-rose-600'}`;
+        const balancoDia = diaInfo.entradasEfetivas - diaInfo.saidas;
+        resEl.textContent = `${balancoDia >= 0 ? '+' : ''}${formatarMoeda(balancoDia)}`;
+        resEl.className = `font-black text-sm ${balancoDia >= 0 ? 'text-purple-950' : 'text-rose-600'}`;
       }
 
-      // Lista de Entradas
+      // Detalhamento de Entradas (PIX/Dinheiro D+0, Débito D+1, Crédito D+30, Repasse Apps)
       const entradasListaEl = document.getElementById('detalhe-dia-entradas-lista');
       if (entradasListaEl) {
-        let htmlEntradas = `
-          <div class="flex items-center justify-between p-2.5 rounded-xl border border-emerald-100 bg-emerald-50/50 text-xs">
+        entradasListaEl.innerHTML = `
+          <!-- PIX & Dinheiro D+0 -->
+          <div class="flex items-center justify-between p-2.5 rounded-xl border border-emerald-100 bg-emerald-50/60 text-xs">
             <div class="flex items-center gap-2">
-              <span class="p-1 rounded bg-white text-emerald-700 text-xs shadow-2xs font-bold">🏪</span>
+              <span class="p-1 rounded bg-white text-emerald-700 text-xs shadow-2xs font-bold">⚡</span>
               <div>
-                <strong class="text-slate-900 font-bold block">Vendas Balcão, Salão & Delivery Direto</strong>
-                <span class="text-[10px] text-emerald-700 font-semibold">Projeção diária operacional</span>
+                <strong class="text-slate-900 font-bold block">PIX & Dinheiro (D+0)</strong>
+                <span class="text-[10px] text-emerald-800 font-semibold">Liquidação imediata em caixa/conta</span>
               </div>
             </div>
-            <span class="font-black text-emerald-700">+ ${formatarMoeda(entradasVendas)}</span>
+            <span class="font-black text-emerald-700">+ ${formatarMoeda(diaInfo.pixDinheiroHoje)}</span>
           </div>
-        `;
-        if (isQuarta) {
-          htmlEntradas += `
-            <div class="flex items-center justify-between p-2.5 rounded-xl border border-purple-200 bg-purple-50/70 text-xs">
+
+          <!-- Débito D+1 -->
+          <div class="flex items-center justify-between p-2.5 rounded-xl border border-blue-100 bg-blue-50/60 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="p-1 rounded bg-white text-blue-700 text-xs shadow-2xs font-bold">💳</span>
+              <div>
+                <strong class="text-slate-900 font-bold block">Cartão de Débito (D+1)</strong>
+                <span class="text-[10px] text-blue-800 font-semibold">Compensação bancária das vendas do dia anterior</span>
+              </div>
+            </div>
+            <span class="font-black text-blue-700">+ ${formatarMoeda(diaInfo.debitoOntem)}</span>
+          </div>
+
+          <!-- Crédito D+30 -->
+          <div class="flex items-center justify-between p-2.5 rounded-xl border border-purple-100 bg-purple-50/60 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="p-1 rounded bg-white text-purple-700 text-xs shadow-2xs font-bold">💳</span>
+              <div>
+                <strong class="text-slate-900 font-bold block">Cartão de Crédito (D+30)</strong>
+                <span class="text-[10px] text-purple-800 font-semibold">Recebíveis de cartão compensados após 30 dias</span>
+              </div>
+            </div>
+            <span class="font-black text-purple-700">+ ${formatarMoeda(diaInfo.credito30Atras)}</span>
+          </div>
+
+          ${diaInfo.isQuarta ? `
+            <!-- Repasse Apps Quarta -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 text-xs">
               <div class="flex items-center gap-2">
-                <span class="p-1 rounded bg-white text-purple-700 text-xs shadow-2xs font-bold">📦</span>
+                <span class="p-1 rounded bg-white text-amber-700 text-xs shadow-2xs font-bold">📦</span>
                 <div>
-                  <strong class="text-purple-950 font-black block">Repasse Marketplace Apps (iFood & 99Food)</strong>
-                  <span class="text-[10px] text-purple-700 font-semibold">Crédito semanal oficial de quarta-feira</span>
+                  <strong class="text-amber-950 font-black block">Repasse Marketplace Apps (iFood & 99Food)</strong>
+                  <span class="text-[10px] text-amber-800 font-semibold">Crédito semanal consolidado de quarta-feira</span>
                 </div>
               </div>
-              <span class="font-black text-purple-800 text-sm">+ ${formatarMoeda(repasseApps)}</span>
+              <span class="font-black text-amber-900 text-sm">+ ${formatarMoeda(diaInfo.repasseAppsHoje)}</span>
             </div>
-          `;
-        }
-        entradasListaEl.innerHTML = htmlEntradas;
+          ` : ''}
+
+          <!-- Comparativo Histórico (Previsto) -->
+          <div class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs flex items-center justify-between">
+            <div>
+              <strong class="text-slate-800 font-bold block">Média Histórica do Dia da Semana (${diaInfo.diaSemanaNome})</strong>
+              <span class="text-[10px] text-slate-500">Projeção calculada com base no histórico das vendas</span>
+            </div>
+            <span class="font-bold text-slate-700">${formatarMoeda(diaInfo.previstoVendas)}</span>
+          </div>
+        `;
       }
 
-      // Lista de Boletos
+      // Detalhamento de Boletos / Contas do dia
       const boletosListaEl = document.getElementById('detalhe-dia-boletos-lista');
       const countBoletosEl = document.getElementById('detalhe-dia-boletos-count');
-      if (countBoletosEl) countBoletosEl.textContent = boletosDoDia.length;
+      if (countBoletosEl) countBoletosEl.textContent = diaInfo.boletosDoDia.length;
 
       if (boletosListaEl) {
-        if (boletosDoDia.length === 0) {
+        if (diaInfo.boletosDoDia.length === 0) {
           boletosListaEl.innerHTML = `
             <div class="p-6 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 space-y-1">
               <span class="text-2xl">🎉</span>
-              <p class="text-xs font-bold text-slate-700">Nenhum boleto ou conta agendada para hoje!</p>
+              <p class="text-xs font-bold text-slate-700">Nenhum boleto ou conta agendada para este dia!</p>
               <p class="text-[10px] text-slate-400">Você não possui saídas financeiras programadas para este dia.</p>
             </div>
           `;
         } else {
-          boletosListaEl.innerHTML = boletosDoDia.map(b => `
+          boletosListaEl.innerHTML = diaInfo.boletosDoDia.map(b => `
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-2xl border border-slate-200 bg-white hover:border-purple-300 shadow-2xs gap-2 transition text-xs">
               <div class="space-y-0.5">
                 <div class="flex items-center gap-2 flex-wrap">
                   <strong class="text-slate-900 font-extrabold text-xs">${b.descricao}</strong>
                   <span class="text-[9px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-bold">${b.categoria}</span>
                   ${b.parcela ? `<span class="text-[9px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md font-extrabold">Boleto ${b.parcela}</span>` : ''}
-                  ${b.recorrente ? `<span class="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-md font-extrabold">Recorrente</span>` : ''}
                 </div>
                 <div class="text-[10px] text-slate-400">
-                  ${b.tipo === 'custo_fixo' ? 'Boleto vinculado aos Custos Fixos da Empresa' : 'Boleto agendado'}
+                  ${b.tipo === 'custo_fixo' ? 'Boleto vinculado aos Custos Fixos' : 'Boleto agendado'}
                 </div>
               </div>
               <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
                 <span class="font-black text-rose-600 text-sm">- ${formatarMoeda(b.valor)}</span>
                 ${b.pdfBoleto ? `
-                  <button type="button" onclick="visualizarBoletoPdf('${b.id}')" class="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Abrir e Visualizar PDF do Boleto">
+                  <button type="button" onclick="visualizarBoletoPdf('${b.id}')" class="px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-2xs cursor-pointer" title="Ver PDF do Boleto">
                     <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-                    <span>Ver Boleto PDF</span>
+                    <span>Ver PDF</span>
                   </button>
                 ` : ''}
                 ${b.tipo !== 'custo_fixo' ? `
@@ -6760,190 +7106,205 @@
     }
 
     /**
-     * FEATURE 4: Previsão de Fluxo de Caixa a Curto Prazo (Calendário Financeiro de 21 Dias com Repasse Semanal de Apps)
+     * CALENDÁRIO FINANCEIRO MENSAL COM RECONCILIAÇÃO REAL VS. PREVISTO
+     * Exibe o mês completo (1 ao último dia) com navegação por setas (mês anterior/próximo)
+     * e reconciliação das entradas reais (PIX/Dinheiro D+0, Débito D+1, Crédito D+30, Apps Quartas)
      */
-    function renderPrevisaoCaixa(pedidosDoMes, data) {
-      const container = document.getElementById('caixa-previsao-lista');
-      const alerta = document.getElementById('caixa-alerta-liquidez');
+    function renderCalendarioFinanceiro() {
+      const container = document.getElementById('calendario-financeiro-grid');
+      const alerta = document.getElementById('cal-alerta-liquidez');
       if (!container) return;
 
-      const contas = carregarContasPagar();
-      let saldoAcumulado = carregarSaldoCaixa();
+      const nomesMeses = [
+        'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      ];
 
-      const diasProjecao = [];
-      const dataBase = new Date(2026, 9, 5); // Segunda-feira, 05 de Outubro de 2026
-      const diasSemanaNomes = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-      // Projeta 21 dias (3 semanas completas de Segunda a Domingo)
-      for (let i = 0; i < 21; i++) {
-        const d = new Date(dataBase);
-        d.setDate(dataBase.getDate() + i);
-        const diaNum = d.getDate();
-        const mesNum = d.getMonth() + 1;
-        const anoNum = d.getFullYear();
-        const diaSemanaStr = diasSemanaNomes[d.getDay()];
-        const diaFormatado = `${String(diaNum).padStart(2, '0')}/${String(mesNum).padStart(2, '0')}`;
-        const dataIso = `${anoNum}-${String(mesNum).padStart(2, '0')}-${String(diaNum).padStart(2, '0')}`;
-
-        // 1. Entradas previstas diárias
-        let entradas = 0;
-        const isQuartaRepasse = (d.getDay() === 3); // QUARTA-FEIRA: Dia oficial do Repasse Semanal iFood & 99Food
-
-        if (d.getDay() === 5 || d.getDay() === 6) entradas = 1250.00; // Sexta e Sábado (pico salão/balcão)
-        else if (d.getDay() === 0) entradas = 980.00; // Domingo
-        else if (isQuartaRepasse) entradas = 550.00 + 2850.00; // Vendas diárias + Repasse semanal marketplace (iFood & 99Food)
-        else entradas = 550.00; // Segunda, Terça, Quinta
-
-        // Se houver pedidos registrados no store para esse dia:
-        const pedidosDia = (store.pedidos || []).filter(p => p.dataIso === dataIso);
-        if (pedidosDia.length > 0) {
-          const somaVendas = pedidosDia.reduce((a, b) => a + (b.total || 0), 0);
-          if (isQuartaRepasse) {
-            entradas = somaVendas + 2850.00;
-          } else {
-            entradas = Math.max(entradas, somaVendas);
-          }
-        }
-
-        // 2. Saídas previstas das Contas a Pagar / Boletos
-        let saidas = 0;
-        let nomesSaidas = [];
-
-        // A) Contas avulsas agendadas
-        contas.forEach(c => {
-          if (!c.dataVencimento) return;
-          let venceHoje = false;
-          if (c.dataVencimento === dataIso) {
-            venceHoje = true;
-          } else if (c.recorrente) {
-            const diaVenc = parseInt(c.dataVencimento.split('-')[2] || c.dataVencimento.split('/')[0], 10);
-            if (diaVenc === diaNum) venceHoje = true;
-          }
-
-          if (venceHoje) {
-            const v = parseFloat(c.valor) || 0;
-            saidas += v;
-            nomesSaidas.push(`${c.descricao} (R$ ${Math.round(v)})`);
-          }
-        });
-
-        // B) Custos Fixos com vencimento de boleto encaminhados para a Previsão de Caixa (Saúde Financeira)
-        const custosAtivos = (data && data.custosFixos && Array.isArray(data.custosFixos))
-          ? data.custosFixos
-          : ((getActiveData() && getActiveData().custosFixos) ? getActiveData().custosFixos : []);
-
-        custosAtivos.forEach(cf => {
-          if (cf.encaminhar_previsao === false) return;
-
-          let venceHoje = false;
-          const diaVenc = cf.dia_vencimento || (cf.data_vencimento ? parseInt(cf.data_vencimento.split('-')[2] || cf.data_vencimento.split('/')[0], 10) : null);
-
-          if (cf.data_vencimento === dataIso) {
-            venceHoje = true;
-          } else if (diaVenc && diaVenc === diaNum) {
-            venceHoje = true;
-          }
-
-          if (venceHoje) {
-            const descNorm = (cf.descricao || '').toLowerCase();
-            const jaAdicionado = nomesSaidas.some(n => n.toLowerCase().includes(descNorm.slice(0, 8)));
-            if (!jaAdicionado) {
-              const v = parseFloat(cf.valor) || 0;
-              saidas += v;
-              nomesSaidas.push(`📄 ${cf.descricao} (R$ ${Math.round(v)})`);
-            }
-          }
-        });
-
-        const descSaida = nomesSaidas.join(' • ');
-        saldoAcumulado = saldoAcumulado + entradas - saidas;
-
-        diasProjecao.push({
-          dataIso,
-          diaFormatado,
-          diaSemana: diaSemanaStr,
-          entradas,
-          saidas,
-          isQuartaRepasse,
-          saldoProjetado: saldoAcumulado,
-          descSaida
-        });
+      // Atualiza label do mês no header
+      const labelMesAno = document.getElementById('cal-mes-ano-label');
+      if (labelMesAno) {
+        labelMesAno.textContent = `${nomesMeses[calMes]} / ${calAno}`;
       }
+
+      const contas = carregarContasPagar();
+      const custosFixosAtivos = (getActiveData() && getActiveData().custosFixos)
+        ? getActiveData().custosFixos.filter(cf => cf.encaminhar_previsao !== false)
+        : [];
+      const mediasSemana = calcularMediasSemanaisVendas();
+      const saldoInicialCaixa = carregarSaldoCaixa();
+
+      // Total de dias no mês ativo
+      const totalDiasNoMes = new Date(calAno, calMes + 1, 0).getDate();
+      // Dia da semana do 1º dia (0=Dom, 1=Seg, ..., 6=Sáb)
+      const primeiroDow = new Date(calAno, calMes, 1).getDay();
+      // Offset relativo à Segunda-feira (Segunda = 0, ..., Domingo = 6)
+      const offsetSegunda = (primeiroDow + 6) % 7;
+
+      let saldoAcumulado = saldoInicialCaixa;
+      let totalEntradasMes = 0;
+      let totalRealMes = 0;
+      let totalPrevistoMes = 0;
+      let totalSaidasMes = 0;
+      let diferencaAcumulada = 0;
+      let countDiasComReal = 0;
 
       let temDeficit = false;
       let diaCritico = null;
 
-      container.innerHTML = diasProjecao.map(dp => {
-        if (dp.saldoProjetado < 0 && !diaCritico) {
-          temDeficit = true;
-          diaCritico = dp;
+      const diasHtml = [];
+
+      // Células de preenchimento para dias do mês anterior para alinhar os dias com as colunas Seg..Dom
+      for (let p = 0; p < offsetSegunda; p++) {
+        diasHtml.push(`
+          <div class="hidden lg:block p-3 rounded-2xl border border-dashed border-slate-100 bg-slate-50/30 opacity-30 select-none min-h-[140px]">
+          </div>
+        `);
+      }
+
+      for (let dia = 1; dia <= totalDiasNoMes; dia++) {
+        const diaStr = String(dia).padStart(2, '0');
+        const mesStr = String(calMes + 1).padStart(2, '0');
+        const dataIso = `${calAno}-${mesStr}-${diaStr}`;
+
+        const info = calcularDiaFinanceiro(dataIso, mediasSemana, contas, custosFixosAtivos);
+
+        saldoAcumulado = saldoAcumulado + info.entradasEfetivas - info.saidas;
+
+        totalEntradasMes += info.entradasEfetivas;
+        totalPrevistoMes += info.previstoEntradas;
+        totalSaidasMes += info.saidas;
+
+        if (info.temVendasRegistradas) {
+          totalRealMes += info.realEntradas;
+          diferencaAcumulada += info.diferenca;
+          countDiasComReal++;
         }
 
-        const isNegativo = dp.saldoProjetado < 0;
-        const saldoCor = isNegativo ? 'text-rose-600' : 'text-emerald-700';
-        const cardBg = isNegativo 
-          ? 'bg-rose-50/70 border-rose-300' 
-          : (dp.isQuartaRepasse ? 'bg-purple-50/40 border-purple-200' : 'bg-slate-50/60 border-slate-200');
+        if (saldoAcumulado < 0 && !diaCritico) {
+          temDeficit = true;
+          diaCritico = {
+            ...info,
+            saldoProjetado: saldoAcumulado
+          };
+        }
 
-        return `
-          <div onclick="abrirDetalhesDiaPrevisao('${dp.dataIso}')" class="p-3 rounded-2xl border ${cardBg} shadow-2xs flex flex-col justify-between space-y-2.5 transition hover:shadow-md hover:border-purple-400 hover:scale-[1.02] cursor-pointer group select-none" title="Clique para ver todos os detalhes e boletos a pagar deste dia">
+        const isNegativo = saldoAcumulado < 0;
+        const saldoCor = isNegativo ? 'text-rose-600' : 'text-emerald-700';
+
+        let cardBg = 'bg-white border-slate-200';
+        if (isNegativo) cardBg = 'bg-rose-50/70 border-rose-300';
+        else if (info.isQuarta) cardBg = 'bg-purple-50/30 border-purple-200';
+        else if (info.temVendasRegistradas) cardBg = 'bg-emerald-50/30 border-emerald-200';
+
+        diasHtml.push(`
+          <div onclick="abrirDetalhesDiaPrevisao('${dataIso}')" class="p-3 rounded-2xl border ${cardBg} shadow-2xs flex flex-col justify-between space-y-2.5 transition hover:shadow-md hover:border-emerald-500 hover:scale-[1.02] cursor-pointer group select-none min-h-[140px]" title="Clique para ver os detalhes completos deste dia">
             <div>
+              <!-- Cabeçalho do Card: Dia + Dia da Semana + Badges -->
               <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                <span class="font-black text-xs text-slate-900 group-hover:text-purple-700 transition flex items-center gap-1">
-                  ${dp.diaSemana} • ${dp.diaFormatado}
-                  <i data-lucide="chevron-right" class="w-3 h-3 text-slate-400 group-hover:text-purple-600 transition"></i>
-                </span>
-                ${dp.isQuartaRepasse ? '<span class="text-[9px] font-black bg-purple-100 text-purple-900 border border-purple-200 px-1.5 py-0.2 rounded-full">📦 Apps</span>' : ''}
+                <div class="flex items-center gap-1.5">
+                  <span class="font-black text-sm text-slate-900 group-hover:text-emerald-700 transition">
+                    ${diaStr} <span class="text-[10px] font-bold text-slate-400 group-hover:text-emerald-600">${info.diaSemanaNome}</span>
+                  </span>
+                </div>
+                <div class="flex items-center gap-1">
+                  ${info.isQuarta ? '<span class="text-[8px] font-black bg-purple-100 text-purple-900 px-1.5 py-0.2 rounded-full border border-purple-200">Apps</span>' : ''}
+                  ${info.temVendasRegistradas 
+                    ? '<span class="text-[8px] font-black bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full border border-emerald-200">REAL</span>' 
+                    : '<span class="text-[8px] font-black bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded-full border border-slate-200">PREV</span>'}
+                </div>
               </div>
 
-              <!-- Entradas e Repasse -->
+              <!-- Valores: Previsto vs Real -->
               <div class="mt-2 space-y-1 text-[11px]">
-                <div class="flex justify-between items-center text-slate-600">
-                  <span class="text-[10px] text-slate-400">Entradas:</span>
-                  <strong class="text-emerald-700 font-black">+ ${formatarMoeda(dp.entradas)}</strong>
-                </div>
-                ${dp.isQuartaRepasse ? `
-                  <div class="text-[9px] text-purple-800 font-extrabold bg-purple-100/70 px-1.5 py-0.5 rounded border border-purple-200/80">
-                    + R$ 2.850 iFood & 99
+                ${info.temVendasRegistradas ? `
+                  <div class="flex justify-between items-center text-slate-500 text-[10px]">
+                    <span>Previsto:</span>
+                    <strong class="text-slate-700">${formatarMoeda(info.previstoEntradas)}</strong>
                   </div>
-                ` : ''}
+                  <div class="flex justify-between items-center">
+                    <span class="text-slate-500 text-[10px]">Real:</span>
+                    <strong class="text-emerald-700 font-black">+ ${formatarMoeda(info.realEntradas)}</strong>
+                  </div>
+                  <!-- Diferença Real vs Previsto -->
+                  <div class="flex justify-between items-center text-[9px] font-extrabold px-1.5 py-0.5 rounded ${info.diferenca >= 0 ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'}">
+                    <span>Diferença:</span>
+                    <span>${info.diferenca >= 0 ? '+' : ''}${formatarMoeda(info.diferenca)}</span>
+                  </div>
+                ` : `
+                  <div class="flex justify-between items-center">
+                    <span class="text-slate-400 text-[10px]">Entrada Prev:</span>
+                    <strong class="text-emerald-700 font-black">+ ${formatarMoeda(info.previstoEntradas)}</strong>
+                  </div>
+                  ${info.isQuarta ? `
+                    <div class="text-[9px] text-purple-800 font-extrabold bg-purple-100/70 px-1.5 py-0.5 rounded border border-purple-200/80">
+                      + R$ 2.850 iFood & 99
+                    </div>
+                  ` : ''}
+                `}
 
-                <!-- Saídas / Boletos Agendados -->
-                <div class="flex justify-between items-center text-slate-600">
-                  <span class="text-[10px] text-slate-400">Boletos:</span>
-                  <strong class="${dp.saidas > 0 ? 'text-rose-600' : 'text-slate-400'} font-black">${dp.saidas > 0 ? `- ${formatarMoeda(dp.saidas)}` : 'R$ 0,00'}</strong>
+                <!-- Boletos do Dia -->
+                <div class="flex justify-between items-center pt-0.5">
+                  <span class="text-slate-400 text-[10px]">Boletos:</span>
+                  <strong class="${info.saidas > 0 ? 'text-rose-600 font-black' : 'text-slate-300 font-medium'}">${info.saidas > 0 ? `- ${formatarMoeda(info.saidas)}` : 'R$ 0'}</strong>
                 </div>
-                ${dp.descSaida ? `
-                  <div class="text-[9px] text-rose-800 bg-rose-50 px-1.5 py-0.5 rounded font-bold border border-rose-200/60 truncate" title="${dp.descSaida}">
-                    ⚡ ${dp.descSaida}
+                ${info.boletosDoDia.length > 0 ? `
+                  <div class="text-[8px] text-rose-800 bg-rose-50 px-1 rounded truncate border border-rose-200/50" title="${info.boletosDoDia.map(b => b.descricao).join(', ')}">
+                    ⚡ ${info.boletosDoDia[0].descricao}${info.boletosDoDia.length > 1 ? ` (+${info.boletosDoDia.length - 1})` : ''}
                   </div>
                 ` : ''}
               </div>
             </div>
 
-            <!-- Saldo Projetado Acumulado & Dica de Clique -->
-            <div>
-              <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
-                <span class="text-[9px] font-bold text-slate-400 uppercase">Saldo:</span>
-                <strong class="text-xs font-black ${saldoCor}">${dp.saldoProjetado >= 0 ? '+' : ''}${formatarMoeda(dp.saldoProjetado)}</strong>
-              </div>
-              <div class="pt-1 text-center">
-                <span class="text-[9px] font-bold text-purple-600 opacity-0 group-hover:opacity-100 transition">Ver o que pagar →</span>
-              </div>
+            <!-- Rodapé do Card: Saldo Acumulado -->
+            <div class="pt-1.5 border-t border-slate-100 flex justify-between items-center">
+              <span class="text-[9px] font-bold text-slate-400 uppercase">Saldo:</span>
+              <strong class="text-xs font-black ${saldoCor}">${saldoAcumulado >= 0 ? '+' : ''}${formatarMoeda(saldoAcumulado)}</strong>
             </div>
           </div>
-        `;
-      }).join('');
+        `);
+      }
 
+      container.innerHTML = diasHtml.join('');
+
+      // Atualiza KPIs Resumo do Mês
+      const kpiSaldoCaixa = document.getElementById('cal-kpi-saldo-caixa');
+      if (kpiSaldoCaixa) kpiSaldoCaixa.textContent = formatarMoeda(saldoInicialCaixa);
+
+      const kpiTotalEntradas = document.getElementById('cal-kpi-total-entradas');
+      if (kpiTotalEntradas) kpiTotalEntradas.textContent = formatarMoeda(totalEntradasMes);
+
+      const kpiTotalSaidas = document.getElementById('cal-kpi-total-saidas');
+      if (kpiTotalSaidas) kpiTotalSaidas.textContent = formatarMoeda(totalSaidasMes);
+
+      const kpiDiferenca = document.getElementById('cal-kpi-diferenca');
+      const kpiDiferencaStatus = document.getElementById('cal-kpi-diferenca-status');
+      if (kpiDiferenca) {
+        kpiDiferenca.textContent = `${diferencaAcumulada >= 0 ? '+' : ''}${formatarMoeda(diferencaAcumulada)}`;
+        kpiDiferenca.className = `text-base font-black mt-1 ${diferencaAcumulada >= 0 ? 'text-emerald-700' : 'text-rose-600'}`;
+        if (kpiDiferencaStatus) {
+          kpiDiferencaStatus.textContent = diferencaAcumulada >= 0 
+            ? `Superou em ${formatarMoeda(diferencaAcumulada)} (${countDiasComReal} dias)`
+            : `Abaixo em ${formatarMoeda(Math.abs(diferencaAcumulada))} (${countDiasComReal} dias)`;
+          kpiDiferencaStatus.className = `text-[10px] font-semibold ${diferencaAcumulada >= 0 ? 'text-emerald-700' : 'text-rose-600'}`;
+        }
+      }
+
+      const kpiSaldoFinal = document.getElementById('cal-kpi-saldo-final');
+      if (kpiSaldoFinal) {
+        kpiSaldoFinal.textContent = `${saldoAcumulado >= 0 ? '+' : ''}${formatarMoeda(saldoAcumulado)}`;
+        kpiSaldoFinal.className = `text-base font-black mt-1 ${saldoAcumulado >= 0 ? 'text-emerald-700' : 'text-rose-600'}`;
+      }
+
+      // Alerta de Liquidez Prescritivo
       if (alerta) {
         if (temDeficit && diaCritico) {
           alerta.className = 'p-3.5 rounded-xl text-xs font-bold bg-rose-50 border border-rose-200 text-rose-950 flex items-start gap-2.5';
           alerta.innerHTML = `
             <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5"></i>
             <div>
-              <span class="block font-black text-rose-900 text-sm">Alerta de Liquidez em ${diaCritico.diaFormatado} (${diaCritico.diaSemana}):</span>
-              <span class="font-normal text-rose-800 mt-0.5 block">Saldo projetado em conta ficará negativo em <strong>-R$ ${formatarNumero(Math.abs(diaCritico.saldoProjetado))}</strong> devido ao vencimento de <strong>${diaCritico.descSaida}</strong>.
-              <strong class="block mt-1 text-slate-900">💡 Prescrição NALIM:</strong> O próximo repasse semanal dos aplicativos cai na quarta-feira seguinte (+R$ 2.850). Antecipe recebíveis de cartão ou solicite 2 dias de prazo no boleto com seu fornecedor para evitar taxas de cheque especial.</span>
+              <span class="block font-black text-rose-900 text-sm">Alerta de Liquidez em ${String(diaCritico.diaNum).padStart(2, '0')}/${String(diaCritico.mesNum).padStart(2, '0')} (${diaCritico.diaSemanaNome}):</span>
+              <span class="font-normal text-rose-800 mt-0.5 block">Saldo projetado em conta ficará negativo em <strong>-R$ ${formatarNumero(Math.abs(diaCritico.saldoProjetado))}</strong> devido às saídas programadas de <strong>${formatarMoeda(diaCritico.saidas)}</strong>.
+              <strong class="block mt-1 text-slate-900">💡 Prescrição NALIM:</strong> O repasse semanal dos aplicativos cai às quartas-feiras. Antecipe recebíveis de cartão de crédito ou solicite prorrogação de 2 a 3 dias no boleto com seu fornecedor para manter a conta sempre positiva.</span>
             </div>
           `;
         } else {
@@ -6951,13 +7312,19 @@
           alerta.innerHTML = `
             <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 flex-shrink-0"></i>
             <div>
-              <strong class="font-black text-emerald-900 block">Fluxo de Caixa Saudável (21 Dias):</strong>
-              <span class="font-normal text-emerald-800">Todas as saídas e boletos programados estão cobertos pelas entradas diárias e pelos repasses semanais de aplicativos às quartas-feiras.</span>
+              <strong class="font-black text-emerald-900 block">Fluxo de Caixa Saudável (${nomesMeses[calMes]} / ${calAno}):</strong>
+              <span class="font-normal text-emerald-800">Todas as saídas e boletos programados deste mês estão cobertos pelas entradas diárias reconciliadas e pelos repasses semanais de aplicativos.</span>
             </div>
           `;
         }
       }
+
       if (window.lucide) safeLucide();
+    }
+
+    // Alias para compatibilidade
+    function renderPrevisaoCaixa(pedidosDoMes, data) {
+      renderCalendarioFinanceiro();
     }
 
     /**
@@ -8493,20 +8860,30 @@ _Painel Estratégico NALIM Food Service_`;
         </button>
       </div>
 
-      <!-- Resumo Financeiro do Dia (Cards) -->
-      <div class="grid grid-cols-3 gap-2 shrink-0">
-        <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3">
-          <span class="text-[10px] font-bold text-emerald-800 uppercase block">Entradas do Dia</span>
+      <!-- Resumo Financeiro do Dia (Cards Previsto vs Real) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 shrink-0">
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+          <span class="text-[10px] font-bold text-slate-500 uppercase block">Previsto (Histórico)</span>
+          <strong id="detalhe-dia-previsto-total" class="text-slate-800 font-black text-sm block mt-0.5">R$ 0,00</strong>
+        </div>
+        <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-2.5">
+          <span class="text-[10px] font-bold text-emerald-800 uppercase block">Real Liquidado</span>
           <strong id="detalhe-dia-entradas-total" class="text-emerald-700 font-black text-sm block mt-0.5">+ R$ 0,00</strong>
         </div>
-        <div class="bg-rose-50/70 border border-rose-200 rounded-xl p-3">
+        <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-2.5">
+          <span class="text-[10px] font-bold text-blue-800 uppercase block">Diferença (Real - Prev)</span>
+          <strong id="detalhe-dia-diferenca-total" class="text-blue-700 font-black text-sm block mt-0.5">R$ 0,00</strong>
+        </div>
+        <div class="bg-rose-50/70 border border-rose-200 rounded-xl p-2.5">
           <span class="text-[10px] font-bold text-rose-800 uppercase block">Boletos / Saídas</span>
           <strong id="detalhe-dia-saidas-total" class="text-rose-600 font-black text-sm block mt-0.5">- R$ 0,00</strong>
         </div>
-        <div class="bg-purple-50/70 border border-purple-200 rounded-xl p-3">
-          <span class="text-[10px] font-bold text-purple-900 uppercase block">Balanço do Dia</span>
-          <strong id="detalhe-dia-resultado-balanco" class="font-black text-sm block mt-0.5">R$ 0,00</strong>
-        </div>
+      </div>
+      
+      <!-- Balanço do Dia Banner -->
+      <div class="flex items-center justify-between p-2.5 bg-purple-50/70 border border-purple-200 rounded-xl text-xs shrink-0">
+        <span class="font-bold text-purple-900">Balanço do Dia (Entradas Efetivas - Boletos):</span>
+        <strong id="detalhe-dia-resultado-balanco" class="font-black text-sm text-purple-950">R$ 0,00</strong>
       </div>
 
       <!-- Seção: Boletos & Contas a Pagar (O que deve ser pago no dia) -->
