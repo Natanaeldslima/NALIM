@@ -3815,16 +3815,17 @@
         salvarMesasPdvLocal();
         atualizarSelectMesasPdv();
 
+        const nomeOperadorPdv = (store && store.userName) ? store.userName : 'Carlos Nalim (Dono)';
         try {
           const res = await fetch(`${API_BASE}/api/operacional/mesas/${encodeURIComponent(mesaAlvo)}/adicionar-itens`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ solicitante: 'Balcão', itens: itensPayload })
+            body: JSON.stringify({ solicitante: nomeOperadorPdv, itens: itensPayload })
           });
           if (res.ok) {
             const data = await res.json();
             if (data.numero_comanda) ticketNumeroFinal = data.numero_comanda;
-            if (data.pedido_kds_id) ticketIdBackend = data.pedido_kds_id;
+            if (data.id || data.pedido_kds_id) ticketIdBackend = data.id || data.pedido_kds_id;
             console.log('[NALIM MESAS] Itens adicionados com sucesso à', mesaAlvo, data);
           }
         } catch (err) {
@@ -3833,6 +3834,7 @@
         await sincronizarMesasPdv();
       } else {
         // Balcão, iFood ou 99Food: Cria Pedido regular
+        const nomeOperadorPdv = (store && store.userName) ? store.userName : 'Carlos Nalim (Dono)';
         try {
           const res = await fetch(`${API_BASE}/api/operacional/pedidos`, {
             method: 'POST',
@@ -3840,7 +3842,7 @@
             body: JSON.stringify({
               canal: canal,
               identificacao: identificacaoFinal,
-              solicitante: 'Balcão',
+              solicitante: nomeOperadorPdv,
               ifood_order_id: ifoodCod,
               ifood_cliente: ifoodCliente,
               forma_pagto: store.selectedPaymentMethod,
@@ -3850,7 +3852,7 @@
           if (res.ok) {
             const data = await res.json();
             if (data.numero_comanda) ticketNumeroFinal = data.numero_comanda;
-            if (data.id) ticketIdBackend = data.id;
+            if (data.id || data.pedido_id) ticketIdBackend = data.id || data.pedido_id;
           }
         } catch (err) {
           console.warn('[NALIM PEDIDO] Erro ao registrar pedido regular:', err);
@@ -3861,12 +3863,13 @@
       const agoraHora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       // 1.5 Envia IMEDIATAMENTE para a Cozinha (KDS) em tempo real
+      const nomeOperadorPdv = (store && store.userName) ? store.userName : 'Carlos Nalim (Dono)';
       const novoTicketKds = {
         id: ticketIdBackend || ticketNumeroFinal,
         numero_comanda: ticketNumeroFinal,
         dataHora: agoraHora,
         identificacao: identificacaoFinal,
-        solicitante: 'Balcão',
+        solicitante: nomeOperadorPdv,
         canal: canal,
         status: 'Na Chapa',
         tempoDecorrido: 'Agora',
@@ -3897,9 +3900,9 @@
       renderKds();
 
       // 2. Histórico Pedidos Local
-      const nomeOperadorPdv = (store && store.userName) ? store.userName : 'Carlos Nalim (Dono)';
-      store.pedidos.unshift({
-        id: ticketNumeroFinal,
+      const novoPedidoLocal = {
+        id: ticketIdBackend || ticketNumeroFinal,
+        numero_comanda: ticketNumeroFinal,
         dataHora: `${hojeIso} ${agoraHora}`,
         dataIso: hojeIso,
         identificacao: identificacaoFinal,
@@ -3912,7 +3915,25 @@
         lucro: lucro,
         itens: nomes.join(' | '),
         itensDetalhados: store.currentOrder.items
-      });
+      };
+
+      // Limpa possível duplicata no store.pedidos e insere no início
+      if (typeof saoMesmoPedido === 'function') {
+        store.pedidos = store.pedidos.filter(p => !saoMesmoPedido(p, novoPedidoLocal));
+      }
+      store.pedidos.unshift(novoPedidoLocal);
+
+      // Salva imediatamente no cache local de pedidos reais
+      try {
+        let pReais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
+        if (Array.isArray(pReais)) {
+          if (typeof saoMesmoPedido === 'function') {
+            pReais = pReais.filter(p => !saoMesmoPedido(p, novoPedidoLocal));
+          }
+          pReais.unshift(novoPedidoLocal);
+          localStorage.setItem('nalim_pedidos_reais', JSON.stringify(pReais));
+        }
+      } catch (e) {}
 
       // 3. Faturamento Hoje (se já pago no Balcão ou Delivery)
       if (canal !== 'Salão') {
@@ -7420,9 +7441,104 @@
     }
 
     /**
+     * Compara se dois pedidos representam a mesma venda (elimina duplicidade)
+     */
+    function saoMesmoPedido(a, b) {
+      if (!a || !b) return false;
+      // 1. Mesmo ID de banco
+      if (a.id && b.id && String(a.id) === String(b.id)) return true;
+      // 2. Mesmo número de comanda
+      if (a.numero_comanda && b.numero_comanda && Number(a.numero_comanda) === Number(b.numero_comanda)) return true;
+      // 3. ID de um é a comanda do outro
+      if (a.id && b.numero_comanda && Number(a.id) === Number(b.numero_comanda)) return true;
+      if (a.numero_comanda && b.id && Number(a.numero_comanda) === Number(b.id)) return true;
+      // 4. Mesma identificação, mesmo canal, total idêntico (diferença <= 0.10) e mesma data
+      const dtA = a.dataIso || (a.dataHora ? a.dataHora.split(' ')[0] : '');
+      const dtB = b.dataIso || (b.dataHora ? b.dataHora.split(' ')[0] : (b.data_iso || (b.data_hora ? b.data_hora.split(' ')[0] : '')));
+      const totA = Math.round((Number(a.total !== undefined ? a.total : a.valor_bruto) || 0) * 100);
+      const totB = Math.round((Number(b.total !== undefined ? b.total : b.valor_bruto) || 0) * 100);
+      if (a.identificacao && b.identificacao && a.identificacao === b.identificacao && Math.abs(totA - totB) <= 10 && dtA && dtB && dtA === dtB) {
+        // Se ambos têm hora com minutos próximos (<= 15 min de intervalo)
+        const hA = a.dataHora ? a.dataHora.slice(11, 16) : '';
+        const hB = b.dataHora ? b.dataHora.slice(11, 16) : (b.data_hora ? b.data_hora.slice(11, 16) : '');
+        if (!hA || !hB || hA === hB) return true;
+        const [h1, m1] = hA.split(':').map(Number);
+        const [h2, m2] = hB.split(':').map(Number);
+        if (!isNaN(h1) && !isNaN(h2)) {
+          const diffMin = Math.abs((h1 * 60 + m1) - (h2 * 60 + m2));
+          if (diffMin <= 15) return true;
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Mescla dados de um pedido existente com atualizações recebidas
+     */
+    function mesclarDadosPedido(existente, novidade) {
+      if (novidade.id) existente.id = novidade.id;
+      if (novidade.numero_comanda) existente.numero_comanda = novidade.numero_comanda;
+      if (!existente.numero_comanda && existente.id && existente.id > 100) existente.numero_comanda = existente.id;
+
+      // Preserva nome de vendedor específico e prioriza o atendente real
+      const vExistente = existente.solicitante || existente.vendedor || '';
+      const vNovidade = novidade.solicitante || novidade.vendedor || '';
+      const ehGenerico = (n) => !n || n === 'Balcão' || n === 'Garçom' || n === 'Cardápio Digital';
+
+      if (ehGenerico(vExistente) && !ehGenerico(vNovidade)) {
+        existente.solicitante = vNovidade;
+        existente.vendedor = vNovidade;
+      } else if (!ehGenerico(vExistente) && ehGenerico(vNovidade)) {
+        // Mantém vExistente específico!
+      } else if (vNovidade) {
+        existente.solicitante = vNovidade;
+        existente.vendedor = vNovidade;
+      }
+
+      // Atualiza pagamento se fechado/alterado
+      if (novidade.pagto && novidade.pagto !== 'Em Aberto (Mesa)') {
+        existente.pagto = novidade.pagto;
+      } else if (!existente.pagto && novidade.pagto) {
+        existente.pagto = novidade.pagto;
+      }
+
+      // Preserva CMV exato de ficha técnica local se já calculado com precisão
+      if (novidade.total !== undefined && novidade.total > 0) existente.total = novidade.total;
+      if (!existente.cmv || existente.cmv === 0) {
+        existente.cmv = novidade.cmv || 0;
+        existente.lucro = novidade.lucro || (existente.total - existente.cmv);
+      }
+      if (novidade.status_kds) existente.status_kds = novidade.status_kds;
+      if (novidade.dataHora && !existente.dataHora) existente.dataHora = novidade.dataHora;
+      if (novidade.dataIso) existente.dataIso = novidade.dataIso;
+      if (novidade.itens && !existente.itens) existente.itens = novidade.itens;
+    }
+
+    /**
      * Sincronização em Tempo Real com Pedidos do Backend e do Cardápio Digital
      */
     async function sincronizarPedidosApi() {
+      // 1. DEDUPLICAÇÃO DE CONTROLE NO store.pedidos
+      let pedidosUnicos = [];
+      let teveDuplicata = false;
+      if (Array.isArray(store.pedidos) && store.pedidos.length > 0) {
+        store.pedidos.forEach(p => {
+          const jaTem = pedidosUnicos.find(u => saoMesmoPedido(u, p));
+          if (!jaTem) {
+            pedidosUnicos.push(p);
+          } else {
+            mesclarDadosPedido(jaTem, p);
+            teveDuplicata = true;
+          }
+        });
+        if (teveDuplicata || pedidosUnicos.length !== store.pedidos.length) {
+          store.pedidos = pedidosUnicos;
+          renderDashboard();
+          renderHistoricoPedidos();
+          renderCalendarioFinanceiro();
+        }
+      }
+
       let pedidosReais = [];
       try {
         const localReais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
@@ -7439,8 +7555,9 @@
           const data = await res.json();
           const lista = Array.isArray(data) ? data : (Array.isArray(data.pedidos) ? data.pedidos : []);
           let cacheMudou = false;
+
           lista.forEach(dbPed => {
-            const idx = pedidosReais.findIndex(r => r.id === dbPed.id || (r.numero_comanda && r.numero_comanda === dbPed.numero_comanda));
+            const idx = pedidosReais.findIndex(r => saoMesmoPedido(r, dbPed));
             const pedFormatado = {
               id: dbPed.id,
               numero_comanda: dbPed.numero_comanda,
@@ -7469,12 +7586,22 @@
               cacheMudou = true;
             } else {
               const old = pedidosReais[idx];
-              if (old.pagto !== pedFormatado.pagto || old.total !== pedFormatado.total || old.solicitante !== pedFormatado.solicitante) {
-                pedidosReais[idx] = { ...old, ...pedFormatado };
-                cacheMudou = true;
-              }
+              mesclarDadosPedido(old, pedFormatado);
+              cacheMudou = true;
             }
           });
+
+          // Limpeza e deduplicação de pedidosReais
+          const unicosReais = [];
+          pedidosReais.forEach(p => {
+            const jaExiste = unicosReais.find(u => saoMesmoPedido(u, p));
+            if (!jaExiste) {
+              unicosReais.push(p);
+            } else {
+              mesclarDadosPedido(jaExiste, p);
+            }
+          });
+          pedidosReais = unicosReais;
 
           if (cacheMudou) {
             try {
@@ -7487,20 +7614,16 @@
       if (pedidosReais.length > 0) {
         let mudou = false;
         pedidosReais.forEach(pr => {
-          const idxStore = store.pedidos.findIndex(p => p.id === pr.id || (p.numero_comanda && pr.numero_comanda && p.numero_comanda === pr.numero_comanda) || (p.identificacao && pr.identificacao && p.identificacao === pr.identificacao && p.dataHora === pr.dataHora));
+          const idxStore = store.pedidos.findIndex(p => saoMesmoPedido(p, pr));
           if (idxStore === -1) {
             store.pedidos.unshift(pr);
             mudou = true;
           } else {
             const p = store.pedidos[idxStore];
-            if (p.pagto !== pr.pagto || p.solicitante !== pr.solicitante || p.total !== pr.total) {
-              p.pagto = pr.pagto;
-              p.solicitante = pr.solicitante;
-              p.vendedor = pr.solicitante;
-              p.total = pr.total;
-              p.cmv = pr.cmv;
-              p.lucro = pr.lucro;
-              p.dataIso = pr.dataIso || p.dataIso;
+            const pagtoAntes = p.pagto;
+            const vendAntes = p.solicitante;
+            mesclarDadosPedido(p, pr);
+            if (p.pagto !== pagtoAntes || p.solicitante !== vendAntes) {
               mudou = true;
             }
           }
