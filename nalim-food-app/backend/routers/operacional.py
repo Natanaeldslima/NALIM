@@ -149,6 +149,7 @@ def criar_pedido(
 
     return {
         "sucesso": True,
+        "id": novo_pedido.id,
         "pedido_id": novo_pedido.id,
         "numero_comanda": novo_pedido.numero_comanda,
         "valor_a_cobrar": round(total_bruto, 2),
@@ -430,6 +431,7 @@ def adicionar_itens_mesa(
         "status": mesa.status,
         "consumo_acumulado": round(mesa.consumo_acumulado, 2),
         "total_itens": len(itens_acumulados),
+        "id": pedido_kds.id,
         "pedido_kds_id": pedido_kds.id,
         "numero_comanda": pedido_kds.numero_comanda,
         "mensagem": f"Rodada adicionada com sucesso! Pedido #{pedido_kds.numero_comanda} despachado para a Cozinha/KDS."
@@ -466,7 +468,7 @@ def fechar_e_zerar_mesa(
     agora_br = obter_data_hora_brasilia()
     for p_mesa in pedidos_alvo:
         p_mesa.forma_pagto = dados.forma_pagto
-        if vendedor_final and (not p_mesa.solicitante or p_mesa.solicitante in ["Balcão", "Garçom"]):
+        if vendedor_final:
             p_mesa.solicitante = vendedor_final
         if p_mesa.status_kds in ["Na Chapa", "Pronto"]:
             p_mesa.status_kds = "Entregue"
