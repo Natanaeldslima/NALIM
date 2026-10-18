@@ -3,6 +3,10 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boo
 from sqlalchemy.orm import relationship
 from database import Base
 
+def obter_data_hora_brasilia() -> datetime.datetime:
+    fuso_br = datetime.timezone(datetime.timedelta(hours=-3))
+    return datetime.datetime.now(fuso_br).replace(tzinfo=None)
+
 class Tenant(Base):
     __tablename__ = "tenants"
 
@@ -18,7 +22,7 @@ class Tenant(Base):
     status = Column(String(20), default="ATIVO")  # 'ATIVO', 'TRIAL', 'SUSPENSO'
     vencimento_mensalidade = Column(String(10), nullable=True)  # 'YYYY-MM-DD'
     observacoes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=obter_data_hora_brasilia)
 
     usuarios = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
     insumos = relationship("Insumo", back_populates="tenant", cascade="all, delete-orphan")
@@ -95,7 +99,7 @@ class Pedido(Base):
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
     numero_comanda = Column(Integer, index=True)
-    data_hora = Column(DateTime, default=datetime.datetime.utcnow)
+    data_hora = Column(DateTime, default=obter_data_hora_brasilia)
     canal = Column(String(30), default="Salão")  # Salão, Balcão, iFood
     identificacao = Column(String(100), default="Balcão")
     ifood_order_id = Column(String(50), nullable=True)
