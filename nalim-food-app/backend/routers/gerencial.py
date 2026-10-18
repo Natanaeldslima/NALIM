@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from database import get_db
 from typing import List, Optional
@@ -214,8 +214,8 @@ def registrar_perda(
     current_user: User = Depends(require_role(["dono", "gerente", "operador"])),
     db: Session = Depends(get_db)
 ):
-    import datetime
-    data_registro = dados.data or datetime.date.today().isoformat()
+    from models import obter_data_hora_brasilia
+    data_registro = dados.data or obter_data_hora_brasilia().strftime("%Y-%m-%d")
     nova_perda = PerdaItem(
         tenant_id=current_user.tenant_id,
         data=data_registro,

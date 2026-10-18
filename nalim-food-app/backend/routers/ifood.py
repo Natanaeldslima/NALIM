@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Tenant, Pedido, ItemPedido, Produto
+from models import Tenant, Pedido, ItemPedido, Produto, obter_data_hora_brasilia
 
 router = APIRouter(prefix="/api/ifood", tags=["Integração Oficial iFood (Merchant API)"])
 
@@ -16,7 +16,8 @@ async def ifood_webhook_receiver(request: Request, db: Session = Depends(get_db)
     """
     payload: Dict[str, Any] = await request.json()
 
-    order_id = payload.get("orderId", f"#{datetime.datetime.utcnow().strftime('%M%S')}")
+    agora_br = obter_data_hora_brasilia()
+    order_id = payload.get("orderId", f"#{agora_br.strftime('%M%S')}")
     customer_name = payload.get("customer", {}).get("name", "Cliente iFood")
     items_raw = payload.get("items", [])
     total_bruto = float(payload.get("total", {}).get("orderAmount", 0.0))
@@ -32,7 +33,7 @@ async def ifood_webhook_receiver(request: Request, db: Session = Depends(get_db)
     novo_pedido = Pedido(
         tenant_id=tenant.id,
         numero_comanda=comanda_num,
-        data_hora=datetime.datetime.utcnow(),
+        data_hora=agora_br,
         canal="iFood",
         identificacao=f"Pedido iFood {order_id} ({customer_name})",
         ifood_order_id=order_id,

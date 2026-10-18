@@ -211,7 +211,7 @@ def listar_pedidos_kds(
         tickets.append({
             "id": p.id,
             "numero_comanda": p.numero_comanda,
-            "data_hora": p.data_hora.strftime("%H:%M") if p.data_hora else datetime.datetime.now().strftime("%H:%M"),
+            "data_hora": p.data_hora.strftime("%H:%M") if p.data_hora else obter_data_hora_brasilia().strftime("%H:%M"),
             "canal": p.canal,
             "identificacao": p.identificacao,
             "solicitante": p.solicitante or ("Balcão" if p.canal == "Balcão" else "Garçom"),
@@ -665,7 +665,7 @@ def criar_pedido_publico(
     novo_pedido = Pedido(
         tenant_id=tenant_id,
         numero_comanda=numero_comanda,
-        data_hora=datetime.datetime.utcnow(),
+        data_hora=obter_data_hora_brasilia(),
         canal=dados.canal or "Cardápio Digital",
         identificacao=dados.identificacao or f"Cardápio Digital #{numero_comanda}",
         forma_pagto=dados.forma_pagto,
