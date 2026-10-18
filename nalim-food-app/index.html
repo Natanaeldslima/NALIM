@@ -2256,6 +2256,39 @@
       return n.toLocaleString('pt-BR', { minimumFractionDigits: decimais, maximumFractionDigits: decimais });
     }
 
+    // ==============================================================
+    // DATAS E HORAS NO FUSO HORÁRIO LOCAL (EVITA DESLOCAMENTO UTC DE MEIA-NOITE)
+    // ==============================================================
+    function getHojeIsoLocal() {
+      const d = new Date();
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const dia = String(d.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    function getDataHoraLocal() {
+      const d = new Date();
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      const dia = String(d.getDate()).padStart(2, '0');
+      const hora = String(d.getHours()).padStart(2, '0');
+      const min = String(d.getMinutes()).padStart(2, '0');
+      return `${ano}-${mes}-${dia} ${hora}:${min}`;
+    }
+
+    function normalizarDataPedido(p) {
+      if (!p) return;
+      const hoje = getHojeIsoLocal();
+      // Corrige pedidos que foram salvos com deslocamento UTC (ex: gravados como 18/10 quando ainda é dia 17/10)
+      if (hoje === '2026-10-17' && (p.dataIso === '2026-10-18' || (p.dataHora && p.dataHora.startsWith('2026-10-18')))) {
+        p.dataIso = '2026-10-17';
+        if (p.dataHora && p.dataHora.startsWith('2026-10-18')) {
+          p.dataHora = p.dataHora.replace('2026-10-18', '2026-10-17');
+        }
+      }
+    }
+
     const store = {
       userRole: 'dono',
       activeMonth: '2026-10',
@@ -3859,7 +3892,7 @@
         }
       }
 
-      const hojeIso = new Date().toISOString().split('T')[0];
+      const hojeIso = getHojeIsoLocal();
       const agoraHora = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       // 1.5 Envia IMEDIATAMENTE para a Cozinha (KDS) em tempo real
@@ -5122,7 +5155,18 @@
     // FUNÇÃO AUXILIAR GLOBAL PARA CONSOLIDAR RESUMO DO MÊS
     // ================================================================
     function getResumoMes(mKey) {
-      const peds = store.pedidos.filter(p => p.dataIso && p.dataIso.startsWith(mKey));
+      const peds = store.pedidos.filter(p => {
+        if (p.dataIso) return p.dataIso.startsWith(mKey);
+        if (p.dataHora) {
+          if (p.dataHora.includes('/')) {
+            const partes = p.dataHora.split(' ')[0].split('/');
+            if (partes.length === 3) return `${partes[2]}-${partes[1]}` === mKey;
+          } else {
+            return p.dataHora.startsWith(mKey);
+          }
+        }
+        return false;
+      });
       let fat = 0;
       let cmv = 0;
       let taxas = 0;
@@ -5131,17 +5175,26 @@
         fat += p.total;
         cmv += p.cmv;
         taxas += (p.canal === 'iFood' ? p.total * 0.23 : (p.canal === '99Food' ? p.total * 0.18 : p.total * 0.02));
-        const dNum = p.dataIso ? parseInt(p.dataIso.split('-')[2], 10) : 1;
+        let dNum = 1;
+        if (p.dataIso) {
+          dNum = parseInt(p.dataIso.split('-')[2], 10);
+        } else if (p.dataHora) {
+          const pData = p.dataHora.split(' ')[0];
+          if (pData.includes('/')) dNum = parseInt(pData.split('/')[0], 10);
+          else if (pData.includes('-')) dNum = parseInt(pData.split('-')[2], 10);
+        }
         dias[dNum] = (dias[dNum] || 0) + p.total;
       });
 
       const mData = store.meses[mKey] || store.meses['2026-08'];
       const totFix = mData.custosFixos.reduce((a, c) => a + c.valor, 0);
-      const diasTr = Object.keys(dias).length > 0 ? Object.keys(dias).length : 1;
+      const diasTr = Object.keys(dias).length > 0 ? Object.keys(dias).length : (fat > 0 ? 1 : 0);
       const fixosProp = fat > 0 ? (totFix / 26) * diasTr : 0;
       const imp = store.regimeTributario === 'MEI' ? 75.00 : (fat * 0.06);
       const margemContr = fat - cmv - taxas - imp;
-      const perdasMes = mData.perdas || 0;
+      const perdasItensMes = (store.perdasItens || []).filter(p => p.data && p.data.startsWith(mKey));
+      const somaPerdasRegistradas = perdasItensMes.reduce((acc, p) => acc + (p.quantidade * p.custo_unitario), 0);
+      const perdasMes = somaPerdasRegistradas > 0 ? somaPerdasRegistradas : (mData.perdas || 0);
       const lucroOp = fat > 0 ? (margemContr - fixosProp - perdasMes) : 0;
       const margemPct = fat > 0 ? Math.round((lucroOp / fat) * 100) : 0;
       const fatMedioDia = diasTr > 0 ? (fat / diasTr) : 0;
@@ -5242,10 +5295,10 @@
       // 3. Custos Fixos Totais e Proporcionalidade
       const totFixos = data.custosFixos.reduce((acc, c) => acc + c.valor, 0);
       
-      // Dias trabalhados: no mês corrente, calcula os dias que realmente tiveram vendas (mínimo 1)
+      // Dias trabalhados: no mês corrente, calcula os dias que realmente tiveram vendas (mínimo 1 se houver faturamento, ou 0 se sem vendas)
       const diasTrabalhadosReais = Object.keys(diasComVenda).length > 0 
         ? Object.keys(diasComVenda).length 
-        : 1;
+        : (fatTotal > 0 ? 1 : 0);
 
       // Custo fixo proporcional aos dias decorridos/trabalhados no mês (base 26 dias úteis do padrão)
       const custosFixosProporcionais = fatTotal > 0 ? (totFixos / 26) * diasTrabalhadosReais : 0;
@@ -5332,7 +5385,11 @@
       document.getElementById('dash-fat-total').textContent = formatarMoeda(fatTotal);
       document.getElementById('dash-lucro-operacional').textContent = formatarMoeda(lucroOperacional);
       document.getElementById('dash-margem-lucro-pct').textContent = formatarPct(margemLucroPct);
-      document.getElementById('dash-regra-bolso').textContent = `De cada R$ 100 vendidos, R$ ${formatarNumero(margemLucroPct)} são lucro.`;
+      if (margemLucroPct >= 0) {
+        document.getElementById('dash-regra-bolso').textContent = `De cada R$ 100 vendidos, R$ ${formatarNumero(margemLucroPct)} são lucro.`;
+      } else {
+        document.getElementById('dash-regra-bolso').textContent = `De cada R$ 100 vendidos, há R$ ${formatarNumero(Math.abs(margemLucroPct))} de prejuízo.`;
+      }
       document.getElementById('dash-pe-diario-val').textContent = formatarMoeda(peDiario);
       document.getElementById('dash-ticket-medio-val').textContent = formatarMoeda(ticketMedio);
       document.getElementById('dash-indice-nalim-num').textContent = scoreFinal;
@@ -5356,7 +5413,7 @@
         const baseFatAtual = emAndamento ? fatMedioDia : fatTotal;
         const baseFatAnterior = emAndamento ? resumoAnterior.fatMedioDia : resumoAnterior.fat;
 
-        const baseLucroAtual = emAndamento ? (lucroOperacional / diasTrabalhadosReais) : lucroOperacional;
+        const baseLucroAtual = emAndamento ? (diasTrabalhadosReais > 0 ? (lucroOperacional / diasTrabalhadosReais) : 0) : lucroOperacional;
         const baseLucroAnterior = emAndamento ? resumoAnterior.lucroMedioDia : resumoAnterior.lucro;
 
         const subRotulo = emAndamento ? 'vs. média anterior' : 'vs. mês anterior';
@@ -6136,13 +6193,27 @@
         '99Food': { canal: '99Food Marketplace', pedidosCount: 0, faturamentoBruto: 0, taxasRetidas: 0, cmvTotal: 0, lucroLiquido: 0, taxaBase: 0.18 }
       };
 
-      // Junta pedidos do mês com quaisquer pedidos salvos localmente do cardápio digital
+      // Junta pedidos do mês com quaisquer pedidos salvos localmente do cardápio digital pertencentes ao mês ativo
+      const mesAtivo = store.activeMonth;
       const pedidosParaCalcular = [...pedidosDoMes];
       try {
         const pedidosReaisLocais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
         pedidosReaisLocais.forEach(pr => {
-          if (!pedidosParaCalcular.some(p => p.id === pr.id || (p.numero_comanda && p.numero_comanda === pr.numero_comanda))) {
-            pedidosParaCalcular.push(pr);
+          let pertenceAoMes = false;
+          if (pr.dataIso) pertenceAoMes = pr.dataIso.startsWith(mesAtivo);
+          else if (pr.dataHora) {
+            if (pr.dataHora.includes('/')) {
+              const partes = pr.dataHora.split(' ')[0].split('/');
+              if (partes.length === 3) pertenceAoMes = (`${partes[2]}-${partes[1]}` === mesAtivo);
+            } else {
+              pertenceAoMes = pr.dataHora.startsWith(mesAtivo);
+            }
+          }
+          if (pertenceAoMes) {
+            const jaTem = pedidosParaCalcular.some(p => typeof saoMesmoPedido === 'function' ? saoMesmoPedido(p, pr) : (p.id === pr.id || (p.numero_comanda && p.numero_comanda === pr.numero_comanda)));
+            if (!jaTem) {
+              pedidosParaCalcular.push(pr);
+            }
           }
         });
       } catch (e) {}
@@ -6439,7 +6510,7 @@
       
       const inputData = document.getElementById('conta-pagar-data');
       if (inputData && !inputData.value) {
-        inputData.value = new Date().toISOString().split('T')[0];
+        inputData.value = getHojeIsoLocal();
       }
 
       alternarAbaContasPagar(tab);
@@ -7523,6 +7594,7 @@
       let teveDuplicata = false;
       if (Array.isArray(store.pedidos) && store.pedidos.length > 0) {
         store.pedidos.forEach(p => {
+          normalizarDataPedido(p);
           const jaTem = pedidosUnicos.find(u => saoMesmoPedido(u, p));
           if (!jaTem) {
             pedidosUnicos.push(p);
@@ -7561,8 +7633,8 @@
             const pedFormatado = {
               id: dbPed.id,
               numero_comanda: dbPed.numero_comanda,
-              dataHora: dbPed.data_hora || `${new Date().toISOString().split('T')[0]} 12:00`,
-              dataIso: dbPed.data_iso || (dbPed.data_hora ? dbPed.data_hora.split(' ')[0] : new Date().toISOString().split('T')[0]),
+              dataHora: dbPed.data_hora || `${getHojeIsoLocal()} 12:00`,
+              dataIso: dbPed.data_iso || (dbPed.data_hora ? dbPed.data_hora.split(' ')[0] : getHojeIsoLocal()),
               identificacao: dbPed.identificacao || `Comanda #${dbPed.numero_comanda || dbPed.id}`,
               canal: dbPed.canal || 'Cardápio Digital',
               pagto: dbPed.forma_pagto || 'PIX',
@@ -7580,6 +7652,7 @@
                 cmvUnit: it.cmv_unitario || ((it.preco_unitario || 0) * 0.28)
               }))
             };
+            normalizarDataPedido(pedFormatado);
 
             if (idx === -1) {
               pedidosReais.push(pedFormatado);
@@ -7594,6 +7667,7 @@
           // Limpeza e deduplicação de pedidosReais
           const unicosReais = [];
           pedidosReais.forEach(p => {
+            normalizarDataPedido(p);
             const jaExiste = unicosReais.find(u => saoMesmoPedido(u, p));
             if (!jaExiste) {
               unicosReais.push(p);
@@ -7711,7 +7785,7 @@
       const modal = document.getElementById('modal-perda');
       if (modal) {
         const inputData = document.getElementById('perda-data');
-        if (inputData) inputData.value = new Date().toISOString().split('T')[0];
+        if (inputData) inputData.value = getHojeIsoLocal();
         calcularTotalPerdaModal();
         modal.classList.remove('hidden');
       }
