@@ -6871,8 +6871,42 @@
         })
         .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
 
-      // B) Débito de ontem (D+1)
-      const debitoOntem = todosPedidos
+      // Função auxiliar para calcular a taxa de desconto de cartão aplicada a cada canal (Balcão, Garçom/Salão e Cardápio)
+      function obterTaxaDescontoCartao(p, tipoForma) {
+        if (p.taxa && p.total > 0 && p.taxa < p.total) {
+          return p.taxa / p.total;
+        }
+        if (p.taxa_aplicada && p.taxa_aplicada > 0 && p.taxa_aplicada < 1) {
+          return p.taxa_aplicada;
+        }
+
+        const cfg = (typeof adminConfigTaxas !== 'undefined' && adminConfigTaxas) ? adminConfigTaxas : {};
+        if (cfg.repassar_taxa_cartao) return 0.0;
+
+        const cLower = (p.canal || '').toLowerCase();
+        const taxaDebitoCfg = (cfg.taxa_debito !== undefined && !isNaN(cfg.taxa_debito)) ? parseFloat(cfg.taxa_debito) / 100 : 0.0199;
+        const taxaCreditoCfg = (cfg.taxa_credito_vista !== undefined && !isNaN(cfg.taxa_credito_vista)) ? parseFloat(cfg.taxa_credito_vista) / 100 : 0.0349;
+
+        if (tipoForma === 'debito') {
+          if (cLower.includes('cardapio') || cLower.includes('cardápio') || cLower.includes('proprio') || cLower.includes('delivery')) {
+            return Math.max(0.015, taxaDebitoCfg);
+          }
+          return taxaDebitoCfg;
+        } else if (tipoForma === 'credito') {
+          if (cLower.includes('cardapio') || cLower.includes('cardápio') || cLower.includes('proprio') || cLower.includes('delivery')) {
+            return Math.max(0.015, taxaCreditoCfg);
+          }
+          return taxaCreditoCfg;
+        }
+        return 0.0;
+      }
+
+      // B) Débito de ontem (D+1) - Líquido após desconto de taxas (Balcão, Garçom/Salão e Cardápio)
+      let debitoBruto = 0;
+      let debitoTaxasRetidas = 0;
+      let debitoOntem = 0;
+
+      const pedidosDebitoOntem = todosPedidos
         .filter(p => {
           const dt = p.dataIso || (p.dataHora ? p.dataHora.split(' ')[0] : '');
           return dt === dataOntem && p.canal !== 'iFood' && p.canal !== '99Food';
@@ -6880,11 +6914,25 @@
         .filter(p => {
           const pag = (p.pagto || '').toLowerCase();
           return pag.includes('d') && pag.includes('bito');
-        })
-        .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+        });
 
-      // C) Crédito de 30 dias atrás (D+30)
-      let credito30Atras = todosPedidos
+      pedidosDebitoOntem.forEach(p => {
+        const valBruto = parseFloat(p.total) || 0;
+        const txRate = obterTaxaDescontoCartao(p, 'debito');
+        const valorTaxa = Math.round(valBruto * txRate * 100) / 100;
+        const valLiquido = Math.max(0, valBruto - valorTaxa);
+
+        debitoBruto += valBruto;
+        debitoTaxasRetidas += valorTaxa;
+        debitoOntem += valLiquido;
+      });
+
+      // C) Crédito de 30 dias atrás (D+30) - Líquido após desconto de taxas (Balcão, Garçom/Salão e Cardápio)
+      let creditoBruto = 0;
+      let creditoTaxasRetidas = 0;
+      let credito30Atras = 0;
+
+      const pedidosCredito30Atras = todosPedidos
         .filter(p => {
           const dt = p.dataIso || (p.dataHora ? p.dataHora.split(' ')[0] : '');
           return dt === data30Atras && p.canal !== 'iFood' && p.canal !== '99Food';
@@ -6892,19 +6940,38 @@
         .filter(p => {
           const pag = (p.pagto || '').toLowerCase();
           return pag.includes('cr') && pag.includes('dito');
-        })
-        .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
+        });
+
+      pedidosCredito30Atras.forEach(p => {
+        const valBruto = parseFloat(p.total) || 0;
+        const txRate = obterTaxaDescontoCartao(p, 'credito');
+        const valorTaxa = Math.round(valBruto * txRate * 100) / 100;
+        const valLiquido = Math.max(0, valBruto - valorTaxa);
+
+        creditoBruto += valBruto;
+        creditoTaxasRetidas += valorTaxa;
+        credito30Atras += valLiquido;
+      });
 
       // Se credito30Atras for zero mas houver vendas no dia com cartão de crédito,
       // utiliza o crédito liquidado compatível para demonstração / histórico
       if (credito30Atras === 0 && pedidosHoje.length > 0) {
-        const creditoHoje = pedidosHoje
+        const pedidosCreditoHoje = pedidosHoje
           .filter(p => {
             const pag = (p.pagto || '').toLowerCase();
             return pag.includes('cr') && pag.includes('dito');
-          })
-          .reduce((a, b) => a + (parseFloat(b.total) || 0), 0);
-        credito30Atras = creditoHoje;
+          });
+
+        pedidosCreditoHoje.forEach(p => {
+          const valBruto = parseFloat(p.total) || 0;
+          const txRate = obterTaxaDescontoCartao(p, 'credito');
+          const valorTaxa = Math.round(valBruto * txRate * 100) / 100;
+          const valLiquido = Math.max(0, valBruto - valorTaxa);
+
+          creditoBruto += valBruto;
+          creditoTaxasRetidas += valorTaxa;
+          credito30Atras += valLiquido;
+        });
       }
 
       // D) Repasse Semanal dos Aplicativos (iFood & 99Food toda Quarta-feira)
@@ -7008,7 +7075,11 @@
         realEntradas,
         pixDinheiroHoje,
         debitoOntem,
+        debitoBruto,
+        debitoTaxasRetidas,
         credito30Atras,
+        creditoBruto,
+        creditoTaxasRetidas,
         repasseAppsHoje,
         entradasEfetivas,
         diferenca,
@@ -7094,10 +7165,13 @@
               <span class="p-1 rounded bg-white text-blue-700 text-xs shadow-2xs font-bold">💳</span>
               <div>
                 <strong class="text-slate-900 font-bold block">Cartão de Débito (D+1)</strong>
-                <span class="text-[10px] text-blue-800 font-semibold">Compensação bancária das vendas do dia anterior</span>
+                <span class="text-[10px] text-blue-800 font-semibold">Compensação líquida após taxas da maquininha</span>
               </div>
             </div>
-            <span class="font-black text-blue-700">+ ${formatarMoeda(diaInfo.debitoOntem)}</span>
+            <div class="text-right">
+              <span class="font-black text-blue-700 block">+ ${formatarMoeda(diaInfo.debitoOntem)}</span>
+              ${diaInfo.debitoTaxasRetidas > 0 ? `<span class="text-[9px] text-slate-400 block font-normal">Bruto: ${formatarMoeda(diaInfo.debitoBruto)} (-${formatarMoeda(diaInfo.debitoTaxasRetidas)})</span>` : ''}
+            </div>
           </div>
 
           <!-- Crédito D+30 -->
@@ -7106,10 +7180,13 @@
               <span class="p-1 rounded bg-white text-purple-700 text-xs shadow-2xs font-bold">💳</span>
               <div>
                 <strong class="text-slate-900 font-bold block">Cartão de Crédito (D+30)</strong>
-                <span class="text-[10px] text-purple-800 font-semibold">Recebíveis de cartão compensados após 30 dias</span>
+                <span class="text-[10px] text-purple-800 font-semibold">Recebíveis líquidos após taxas de cartão (Balcão, Garçom e Cardápio)</span>
               </div>
             </div>
-            <span class="font-black text-purple-700">+ ${formatarMoeda(diaInfo.credito30Atras)}</span>
+            <div class="text-right">
+              <span class="font-black text-purple-700 block">+ ${formatarMoeda(diaInfo.credito30Atras)}</span>
+              ${diaInfo.creditoTaxasRetidas > 0 ? `<span class="text-[9px] text-slate-400 block font-normal">Bruto: ${formatarMoeda(diaInfo.creditoBruto)} (-${formatarMoeda(diaInfo.creditoTaxasRetidas)})</span>` : ''}
+            </div>
           </div>
 
           ${diaInfo.isQuarta ? `
