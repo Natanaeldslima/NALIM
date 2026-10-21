@@ -64,6 +64,7 @@ def serve_root():
 
 # Rota do Login Oficial
 @app.get("/login")
+@app.get("/login.html")
 def serve_login():
     if os.path.exists(LOGIN_FILE):
         return FileResponse(LOGIN_FILE, headers=NO_CACHE_HEADERS)
@@ -84,6 +85,7 @@ def serve_landing():
 
 # Rota do Sistema de Gestão (Dono & Gerente)
 @app.get("/app")
+@app.get("/index.html")
 def serve_app():
     if os.path.exists(FRONTEND_FILE):
         return FileResponse(FRONTEND_FILE, headers=NO_CACHE_HEADERS)
