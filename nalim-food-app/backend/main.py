@@ -31,6 +31,7 @@ GARCOM_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "gar
 LOGIN_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "login.html"))
 CARDAPIO_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "cardapio.html"))
 ADMIN_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "admin.html"))
+LANDING_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "landing-page.html"))
 SW_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sw.js"))
 
 # Auto-seed no startup
@@ -67,6 +68,19 @@ def serve_login():
     if os.path.exists(LOGIN_FILE):
         return FileResponse(LOGIN_FILE, headers=NO_CACHE_HEADERS)
     return {"mensagem": "Arquivo login.html não encontrado."}
+
+# Rota da Landing Page Comercial (Apresentação & Vendas)
+@app.get("/landing")
+@app.get("/landing-page")
+@app.get("/landing-page.html")
+@app.get("/sobre")
+@app.get("/planos")
+@app.get("/site")
+@app.get("/vendas")
+def serve_landing():
+    if os.path.exists(LANDING_FILE):
+        return FileResponse(LANDING_FILE, headers=NO_CACHE_HEADERS)
+    return {"mensagem": "Arquivo landing-page.html não encontrado."}
 
 # Rota do Sistema de Gestão (Dono & Gerente)
 @app.get("/app")
