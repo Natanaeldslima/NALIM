@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NALIM Food — O Sistema de Gestão & Lucro Real para Restaurantes e Hamburguerias</title>
+  
+  <!-- Meta tags de Conversão e SEO -->
+  <meta name="description" content="Pare de apenas faturar alto e comece a ver o lucro real no bolso. O NALIM Food conecta Garçom no celular, KDS Cozinha e Cérebro Financeiro com previsão de caixa para 30 dias. Teste grátis!">
+  <meta name="keywords" content="sistema para restaurante, sistema para hamburgueria, kds cozinha, comanda garcom mobile, fluxo de caixa restaurante, cmv prato a prato, gestao ifood">
+  <meta property="og:title" content="NALIM Food — Conecte sua Cozinha, Garçons e Veja seu Lucro Real">
+  <meta property="og:description" content="O sistema que calcula seu lucro prato a prato, projeta seu fluxo de caixa em 30 dias e elimina maquininhas caras de garçom.">
+  <meta property="og:type" content="website">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            forest: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+              950: '#052e16',
+            }
+          },
+          boxShadow: {
+            'glow': '0 0 40px -10px rgba(22, 163, 74, 0.35)',
+            'card': '0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 5px 15px -5px rgba(0, 0, 0, 0.02)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Estilos Customizados de Apoio */
+    .hero-gradient {
+      background: radial-gradient(circle at 50% 0%, rgba(22, 163, 74, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+    }
+    .badge-shimmer {
+      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-forest-500 selection:text-white">
+
+  <!-- ================================================================ -->
+  <!-- BARRA SUPERIOR DE ALERTA DE OFERTA                               -->
+  <!-- ================================================================ -->
+  <aside aria-label="Alerta de Oferta" class="bg-forest-950 text-white text-xs py-2 px-4 text-center font-medium border-b border-forest-800 flex items-center justify-center gap-2">
+    <span class="inline-flex items-center gap-1.5 bg-forest-800/80 text-forest-200 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+      <span class="w-1.5 h-1.5 rounded-full bg-forest-400 animate-pulse"></span> Oferta de Lançamento
+    </span>
+    <span>Experimente o <strong>NALIM Food por 7 dias grátis</strong> sem precisar cadastrar cartão de crédito!</span>
+    <a href="#planos" class="underline text-forest-300 hover:text-white font-bold ml-1 transition">Ver planos</a>
+  </aside>
+
+  <!-- ================================================================ -->
+  <!-- NAVBAR / CABEÇALHO                                               -->
+  <!-- ================================================================ -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Logo NALIM -->
+      <a href="#" class="flex items-center gap-2.5 group">
+        <div class="w-10 h-10 rounded-xl bg-forest-900 text-white flex items-center justify-center font-black text-xl shadow-md group-hover:scale-105 transition">
+          N
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="text-xl font-black text-slate-900 tracking-tight">NALIM</span>
+            <span class="text-xl font-extrabold text-forest-700">FOOD</span>
+          </div>
+          <span class="text-[10px] font-bold text-slate-400 block -mt-1 tracking-wider uppercase">Gestão & Lucro Real</span>
+        </div>
+      </a>
+
+      <!-- Menu de Navegação Desktop -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
+        <a href="#como-funciona" class="hover:text-forest-700 transition">Como Funciona</a>
+        <a href="#diferenciais" class="hover:text-forest-700 transition">Diferenciais</a>
+        <a href="#calculadora" class="hover:text-forest-700 transition">Calculadora de Economia</a>
+        <a href="#planos" class="hover:text-forest-700 transition">Planos & Preços</a>
+        <a href="#faq" class="hover:text-forest-700 transition">Dúvidas</a>
+      </nav>
+
+      <!-- Ações do Cabeçalho -->
+      <div class="hidden sm:flex items-center gap-3">
+        <a href="login.html" class="px-4 py-2 text-sm font-bold text-slate-700 hover:text-forest-800 transition">
+          Já sou cliente
+        </a>
+        <button onclick="abrirModalLead('Header')" class="px-5 py-2.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white text-sm font-black shadow-md hover:shadow-lg transition flex items-center gap-2">
+          <span>Testar 7 Dias Grátis</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Botão Menu Mobile -->
+      <button onclick="toggleMenuMobile()" class="md:hidden p-2 text-slate-700 hover:text-slate-900 rounded-lg hover:bg-slate-100 transition" aria-label="Abrir Menu">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+
+    </div>
+
+    <!-- Menu Dropdown Mobile -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 shadow-xl">
+      <a href="#como-funciona" onclick="toggleMenuMobile()" class="block text-sm font-bold text-slate-700 py-1.5">Como Funciona</a>
+      <a href="#diferenciais" onclick="toggleMenuMobile()" class="block text-sm font-bold text-slate-700 py-1.5">Diferenciais</a>
+      <a href="#calculadora" onclick="toggleMenuMobile()" class="block text-sm font-bold text-slate-700 py-1.5">Calculadora de Economia</a>
+      <a href="#planos" onclick="toggleMenuMobile()" class="block text-sm font-bold text-slate-700 py-1.5">Planos & Preços</a>
+      <a href="#faq" onclick="toggleMenuMobile()" class="block text-sm font-bold text-slate-700 py-1.5">Dúvidas</a>
+      <div class="pt-3 border-t border-slate-100 flex flex-col gap-2">
+        <a href="login.html" class="w-full text-center py-2 text-sm font-bold text-slate-700 border border-slate-200 rounded-xl">Entrar no Sistema</a>
+        <button onclick="abrirModalLead('Mobile'); toggleMenuMobile();" class="w-full py-2.5 rounded-xl bg-forest-800 text-white text-sm font-black">Testar 7 Dias Grátis</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================================================================ -->
+  <!-- HERO SECTION: A GRANDE PROMESSA E DOR CENTRAL                    -->
+  <!-- ================================================================ -->
+  <section class="hero-gradient relative pt-12 pb-20 lg:pt-20 lg:pb-32 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-6">
+        
+        <!-- Tag de Destaque -->
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-forest-100/80 border border-forest-300 text-forest-900 text-xs font-black shadow-2xs">
+          <i data-lucide="sparkles" class="w-4 h-4 text-forest-700"></i>
+          <span>O PRIMEIRO SISTEMA COM CÉREBRO FINANCEIRO & PREVISÃO DE 30 DIAS</span>
+        </div>
+
+        <!-- Título Principal -->
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.15]">
+          Seu restaurante fatura alto, mas você não sabe <span class="text-transparent bg-clip-text bg-gradient-to-r from-forest-700 to-emerald-600">onde foi parar o lucro?</span>
+        </h1>
+
+        <!-- Subtítulo -->
+        <p class="text-base sm:text-xl text-slate-600 font-normal leading-relaxed max-w-2xl mx-auto">
+          Pare de viver na ilusão do faturamento bruto. O <strong>NALIM Food</strong> conecta o garçom no próprio celular, a cozinha sem papel e calcula o seu <strong>lucro líquido real prato a prato</strong>, avisando com 30 dias de antecedência se o caixa vai fechar no azul.
+        </p>
+
+        <!-- Ações do Hero -->
+        <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button onclick="abrirModalLead('Hero')" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-forest-800 hover:bg-forest-900 text-white font-black text-base shadow-glow hover:shadow-xl hover:-translate-y-0.5 transition duration-200 flex items-center justify-center gap-2.5">
+            <span>Começar Teste Grátis de 7 Dias</span>
+            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+          </button>
+          
+          <a href="#como-funciona" class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-base shadow-2xs hover:shadow transition flex items-center justify-center gap-2">
+            <i data-lucide="play-circle" class="w-5 h-5 text-forest-700"></i>
+            <span>Ver como funciona</span>
+          </a>
+        </div>
+
+        <!-- Micro-Garantias abaixo do CTA -->
+        <div class="pt-2 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 font-semibold">
+          <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Sem cartão de crédito</span>
+          <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Sem comprar maquininha cara</span>
+          <span class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Instalação em 5 minutos</span>
+        </div>
+
+      </div>
+
+      <!-- ============================================================== -->
+      <!-- DEMONSTRAÇÃO INTERATIVA DO SISTEMA (ABAS AO VIVO)              -->
+      <!-- ============================================================== -->
+      <div class="mt-14 max-w-5xl mx-auto">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl overflow-hidden">
+          
+          <!-- Barra Superior da Janela de Demonstração -->
+          <div class="bg-slate-900 text-white px-5 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+              <span class="text-xs font-bold text-slate-300 ml-2 font-mono">ecossistema-nalim.app</span>
+            </div>
+
+            <!-- Botões das Abas Interativas -->
+            <div class="flex items-center bg-slate-800/90 p-1 rounded-xl text-xs font-bold gap-1">
+              <button onclick="trocarAbaDemo('financeiro')" id="tab-btn-financeiro" class="px-3 py-1.5 rounded-lg bg-forest-700 text-white shadow-2xs transition">
+                🧠 Cérebro & DRE
+              </button>
+              <button onclick="trocarAbaDemo('calendario')" id="tab-btn-calendario" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition">
+                📅 Calendário 30 Dias
+              </button>
+              <button onclick="trocarAbaDemo('garcom')" id="tab-btn-garcom" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition">
+                📱 Garçom Mobile
+              </button>
+              <button onclick="trocarAbaDemo('cozinha')" id="tab-btn-cozinha" class="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition">
+                🔥 KDS Cozinha
+              </button>
+            </div>
+          </div>
+
+          <!-- Conteúdo da Aba 1: CÉREBRO FINANCEIRO & DRE -->
+          <div id="demo-content-financeiro" class="p-6 bg-slate-900 text-white space-y-6">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+              <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
+                <span class="text-slate-400 block font-medium">Faturamento Líquido</span>
+                <span class="text-xl font-black text-white mt-0.5 block">R$ 48.720,00</span>
+                <span class="text-[10px] text-emerald-400 font-bold mt-1 inline-block">↗ +18,4% vs. mês ant.</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
+                <span class="text-slate-400 block font-medium">Lucro Operacional Real</span>
+                <span class="text-xl font-black text-emerald-400 mt-0.5 block">R$ 11.240,00</span>
+                <span class="text-[10px] text-emerald-300 font-bold mt-1 inline-block">Margem Limpa: 23,1%</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
+                <span class="text-slate-400 block font-medium">Ponto de Equilíbrio / Dia</span>
+                <span class="text-xl font-black text-amber-400 mt-0.5 block">R$ 1.150,00</span>
+                <span class="text-[10px] text-slate-400 font-bold mt-1 inline-block">Meta batida em 22 de 26 dias</span>
+              </div>
+              <div class="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700">
+                <span class="text-slate-400 block font-medium">Saúde Financeira</span>
+                <span class="text-xl font-black text-emerald-300 mt-0.5 block">92 / 100</span>
+                <span class="text-[10px] text-emerald-400 font-bold mt-1 inline-block">Classificação: SAUDÁVEL</span>
+              </div>
+            </div>
+
+            <!-- Banner Prescritivo da IA -->
+            <div class="p-4 rounded-2xl bg-forest-950/70 border border-forest-600/80 text-xs flex items-start gap-3">
+              <div class="p-2 rounded-xl bg-forest-800 text-white font-black text-sm">💡</div>
+              <div class="space-y-1">
+                <strong class="text-emerald-300 font-black text-sm block">Recomendação do Cérebro Financeiro:</strong>
+                <p class="text-slate-300 text-xs leading-relaxed">
+                  "O produto <strong>X-Bacon Especial</strong> vende 340 unidades/mês com margem de 44%. Reajustar em <strong>R$ 1,50</strong> não afeta suas vendas e injetará <strong>+R$ 510,00 líquidos</strong> direto no seu caixa este mês."
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conteúdo da Aba 2: CALENDÁRIO 30 DIAS -->
+          <div id="demo-content-calendario" class="hidden p-6 bg-slate-900 text-white space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+              <div>
+                <strong class="text-sm font-black text-white block">Calendário de Previsão de Fluxo de Caixa (Outubro)</strong>
+                <span class="text-xs text-slate-400">Reconciliação automática: PIX D+0, Débito D+1, Crédito D+30 e Repasses iFood nas quartas</span>
+              </div>
+              <span class="text-xs font-bold px-3 py-1 bg-forest-900/60 text-emerald-300 border border-forest-700 rounded-full">Liquidez Garantida</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
+              <div class="p-3 rounded-xl bg-slate-800 border border-slate-700">
+                <div class="flex justify-between font-black text-slate-300 pb-1">
+                  <span>Seg 19/10</span>
+                  <span class="text-[9px] bg-slate-700 px-1 rounded">Prev</span>
+                </div>
+                <div class="text-emerald-400 font-black mt-2">+ R$ 680,00</div>
+                <div class="text-rose-400 font-bold">- R$ 350,00 (Gás)</div>
+                <div class="text-[10px] text-slate-400 mt-1 font-mono">Saldo: R$ 4.210</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-800 border border-slate-700">
+                <div class="flex justify-between font-black text-slate-300 pb-1">
+                  <span>Ter 20/10</span>
+                  <span class="text-[9px] bg-slate-700 px-1 rounded">Prev</span>
+                </div>
+                <div class="text-emerald-400 font-black mt-2">+ R$ 820,00</div>
+                <div class="text-slate-500 font-bold">Sem boletos</div>
+                <div class="text-[10px] text-slate-400 mt-1 font-mono">Saldo: R$ 5.030</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-purple-950/50 border border-purple-700/80">
+                <div class="flex justify-between font-black text-purple-200 pb-1">
+                  <span>Qua 21/10</span>
+                  <span class="text-[9px] bg-purple-700 text-white px-1 rounded font-extrabold">Apps</span>
+                </div>
+                <div class="text-purple-300 font-black mt-2">+ R$ 3.420,00 (iFood)</div>
+                <div class="text-rose-400 font-bold">- R$ 1.800 (Carne)</div>
+                <div class="text-[10px] text-purple-200 mt-1 font-mono">Saldo: R$ 6.650</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-slate-800 border border-slate-700">
+                <div class="flex justify-between font-black text-slate-300 pb-1">
+                  <span>Qui 22/10</span>
+                  <span class="text-[9px] bg-slate-700 px-1 rounded">Prev</span>
+                </div>
+                <div class="text-emerald-400 font-black mt-2">+ R$ 940,00</div>
+                <div class="text-slate-500 font-bold">Sem boletos</div>
+                <div class="text-[10px] text-slate-400 mt-1 font-mono">Saldo: R$ 7.590</div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-emerald-950/40 border border-emerald-600/70">
+                <div class="flex justify-between font-black text-emerald-200 pb-1">
+                  <span>Sex 23/10</span>
+                  <span class="text-[9px] bg-emerald-700 text-white px-1 rounded font-extrabold">Pico</span>
+                </div>
+                <div class="text-emerald-300 font-black mt-2">+ R$ 2.450,00</div>
+                <div class="text-rose-400 font-bold">- R$ 420 (Energia)</div>
+                <div class="text-[10px] text-emerald-200 mt-1 font-mono">Saldo: R$ 9.620</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conteúdo da Aba 3: GARÇOM MOBILE -->
+          <div id="demo-content-garcom" class="hidden p-6 bg-slate-900 text-white">
+            <div class="max-w-md mx-auto bg-slate-800 p-4 rounded-2xl border border-slate-700 space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-slate-700">
+                <div class="flex items-center gap-2">
+                  <span class="p-1 rounded-lg bg-purple-600 text-white font-bold text-xs">Mesa 04</span>
+                  <span class="text-xs text-slate-300 font-bold">Garçom: Carlos Silva</span>
+                </div>
+                <span class="text-xs font-black text-emerald-400">Total: R$ 78,00</span>
+              </div>
+              <div class="space-y-1.5 text-xs text-slate-200">
+                <div class="flex justify-between bg-slate-700/60 p-2 rounded-lg">
+                  <span>2x Burger Smash Duplo (sem cebola)</span>
+                  <strong class="text-white">R$ 56,00</strong>
+                </div>
+                <div class="flex justify-between bg-slate-700/60 p-2 rounded-lg">
+                  <span>1x Batata Rústica c/ Cheddar</span>
+                  <strong class="text-white">R$ 22,00</strong>
+                </div>
+              </div>
+              <button class="w-full py-2.5 rounded-xl bg-forest-700 hover:bg-forest-600 font-black text-xs text-white transition flex items-center justify-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                <span>Enviar Direto para a Cozinha (Zero Papel)</span>
+              </button>
+              <p class="text-[10px] text-center text-slate-400">O garçom usa o próprio celular. Zero gasto com maquininhas de R$ 1.500.</p>
+            </div>
+          </div>
+
+          <!-- Conteúdo da Aba 4: KDS COZINHA -->
+          <div id="demo-content-cozinha" class="hidden p-6 bg-slate-900 text-white">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div class="bg-slate-800 p-3.5 rounded-2xl border-l-4 border-l-emerald-500 border border-slate-700 space-y-2">
+                <div class="flex justify-between items-center font-bold">
+                  <span class="text-emerald-400 font-black">#Comanda 14 • Mesa 02</span>
+                  <span class="text-[10px] bg-slate-700 px-1.5 py-0.5 rounded text-slate-300 font-mono">04:12</span>
+                </div>
+                <p class="text-slate-200 font-medium">1x Smash Bacon Especial<br>1x Batata Frita P</p>
+                <button class="w-full py-1.5 bg-emerald-600/90 text-white rounded-lg font-bold hover:bg-emerald-500 transition text-[11px]">
+                  ✓ Marcar Pronto
+                </button>
+              </div>
+
+              <div class="bg-slate-800 p-3.5 rounded-2xl border-l-4 border-l-amber-500 border border-slate-700 space-y-2">
+                <div class="flex justify-between items-center font-bold">
+                  <span class="text-amber-400 font-black">#Comanda 15 • Balcão</span>
+                  <span class="text-[10px] bg-slate-700 px-1.5 py-0.5 rounded text-slate-300 font-mono">11:45</span>
+                </div>
+                <p class="text-slate-200 font-medium">2x Double Smash Cheddar<br><span class="text-amber-300 font-bold text-[10px]">OBS: Sem molho verde</span></p>
+                <button class="w-full py-1.5 bg-amber-600/90 text-white rounded-lg font-bold hover:bg-amber-500 transition text-[11px]">
+                  Preparando...
+                </button>
+              </div>
+
+              <div class="bg-slate-800 p-3.5 rounded-2xl border-l-4 border-l-rose-500 border border-slate-700 space-y-2">
+                <div class="flex justify-between items-center font-bold">
+                  <span class="text-rose-400 font-black">#Comanda 16 • iFood</span>
+                  <span class="text-[10px] bg-rose-950 text-rose-300 px-1.5 py-0.5 rounded font-mono font-bold">18:30 (Atrasando)</span>
+                </div>
+                <p class="text-slate-200 font-medium">1x Combo Master Família<br>3x Refrigerante Lata</p>
+                <button class="w-full py-1.5 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-500 transition text-[11px]">
+                  Prioridade Alta
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 2: A REALIDADE CRUEL (AS 4 GRANDES DORES)                 -->
+  <!-- ================================================================ -->
+  <section class="py-20 bg-white border-y border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-2xl mx-auto space-y-3">
+        <span class="text-xs font-black uppercase text-rose-600 tracking-wider">A Realidade da Maioria dos Restaurantes</span>
+        <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Você se identifica com algum desses 4 ralos de dinheiro?
+        </h2>
+        <p class="text-slate-500 text-sm sm:text-base">
+          Trabalhar 14 horas por dia sem ver a cor do dinheiro não é falta de esforço. É falta de controle inteligente.
+        </p>
+      </div>
+
+      <div class="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Dor 1 -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs space-y-3 hover:border-rose-300 transition">
+          <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-black text-xl">
+            📉
+          </div>
+          <h3 class="text-base font-extrabold text-slate-900">A Ilusão do Faturamento Bruto</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Passar R$ 40 mil na maquininha não significa que você ganhou dinheiro. As taxas de 23% dos apps, 2% do cartão e o CMV invisível comem quase tudo.
+          </p>
+        </div>
+
+        <!-- Dor 2 -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs space-y-3 hover:border-amber-300 transition">
+          <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xl">
+            💥
+          </div>
+          <h3 class="text-base font-extrabold text-slate-900">Susto com Boletos no Fim do Mês</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            O aluguel, carne e energia vencem e você descobre que não tem saldo no dia. Entrar no cheque especial ou atrasar fornecedor vira rotina.
+          </p>
+        </div>
+
+        <!-- Dor 3 -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs space-y-3 hover:border-purple-300 transition">
+          <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-black text-xl">
+            📱
+          </div>
+          <h3 class="text-base font-extrabold text-slate-900">Maquininhas Caras de Garçom</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Softwares antigos cobram R$ 1.500 por maquininha proprietária. Se quebrar ou cair no chão, o prejuízo é seu e o atendimento trava.
+          </p>
+        </div>
+
+        <!-- Dor 4 -->
+        <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs space-y-3 hover:border-blue-300 transition">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xl">
+            📝
+          </div>
+          <h3 class="text-base font-extrabold text-slate-900">Papelada e Gritaria na Cozinha</h3>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Comanda rasgada, pedido esquecido, comida esfriando na bancada. O cliente reclama da demora e você perde avaliações de 5 estrelas.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 3: A SOLUÇÃO NALIM FOOD (COMO FUNCIONA)                    -->
+  <!-- ================================================================ -->
+  <section id="como-funciona" class="py-20 lg:py-28 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-3">
+        <span class="text-xs font-black uppercase text-forest-700 tracking-wider">A Solução Completa</span>
+        <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Como o NALIM transforma sua operação em uma máquina lucrativa
+        </h2>
+        <p class="text-slate-600 text-sm sm:text-base">
+          Tudo o que acontece no salão, no balcão e no delivery alimenta a inteligência do seu fluxo de caixa em tempo real.
+        </p>
+      </div>
+
+      <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Passo 1 -->
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-card space-y-4 hover:shadow-lg transition">
+          <div class="w-14 h-14 rounded-2xl bg-forest-100 text-forest-800 flex items-center justify-center font-black text-2xl">
+            1
+          </div>
+          <h3 class="text-lg font-black text-slate-900">Garçom Lança no Celular Comum</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+            Seu garçom abre o sistema no próprio smartphone (Android ou iPhone) via navegador ou app leve. Anota o pedido da mesa em 15 segundos sem gastar 1 centavo com aparelhos caros.
+          </p>
+          <ul class="text-xs text-slate-500 space-y-1.5 font-semibold pt-2 border-t border-slate-100">
+            <li class="flex items-center gap-1.5 text-forest-800"><i data-lucide="check" class="w-3.5 h-3.5"></i> Identificação por comanda ou mesa</li>
+            <li class="flex items-center gap-1.5 text-forest-800"><i data-lucide="check" class="w-3.5 h-3.5"></i> Observações personalizadas do cliente</li>
+          </ul>
+        </div>
+
+        <!-- Passo 2 -->
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-card space-y-4 hover:shadow-lg transition">
+          <div class="w-14 h-14 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-black text-2xl">
+            2
+          </div>
+          <h3 class="text-lg font-black text-slate-900">Cozinha KDS Recebe na Hora</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+            O pedido apita imediatamente na tela da cozinha (KDS). Os cozinheiros veem a ordem cronológica com alerta de tempo (verde, amarelo e vermelho), sem nenhum papel amassado.
+          </p>
+          <ul class="text-xs text-slate-500 space-y-1.5 font-semibold pt-2 border-t border-slate-100">
+            <li class="flex items-center gap-1.5 text-amber-800"><i data-lucide="check" class="w-3.5 h-3.5"></i> Fim dos pratos esquecidos</li>
+            <li class="flex items-center gap-1.5 text-amber-800"><i data-lucide="check" class="w-3.5 h-3.5"></i> Garçom é notificado quando fica pronto</li>
+          </ul>
+        </div>
+
+        <!-- Passo 3 -->
+        <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-card space-y-4 hover:shadow-lg transition">
+          <div class="w-14 h-14 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center font-black text-2xl">
+            3
+          </div>
+          <h3 class="text-lg font-black text-slate-900">O Cérebro Calcula o Lucro Real</h3>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+            No mesmo instante, o NALIM dá baixa nos insumos pela Ficha Técnica, desconta as taxas do canal (iFood, cartão ou balcão) e provisiona o dia do repasse no Calendário Financeiro.
+          </p>
+          <ul class="text-xs text-slate-500 space-y-1.5 font-semibold pt-2 border-t border-slate-100">
+            <li class="flex items-center gap-1.5 text-purple-800"><i data-lucide="check" class="w-3.5 h-3.5"></i> Lucro líquido calculado no centavo</li>
+            <li class="flex items-center gap-1.5 text-purple-800"><i data-lucide="check" class="w-3.5 h-3.5"></i> Visão de fluxo de caixa para 30 dias</li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 4: CALCULADORA INTERATIVA DE ECONOMIA (ROI IMEDIATO)       -->
+  <!-- ================================================================ -->
+  <section id="calculadora" class="py-20 bg-forest-950 text-white relative overflow-hidden">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      
+      <div class="text-center max-w-2xl mx-auto space-y-3">
+        <span class="text-xs font-black uppercase text-forest-300 tracking-wider">Simule Sua Economia Real</span>
+        <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
+          Quanto você vai economizar com o NALIM?
+        </h2>
+        <p class="text-forest-200 text-sm">
+          Mova os controles abaixo e veja na hora o impacto financeiro no seu caixa.
+        </p>
+      </div>
+
+      <!-- Caixa da Calculadora -->
+      <div class="mt-12 bg-slate-900/90 border border-forest-800 p-6 sm:p-10 rounded-3xl shadow-2xl backdrop-blur-md space-y-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          
+          <!-- Controles / Sliders -->
+          <div class="space-y-6">
+            
+            <!-- Slider 1: Garçons -->
+            <div class="space-y-2">
+              <div class="flex justify-between items-center text-sm font-bold">
+                <label for="slider-garcons" class="text-slate-300">Quantos garçons / atendentes você tem?</label>
+                <span id="label-garcons-val" class="px-2.5 py-1 bg-forest-800 text-white rounded-lg font-black text-xs">3 garçons</span>
+              </div>
+              <input type="range" id="slider-garcons" min="1" max="10" value="3" oninput="calcularRoi()" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-forest-500">
+              <span class="text-[11px] text-slate-400 block">Softwares tradicionais cobram ~R$ 1.200 por aparelho/maquininha proprietária.</span>
+            </div>
+
+            <!-- Slider 2: Faturamento iFood / Delivery -->
+            <div class="space-y-2">
+              <div class="flex justify-between items-center text-sm font-bold">
+                <label for="slider-fat" class="text-slate-300">Quanto você fatura no Delivery / iFood por mês?</label>
+                <span id="label-fat-val" class="px-2.5 py-1 bg-forest-800 text-white rounded-lg font-black text-xs">R$ 25.000</span>
+              </div>
+              <input type="range" id="slider-fat" min="5000" max="100000" step="5000" value="25000" oninput="calcularRoi()" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-forest-500">
+              <span class="text-[11px] text-slate-400 block">O controle de CMV e canal próprio recupera em média 3% a 6% de lucro limpo.</span>
+            </div>
+
+          </div>
+
+          <!-- Card do Resultado -->
+          <div class="p-6 rounded-2xl bg-forest-900/70 border border-forest-600/60 space-y-4 flex flex-col justify-between">
+            <div>
+              <span class="text-[10px] font-black uppercase text-emerald-300 tracking-wider block">ECONOMIA ESTIMADA NO SEU BOLSO:</span>
+              
+              <div class="mt-3 space-y-2">
+                <div class="flex justify-between items-center text-xs text-slate-300 pb-2 border-b border-forest-800">
+                  <span>Economia imediata em Maquininhas:</span>
+                  <strong id="calc-eco-aparelhos" class="text-white font-extrabold">R$ 3.600,00</strong>
+                </div>
+                <div class="flex justify-between items-center text-xs text-slate-300 pb-2 border-b border-forest-800">
+                  <span>Lucro recuperado em taxas e CMV/mês:</span>
+                  <strong id="calc-eco-mensal" class="text-emerald-300 font-extrabold">+ R$ 1.000,00/mês</strong>
+                </div>
+                <div class="flex justify-between items-center text-xs text-slate-300 pt-1">
+                  <span>Total Economizado no 1º Ano:</span>
+                  <strong id="calc-eco-anual" class="text-2xl font-black text-white">R$ 15.600,00</strong>
+                </div>
+              </div>
+            </div>
+
+            <button onclick="abrirModalLead('Calculadora')" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-black text-xs uppercase tracking-wider transition shadow-md">
+              Quero Essa Economia no Meu Restaurante
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 5: PLANOS & PREÇOS (TRANSPARÊNCIA TOTAL)                  -->
+  <!-- ================================================================ -->
+  <section id="planos" class="py-20 lg:py-28 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto space-y-4">
+        <span class="text-xs font-black uppercase text-forest-700 tracking-wider">Planos Transparentes</span>
+        <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Investimento menor que o valor de 1 hambúrguer por dia
+        </h2>
+        <p class="text-slate-600 text-sm sm:text-base">
+          Sem taxas escondidas. Sem fidelidade forçada. Cancele quando quiser.
+        </p>
+
+        <!-- Toggle Mensal / Anual -->
+        <div class="pt-2 flex items-center justify-center gap-3 text-xs font-bold">
+          <span id="label-ciclo-mensal" class="text-slate-900">Mensal</span>
+          <button type="button" onclick="toggleCicloPrecos()" class="w-12 h-6 rounded-full bg-forest-800 p-0.5 transition flex items-center" id="toggle-ciclo-btn" aria-label="Alternar ciclo de pagamento">
+            <span id="toggle-ciclo-bolinha" class="w-5 h-5 rounded-full bg-white shadow-md transform transition translate-x-0"></span>
+          </button>
+          <span id="label-ciclo-anual" class="text-slate-400 flex items-center gap-1.5">
+            Anual <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full">20% OFF</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Grid dos 3 Planos -->
+      <div class="mt-14 grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+        
+        <!-- Plano 1: START -->
+        <div class="p-8 rounded-3xl bg-slate-50 border border-slate-200 shadow-2xs flex flex-col justify-between space-y-6 hover:border-slate-300 transition">
+          <div class="space-y-4">
+            <div>
+              <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Para Pequenos & Delivery</span>
+              <h3 class="text-xl font-black text-slate-900 mt-1">Plano Start</h3>
+              <p class="text-xs text-slate-500 mt-1">Ideal para quem está começando ou foca exclusivamente em delivery.</p>
+            </div>
+
+            <div class="py-2">
+              <span class="text-3xl font-black text-slate-900" id="preco-start-val">R$ 89,90</span>
+              <span class="text-xs text-slate-500 font-medium">/mês</span>
+            </div>
+
+            <ul class="space-y-2.5 text-xs text-slate-700">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> PDV Balcão & Caixa com Fechamento Cego</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> KDS Cozinha Digital (Sem Papel)</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Ficha Técnica e CMV dos Produtos</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Até 2 Usuários / Atendentes</li>
+              <li class="flex items-center gap-2 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i> Calendário Financeiro de 30 Dias</li>
+            </ul>
+          </div>
+
+          <button onclick="abrirModalLead('Plano Start')" class="w-full py-3.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-extrabold text-xs transition">
+            Testar Start Grátis por 7 Dias
+          </button>
+        </div>
+
+        <!-- Plano 2: PRO (DESTAQUE) -->
+        <div class="p-8 rounded-3xl bg-forest-950 text-white border-2 border-forest-500 shadow-2xl flex flex-col justify-between space-y-6 relative transform lg:-translate-y-2">
+          
+          <div class="absolute -top-3.5 left-1/2 transform -translate-x-1/2 bg-forest-500 text-slate-950 font-black text-[10px] tracking-wider uppercase px-3 py-1 rounded-full shadow">
+            O MAIS ESCOLHIDO POR RESTAURANTES
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <span class="text-xs font-black text-emerald-300 uppercase tracking-wider">Completo & Recomendado</span>
+              <h3 class="text-xl font-black text-white mt-1">Plano Pro</h3>
+              <p class="text-xs text-forest-200 mt-1">Para hamburguerias, pizzarias e restaurantes com salão e entrega.</p>
+            </div>
+
+            <div class="py-2">
+              <span class="text-4xl font-black text-white" id="preco-pro-val">R$ 139,90</span>
+              <span class="text-xs text-forest-300 font-medium">/mês</span>
+            </div>
+
+            <ul class="space-y-2.5 text-xs text-slate-200">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> <strong>Tudo do Plano Start +</strong></li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> <strong>Garçom Mobile Ilimitado</strong> (sem comprar maquininha)</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> <strong>Cérebro Financeiro com IA</strong> de recomendação de preços</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> <strong>Calendário Financeiro de 30 Dias</strong> com alerta de caixa</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Conciliação iFood, 99Food, PIX D+0 e Cartões</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Matriz BCG de Cardápio (Estrelas, Burros, Cães)</li>
+            </ul>
+          </div>
+
+          <button onclick="abrirModalLead('Plano Pro')" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm transition shadow-glow">
+            Começar 7 Dias Grátis no Pro
+          </button>
+        </div>
+
+        <!-- Plano 3: ENTERPRISE -->
+        <div class="p-8 rounded-3xl bg-slate-50 border border-slate-200 shadow-2xs flex flex-col justify-between space-y-6 hover:border-slate-300 transition">
+          <div class="space-y-4">
+            <div>
+              <span class="text-xs font-black text-slate-500 uppercase tracking-wider">Para Redes & Grandes Volumes</span>
+              <h3 class="text-xl font-black text-slate-900 mt-1">Plano Enterprise</h3>
+              <p class="text-xs text-slate-500 mt-1">Para casas de alto movimento ou múltiplas filiais.</p>
+            </div>
+
+            <div class="py-2">
+              <span class="text-3xl font-black text-slate-900" id="preco-enterprise-val">R$ 229,90</span>
+              <span class="text-xs text-slate-500 font-medium">/mês</span>
+            </div>
+
+            <ul class="space-y-2.5 text-xs text-slate-700">
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> <strong>Tudo do Plano Pro +</strong></li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Usuários, Garçons e Telas KDS Ilimitados</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Suporte Prioritário VIP no WhatsApp</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Treinamento e Configuração Assistida</li>
+              <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Relatórios Executivos Consolidados</li>
+            </ul>
+          </div>
+
+          <button onclick="abrirModalLead('Plano Enterprise')" class="w-full py-3.5 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 border border-slate-300 font-extrabold text-xs transition">
+            Testar Enterprise Grátis por 7 Dias
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 6: PERGUNTAS FREQUENTES (FAQ)                              -->
+  <!-- ================================================================ -->
+  <section id="faq" class="py-20 bg-slate-50 border-t border-slate-200">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      
+      <div class="text-center space-y-3">
+        <span class="text-xs font-black uppercase text-forest-700 tracking-wider">Tire Suas Dúvidas</span>
+        <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Perguntas Frequentes</h2>
+      </div>
+
+      <div class="space-y-3" id="faq-container">
+        
+        <!-- FAQ 1 -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+          <button onclick="toggleFaq(1)" class="w-full p-5 text-left font-bold text-slate-900 text-sm flex justify-between items-center gap-4 hover:bg-slate-50 transition">
+            <span>Preciso comprar maquininhas ou computadores caros para usar o NALIM?</span>
+            <i data-lucide="chevron-down" id="faq-icon-1" class="w-4 h-4 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="faq-content-1" class="hidden px-5 pb-5 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+            <strong>Não!</strong> Essa é uma das maiores economias do NALIM. O sistema funciona em qualquer navegador web: no celular dos seus garçons, em tablets simples ou em qualquer computador/notebook que você já tenha no caixa ou na cozinha.
+          </div>
+        </div>
+
+        <!-- FAQ 2 -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+          <button onclick="toggleFaq(2)" class="w-full p-5 text-left font-bold text-slate-900 text-sm flex justify-between items-center gap-4 hover:bg-slate-50 transition">
+            <span>Como funciona o Teste Grátis de 7 dias?</span>
+            <i data-lucide="chevron-down" id="faq-icon-2" class="w-4 h-4 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="faq-content-2" class="hidden px-5 pb-5 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+            Você ganha acesso imediato a todas as funcionalidades do sistema durante 7 dias corridos. <strong>Não pedimos cartão de crédito</strong> para começar. Se ao final do período você decidir que o NALIM não é para você, sua conta é encerrada sem nenhuma cobrança.
+          </div>
+        </div>
+
+        <!-- FAQ 3 -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+          <button onclick="toggleFaq(3)" class="w-full p-5 text-left font-bold text-slate-900 text-sm flex justify-between items-center gap-4 hover:bg-slate-50 transition">
+            <span>Como o Calendário Financeiro sabe quando vou receber do iFood e cartões?</span>
+            <i data-lucide="chevron-down" id="faq-icon-3" class="w-4 h-4 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="faq-content-3" class="hidden px-5 pb-5 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+            O NALIM possui a inteligência das regras bancárias do Food Service: PIX e dinheiro entram no mesmo dia (D+0), cartão de débito no dia útil seguinte (D+1), cartão de crédito em 30 dias (D+30), e os repasses dos aplicativos iFood e 99Food são consolidados e provisionados automaticamente nas quartas-feiras.
+          </div>
+        </div>
+
+        <!-- FAQ 4 -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+          <button onclick="toggleFaq(4)" class="w-full p-5 text-left font-bold text-slate-900 text-sm flex justify-between items-center gap-4 hover:bg-slate-50 transition">
+            <span>Se eu tiver dúvidas para cadastrar meu cardápio, terei suporte?</span>
+            <i data-lucide="chevron-down" id="faq-icon-4" class="w-4 h-4 text-slate-400 transition-transform"></i>
+          </button>
+          <div id="faq-content-4" class="hidden px-5 pb-5 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+            Sim! Nós disponibilizamos vídeos práticos de 2 minutos ensinando passo a passo, além de suporte direto pelo WhatsApp para ajudar a calibrar suas fichas técnicas e custos fixos.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 7: CTA FINAL DE CONVERSÃO                                  -->
+  <!-- ================================================================ -->
+  <section class="py-20 bg-forest-950 text-white text-center relative overflow-hidden">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 relative z-10">
+      
+      <div class="inline-flex items-center gap-2 px-3 py-1 bg-forest-800 text-forest-200 text-xs font-black rounded-full uppercase tracking-wider">
+        Chega de Dúvidas no Caixa
+      </div>
+
+      <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight">
+        Pronto para ter o controle total do seu restaurante e ver seu lucro real?
+      </h2>
+
+      <p class="text-forest-200 text-sm sm:text-lg max-w-2xl mx-auto leading-relaxed">
+        Junte-se a donos de restaurantes que transformaram correria e estresse em tranquilidade financeira e previsibilidade de caixa.
+      </p>
+
+      <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button onclick="abrirModalLead('CTA Final')" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-base shadow-glow hover:shadow-xl transition">
+          Começar Teste Grátis de 7 Dias Agora
+        </button>
+        <button onclick="abrirWhatsAppDireto('Gostaria de tirar uma duvida sobre o NALIM')" class="w-full sm:w-auto px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-base transition flex items-center justify-center gap-2">
+          <i data-lucide="message-circle" class="w-5 h-5 text-emerald-400"></i>
+          <span>Falar com Especialista no WhatsApp</span>
+        </button>
+      </div>
+
+      <span class="text-xs text-forest-400 block pt-2">Sem taxa de adesão • Sem fidelidade • Ativação imediata</span>
+
+    </div>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- RODAPÉ                                                           -->
+  <!-- ================================================================ -->
+  <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-6">
+      
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-forest-800 text-white flex items-center justify-center font-black text-sm">N</div>
+        <span class="font-extrabold text-white text-sm">NALIM Food Service</span>
+        <span class="text-slate-500">| Gestão & Lucro Real</span>
+      </div>
+
+      <div class="flex items-center gap-6 font-semibold">
+        <a href="#como-funciona" class="hover:text-white transition">Como Funciona</a>
+        <a href="#planos" class="hover:text-white transition">Planos</a>
+        <a href="login.html" class="hover:text-white transition">Acessar Sistema</a>
+        <button onclick="abrirConfigWhatsApp()" class="hover:text-white transition text-slate-500">Configurar WhatsApp</button>
+      </div>
+
+      <div class="text-slate-500 text-center sm:text-right">
+        © 2026 NALIM Food Service. Todos os direitos reservados.
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ================================================================ -->
+  <!-- BOTÃO FLUTUANTE DO WHATSAPP                                      -->
+  <!-- ================================================================ -->
+  <aside aria-label="Atendimento WhatsApp" class="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+    <div class="hidden sm:block bg-white text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg border border-slate-200 animate-bounce">
+      Dúvidas? Fale conosco agora!
+    </div>
+    <button onclick="abrirWhatsAppDireto('Ola! Gostaria de saber mais sobre o sistema NALIM Food para o meu restaurante.')" class="w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl flex items-center justify-center transition-transform hover:scale-110 cursor-pointer" aria-label="Falar no WhatsApp" title="Falar no WhatsApp">
+      <i data-lucide="message-circle" class="w-7 h-7"></i>
+    </button>
+  </aside>
+
+  <!-- ================================================================ -->
+  <!-- MODAL DE CAPTURA DE LEAD / TESTE GRÁTIS                          -->
+  <!-- ================================================================ -->
+  <div id="modal-lead" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-5 animate-in fade-in duration-200 relative">
+      
+      <button onclick="fecharModalLead()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition" aria-label="Fechar Modal">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="text-center space-y-1">
+        <span class="w-10 h-10 rounded-2xl bg-forest-100 text-forest-800 inline-flex items-center justify-center font-black text-xl mb-1">🚀</span>
+        <h3 class="text-xl font-black text-slate-900 tracking-tight">Ativar Teste Grátis de 7 Dias</h3>
+        <p class="text-xs text-slate-500">Sem cartão de crédito. Preencha abaixo para receber seu link de acesso:</p>
+      </div>
+
+      <form onsubmit="submeterLead(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label for="lead-restaurante" class="font-bold text-slate-700 block mb-1">Nome do Restaurante / Negócio:</label>
+          <input type="text" id="lead-restaurante" required placeholder="Ex: Hamburgueria Dom Nalim" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-forest-600 text-xs">
+        </div>
+
+        <div>
+          <label for="lead-nome" class="font-bold text-slate-700 block mb-1">Seu Nome:</label>
+          <input type="text" id="lead-nome" required placeholder="Ex: Carlos Silva" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-forest-600 text-xs">
+        </div>
+
+        <div>
+          <label for="lead-whatsapp" class="font-bold text-slate-700 block mb-1">Seu WhatsApp com DDD:</label>
+          <input type="tel" id="lead-whatsapp" required placeholder="Ex: (11) 98765-4321" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-forest-600 text-xs">
+        </div>
+
+        <div>
+          <label for="lead-tipo" class="font-bold text-slate-700 block mb-1">Tipo de Operação:</label>
+          <select id="lead-tipo" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-forest-600 text-xs bg-white">
+            <option value="Hamburgueria">Hamburgueria</option>
+            <option value="Pizzaria">Pizzaria</option>
+            <option value="Restaurante Salão">Restaurante Salão & Balcão</option>
+            <option value="Delivery / Dark Kitchen">Apenas Delivery / Dark Kitchen</option>
+            <option value="Bar / Petiscaria">Bar / Petiscaria</option>
+            <option value="Outro">Outro tipo de alimentação</option>
+          </select>
+        </div>
+
+        <input type="hidden" id="lead-origem" value="Geral">
+
+        <button type="submit" class="w-full py-3.5 rounded-xl bg-forest-800 hover:bg-forest-900 text-white font-black text-sm shadow-md transition flex items-center justify-center gap-2 mt-2">
+          <span>Criar Minha Conta & Liberar Acesso</span>
+          <i data-lucide="check" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <span class="text-[10px] text-center text-slate-400 block">Seus dados estão protegidos. Nós respeitamos sua privacidade.</span>
+
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- JAVASCRIPT: INTERATIVIDADE DA LANDING PAGE                       -->
+  <!-- ================================================================ -->
+  <script>
+    // Inicialização do Lucide Icons
+    if (window.lucide) {
+      window.lucide.createIcons();
+    }
+
+    // NÚMERO DO WHATSAPP COMERCIAL (Substitua por seu WhatsApp com DDD)
+    let WHATSAPP_COMERCIAL = localStorage.getItem('nalim_whatsapp_comercial') || '5511999999999';
+
+    // 1. Menu Mobile
+    function toggleMenuMobile() {
+      const m = document.getElementById('mobile-menu');
+      if (m) m.classList.toggle('hidden');
+    }
+
+    // 2. Abas da Demonstração Interativa
+    function trocarAbaDemo(aba) {
+      const abas = ['financeiro', 'calendario', 'garcom', 'cozinha'];
+      abas.forEach(a => {
+        const c = document.getElementById('demo-content-' + a);
+        const b = document.getElementById('tab-btn-' + a);
+        if (c && b) {
+          if (a === aba) {
+            c.classList.remove('hidden');
+            b.className = 'px-3 py-1.5 rounded-lg bg-forest-700 text-white shadow-2xs transition';
+          } else {
+            c.classList.add('hidden');
+            b.className = 'px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition';
+          }
+        }
+      });
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    // 3. Calculadora de Economia e ROI
+    function calcularRoi() {
+      const garcons = parseInt(document.getElementById('slider-garcons').value, 10);
+      const faturamento = parseFloat(document.getElementById('slider-fat').value);
+
+      document.getElementById('label-garcons-val').textContent = `${garcons} garçom${garcons > 1 ? 'es' : ''}`;
+      document.getElementById('label-fat-val').textContent = 'R$ ' + faturamento.toLocaleString('pt-BR');
+
+      // Economia em maquininhas: R$ 1.200 por garçom
+      const ecoAparelhos = garcons * 1200;
+      // Economia em desperdício e taxa de erros: 4% do faturamento de delivery
+      const ecoMensal = Math.round(faturamento * 0.04);
+      const ecoAnual = ecoAparelhos + (ecoMensal * 12);
+
+      document.getElementById('calc-eco-aparelhos').textContent = 'R$ ' + ecoAparelhos.toLocaleString('pt-BR') + ',00';
+      document.getElementById('calc-eco-mensal').textContent = '+ R$ ' + ecoMensal.toLocaleString('pt-BR') + ',00/mês';
+      document.getElementById('calc-eco-anual').textContent = 'R$ ' + ecoAnual.toLocaleString('pt-BR') + ',00';
+    }
+
+    // 4. Toggle Mensal / Anual
+    let isAnual = false;
+    function toggleCicloPrecos() {
+      isAnual = !isAnual;
+      const bolinha = document.getElementById('toggle-ciclo-bolinha');
+      const labelM = document.getElementById('label-ciclo-mensal');
+      const labelA = document.getElementById('label-ciclo-anual');
+
+      if (isAnual) {
+        bolinha.className = 'w-5 h-5 rounded-full bg-white shadow-md transform transition translate-x-6';
+        labelM.className = 'text-slate-400';
+        labelA.className = 'text-slate-900 font-black flex items-center gap-1.5';
+        document.getElementById('preco-start-val').textContent = 'R$ 71,90';
+        document.getElementById('preco-pro-val').textContent = 'R$ 111,90';
+        document.getElementById('preco-enterprise-val').textContent = 'R$ 183,90';
+      } else {
+        bolinha.className = 'w-5 h-5 rounded-full bg-white shadow-md transform transition translate-x-0';
+        labelM.className = 'text-slate-900 font-black';
+        labelA.className = 'text-slate-400 flex items-center gap-1.5';
+        document.getElementById('preco-start-val').textContent = 'R$ 89,90';
+        document.getElementById('preco-pro-val').textContent = 'R$ 139,90';
+        document.getElementById('preco-enterprise-val').textContent = 'R$ 229,90';
+      }
+    }
+
+    // 5. Acordeão do FAQ
+    function toggleFaq(num) {
+      const content = document.getElementById(`faq-content-${num}`);
+      const icon = document.getElementById(`faq-icon-${num}`);
+      if (content) {
+        const isAberto = !content.classList.contains('hidden');
+        content.classList.toggle('hidden');
+        if (icon) {
+          icon.style.transform = isAberto ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+      }
+    }
+
+    // 6. Modal de Captura de Leads
+    function abrirModalLead(origem) {
+      const modal = document.getElementById('modal-lead');
+      const inpOrigem = document.getElementById('lead-origem');
+      if (inpOrigem) inpOrigem.value = origem || 'Geral';
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function fecharModalLead() {
+      const modal = document.getElementById('modal-lead');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function submeterLead(e) {
+      e.preventDefault();
+      const restaurante = document.getElementById('lead-restaurante').value;
+      const nome = document.getElementById('lead-nome').value;
+      const whatsapp = document.getElementById('lead-whatsapp').value;
+      const tipo = document.getElementById('lead-tipo').value;
+      const origem = document.getElementById('lead-origem').value;
+
+      // Mensagem personalizada para o WhatsApp
+      const mensagem = `Olá! Acabei de me cadastrar para o Teste Grátis de 7 Dias do NALIM Food.\n\n*Restaurante:* ${restaurante}\n*Responsável:* ${nome}\n*WhatsApp:* ${whatsapp}\n*Segmento:* ${tipo}\n*Origem:* ${origem}\n\nGostaria de ativar minha conta de teste imediatamente!`;
+
+      fecharModalLead();
+
+      // Redireciona para o WhatsApp comercial do Nalim Food
+      const urlWhats = `https://api.whatsapp.com/send?phone=${WHATSAPP_COMERCIAL}&text=${encodeURIComponent(mensagem)}`;
+      window.open(urlWhats, '_blank');
+    }
+
+    // 7. Envio direto para o WhatsApp
+    function abrirWhatsAppDireto(texto) {
+      const urlWhats = `https://api.whatsapp.com/send?phone=${WHATSAPP_COMERCIAL}&text=${encodeURIComponent(texto)}`;
+      window.open(urlWhats, '_blank');
+    }
+
+    // 8. Configuração Fácil do WhatsApp para o Proprietário
+    function abrirConfigWhatsApp() {
+      const atual = WHATSAPP_COMERCIAL;
+      const novo = prompt('Insira seu número de WhatsApp com DDD (apenas números, ex: 5511999998888):', atual);
+      if (novo && novo.trim().length >= 10) {
+        WHATSAPP_COMERCIAL = novo.replace(/\D/g, '');
+        localStorage.setItem('nalim_whatsapp_comercial', WHATSAPP_COMERCIAL);
+        alert('Número do WhatsApp comercial atualizado com sucesso para: ' + WHATSAPP_COMERCIAL);
+      }
+    }
+
+    // Executa o cálculo inicial de ROI ao carregar
+    calcularRoi();
+  </script>
+
+</body>
+</html>
