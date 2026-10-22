@@ -894,7 +894,7 @@
 
         <div>
           <label for="lead-whatsapp" class="font-bold text-slate-700 block mb-1">Seu WhatsApp com DDD:</label>
-          <input type="tel" id="lead-whatsapp" required placeholder="Ex: (11) 98765-4321" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-forest-600 text-xs">
+          <input type="tel" id="lead-whatsapp" required placeholder="Ex: (85) 99270-9577" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-hidden focus:border-forest-600 text-xs">
         </div>
 
         <div>
@@ -1057,7 +1057,7 @@
     // 8. Configuração Fácil do WhatsApp para o Proprietário
     function abrirConfigWhatsApp() {
       const atual = WHATSAPP_COMERCIAL;
-      const novo = prompt('Insira seu número de WhatsApp com DDD (apenas números, ex: 5511999998888):', atual);
+      const novo = prompt('Insira seu número de WhatsApp com DDD (apenas números, ex: 5585992709577):', atual);
       if (novo && novo.trim().length >= 10) {
         WHATSAPP_COMERCIAL = novo.replace(/\D/g, '');
         localStorage.setItem('nalim_whatsapp_comercial', WHATSAPP_COMERCIAL);
