@@ -7,6 +7,8 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     role: str
     nome: str
+    tenant_id: Optional[int] = None
+    tenant_nome: Optional[str] = None
     tenant_slug: str
 
 class LoginRequest(BaseModel):
@@ -18,6 +20,9 @@ class UserResponse(BaseModel):
     nome: str
     email: str
     role: str
+    tenant_id: int
+    tenant_nome: Optional[str] = None
+    tenant_slug: Optional[str] = None
 
 # Insumos Schemas
 class InsumoBase(BaseModel):
@@ -91,6 +96,8 @@ class PedidoCreate(BaseModel):
     ifood_order_id: Optional[str] = None
     ifood_cliente: Optional[str] = None
     forma_pagto: str = "PIX"
+    desconto_cupom: Optional[float] = 0.0
+    subsidio_frete: Optional[float] = 0.0
     itens: List[ItemPedidoInput]
 
 class PedidoResponse(BaseModel):
@@ -105,6 +112,8 @@ class PedidoResponse(BaseModel):
     # Métricas restritas para gerente/dono:
     cmv_total: Optional[float] = None
     taxa_canal: Optional[float] = None
+    desconto_cupom: Optional[float] = 0.0
+    subsidio_frete: Optional[float] = 0.0
     lucro_liquido: Optional[float] = None
     itens_desc: List[str] = []
     class Config:
@@ -163,6 +172,7 @@ class DreResponse(BaseModel):
     receita_bruta: float
     deducoes_impostos: float
     taxas_canais_ifood: float
+    total_cupons_descontados: float = 0.0
     receita_liquida: float
     cmv_total: float
     lucro_bruto: float
