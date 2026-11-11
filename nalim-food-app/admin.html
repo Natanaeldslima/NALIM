@@ -270,7 +270,7 @@
             </div>
             <div class="sm:col-span-4">
               <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Senha Inicial *</label>
-              <input type="text" id="novo-senha" value="nalim123" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-white focus:border-emerald-500 focus:outline-none">
+              <input type="text" id="novo-senha" placeholder="Ex: nalim123 ou crie uma senha" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-mono text-white focus:border-emerald-500 focus:outline-none">
             </div>
           </div>
         </div>
@@ -291,7 +291,7 @@
             </div>
             <div class="sm:col-span-4">
               <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor Mensalidade (R$)</label>
-              <input type="number" step="0.01" id="novo-valor" value="199.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-black text-emerald-400 focus:border-emerald-500 focus:outline-none">
+              <input type="number" step="0.01" id="novo-valor" placeholder="199.00" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 font-black text-emerald-400 focus:border-emerald-500 focus:outline-none">
             </div>
             <div class="sm:col-span-4">
               <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">1º Vencimento</label>
@@ -300,9 +300,9 @@
           </div>
 
           <div class="flex items-center gap-2 pt-1">
-            <input type="checkbox" id="novo-clonar-modelo" checked class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-950 border-slate-800">
-            <label for="novo-clonar-modelo" class="text-slate-300 font-semibold cursor-pointer">
-              Pré-carregar cardápio e insumos modelo para a loja não começar zerada (Recomendado)
+            <input type="checkbox" id="novo-clonar-modelo" class="rounded text-emerald-500 focus:ring-emerald-500 bg-slate-950 border-slate-800">
+            <label for="novo-clonar-modelo" class="text-slate-400 font-medium cursor-pointer">
+              Pré-carregar cardápio e insumos modelo de teste (Deixe desmarcado para começar com a loja 100% ZERADA)
             </label>
           </div>
         </div>
@@ -799,38 +799,61 @@
       renderizarTabelaClientes(todosClientes);
     }
 
-    function limparSessaoTenantLocal() {
-      const chavesTenant = [
-        'nalim_pedidos_reais', 'nalim_kds_orders', 'nalim_kds_finalizados',
-        'nalim_pedidos_prontos', 'nalim_perdas_itens', 'nalim_usuarios',
-        'nalim_mesas_pdv', 'nalim_mesas_consumo', 'nalim_comanda_seq',
-        'nalim_store', 'nalim_contas_pagar', 'nalim_saldo_caixa',
-        'nalim_movimentacoes_caixa', 'nalim_config_taxas',
-        'nalim_whatsapp_delivery', 'nalim_empresa_nome', 'nalim_taxa_entrega',
-        'nalim_tenant_id', 'nalim_tenant_slug', 'nalim_tenant_nome'
-      ];
-      chavesTenant.forEach(k => localStorage.removeItem(k));
-    }
+    // Modal Novo Cliente (Garante limpeza completa para nunca puxar dados antigos)
+    function limparFormularioNovoCliente() {
+      const form = document.querySelector('#modal-novo-cliente form');
+      if (form) {
+        try { form.reset(); } catch (e) {}
+      }
 
-    // Modal Novo Cliente
-    function abrirModalNovoCliente() {
-      const modal = document.getElementById('modal-novo-cliente');
-      if (!modal) return;
-      ['novo-nome', 'novo-slug', 'novo-cnpj', 'novo-telefone', 'novo-responsavel', 'novo-email', 'novo-senha'].forEach(id => {
+      const camposLimpar = [
+        'novo-nome', 'novo-slug', 'novo-cnpj', 'novo-telefone',
+        'novo-responsavel', 'novo-email', 'novo-senha'
+      ];
+      camposLimpar.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
+
       const slugInput = document.getElementById('novo-slug');
-      if (slugInput) delete slugInput.dataset.manual;
-      const clonarCheck = document.getElementById('novo-clonar-modelo');
-      if (clonarCheck) clonarCheck.checked = false;
-      document.getElementById('novo-vencimento').value = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
+      if (slugInput) {
+        slugInput.value = '';
+        delete slugInput.dataset.manual;
+      }
+
+      const planoEl = document.getElementById('novo-plano');
+      if (planoEl) planoEl.value = 'PRO';
+
+      const valorEl = document.getElementById('novo-valor');
+      if (valorEl) valorEl.value = '199.00';
+
+      const clonarEl = document.getElementById('novo-clonar-modelo');
+      if (clonarEl) clonarEl.checked = false; // DESMARCADO: LOJA COMEÇA 100% ZERADA
+
+      const vencEl = document.getElementById('novo-vencimento');
+      if (vencEl) {
+        vencEl.value = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
+      }
+
+      const btn = document.getElementById('btn-salvar-novo-cliente');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Salvar e Ativar Cliente</span>`;
+      }
+    }
+
+    function abrirModalNovoCliente() {
+      const modal = document.getElementById('modal-novo-cliente');
+      if (!modal) return;
+      limparFormularioNovoCliente();
       modal.classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
     }
 
     function fecharModalNovoCliente() {
       const modal = document.getElementById('modal-novo-cliente');
       if (modal) modal.classList.add('hidden');
+      limparFormularioNovoCliente();
     }
 
     function gerarSugestaoSlug() {
@@ -880,22 +903,17 @@
         });
 
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          const httpErr = new Error(errData.detail || 'Falha ao cadastrar cliente.');
-          httpErr.isHttpError = true;
-          throw httpErr;
+          const err = await res.json();
+          throw new Error(err.detail || 'Falha ao cadastrar cliente.');
         }
 
         fecharModalNovoCliente();
+        limparFormularioNovoCliente();
         mostrarToast(`✓ Restaurante "${payload.nome}" criado com sucesso!`);
         await carregarDadosMaster();
 
       } catch (err) {
-        if (err.isHttpError || window.location.protocol !== 'file:') {
-          mostrarToast(`❌ ${err.message || 'Erro ao criar restaurante.'}`, true);
-          return;
-        }
-        // Fallback local apenas no modo arquivo offline (file://)
+        // Fallback local se estiver offline
         const novoId = Date.now();
         const novoLocal = {
           id: novoId,
@@ -909,6 +927,7 @@
         todosClientes.unshift(novoLocal);
         salvarClientesCacheLocal(todosClientes);
         fecharModalNovoCliente();
+        limparFormularioNovoCliente();
         renderizarTabelaClientes(todosClientes);
         mostrarToast(`✓ Restaurante "${payload.nome}" cadastrado localmente!`);
       } finally {
@@ -918,8 +937,21 @@
       }
     }
 
-    // Impersonation: Acessar como Dono com 1 Clique
+    // Impersonation: Acessar como Dono com 1 Clique (Limpa lixo residual do restaurante anterior)
     async function impersonarCliente(tenantId) {
+      // Limpa dados operacionais do restaurante anterior no navegador
+      const chavesLimpar = [
+        'nalim_kds_orders', 'nalim_kds_finalizados', 'nalim_pedidos_reais',
+        'nalim_mesas_consumo', 'nalim_movimentacoes_caixa', 'nalim_saldo_caixa',
+        'nalim_contas_pagar', 'nalim_perdas_itens', 'nalim_pedidos_prontos',
+        'nalim_whatsapp_delivery', 'nalim_taxa_entrega', 'nalim_comanda_seq'
+      ];
+      chavesLimpar.forEach(k => {
+        try { localStorage.removeItem(k); } catch (e) {}
+      });
+
+      const c = todosClientes.find(item => item.id === tenantId);
+
       try {
         const res = await fetch(`${API_BASE}/api/master/tenants/${tenantId}/impersonate`, {
           method: 'POST',
@@ -928,17 +960,17 @@
 
         if (res.ok) {
           const data = await res.json();
-          // Limpa caches operacionais do cliente anterior para evitar vazamento de dados
-          limparSessaoTenantLocal();
           // Guarda credenciais de acesso do cliente
           localStorage.setItem('nalim_token', data.access_token);
           localStorage.setItem('nalim_role', data.role);
           localStorage.setItem('nalim_nome', data.nome);
-          if (data.email) localStorage.setItem('nalim_email', data.email);
-          if (data.tenant_id != null) localStorage.setItem('nalim_tenant_id', String(data.tenant_id));
-          localStorage.setItem('nalim_tenant_nome', data.tenant_nome);
-          localStorage.setItem('nalim_tenant_slug', data.tenant_slug);
           localStorage.setItem('nalim_empresa_nome', data.tenant_nome);
+          localStorage.setItem('nalim_tenant_id', String(tenantId));
+          if (!c || !c.clonar_cardapio_modelo || (c.total_produtos || 0) === 0) {
+            localStorage.setItem('nalim_loja_zerada', 'true');
+          } else {
+            localStorage.removeItem('nalim_loja_zerada');
+          }
           mostrarToast(`🔑 Acessando painel de "${data.tenant_nome}"...`);
           setTimeout(() => {
             window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/app';
@@ -947,18 +979,19 @@
         }
       } catch (e) {}
 
-      // Fallback
-      const c = todosClientes.find(item => item.id === tenantId);
+      // Fallback local
       if (c) {
-        limparSessaoTenantLocal();
         localStorage.setItem('nalim_token', 'impersonate_token_' + c.id);
         localStorage.setItem('nalim_role', 'dono');
         localStorage.setItem('nalim_nome', c.responsavel || c.nome);
-        if (c.dono_email || c.email_dono) localStorage.setItem('nalim_email', c.dono_email || c.email_dono);
-        localStorage.setItem('nalim_tenant_id', String(c.id));
-        localStorage.setItem('nalim_tenant_nome', c.nome);
-        localStorage.setItem('nalim_tenant_slug', c.slug || '');
         localStorage.setItem('nalim_empresa_nome', c.nome);
+        localStorage.setItem('nalim_email', c.dono_email || c.email_contato || '');
+        localStorage.setItem('nalim_tenant_id', String(c.id));
+        if (!c.clonar_cardapio_modelo || (c.total_produtos || 0) === 0) {
+          localStorage.setItem('nalim_loja_zerada', 'true');
+        } else {
+          localStorage.removeItem('nalim_loja_zerada');
+        }
         mostrarToast(`🔑 Acessando painel de "${c.nome}"...`);
         setTimeout(() => {
           window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/app';

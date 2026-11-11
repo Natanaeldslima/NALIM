@@ -180,19 +180,6 @@
       }
     }
 
-    function limparCachesTenantLocal() {
-      const chaves = [
-        'nalim_pedidos_reais', 'nalim_kds_orders', 'nalim_kds_finalizados',
-        'nalim_pedidos_prontos', 'nalim_perdas_itens', 'nalim_usuarios',
-        'nalim_mesas_pdv', 'nalim_mesas_consumo', 'nalim_comanda_seq',
-        'nalim_store', 'nalim_contas_pagar', 'nalim_saldo_caixa',
-        'nalim_movimentacoes_caixa', 'nalim_config_taxas',
-        'nalim_whatsapp_delivery', 'nalim_empresa_nome', 'nalim_taxa_entrega',
-        'nalim_tenant_id', 'nalim_tenant_slug', 'nalim_tenant_nome'
-      ];
-      chaves.forEach(k => localStorage.removeItem(k));
-    }
-
     async function executarLogin() {
       let email = document.getElementById('input-email').value.trim();
       if (email.endsWith('.con')) {
@@ -222,20 +209,11 @@
 
         const data = await res.json();
         
-        // Isolamento multi-tenant: limpa caches locais antes de gravar nova sessão
-        limparCachesTenantLocal();
-
         // Salva credenciais seguras na sessão local
         localStorage.setItem('nalim_token', data.access_token);
         localStorage.setItem('nalim_role', data.role);
         localStorage.setItem('nalim_nome', data.nome);
         localStorage.setItem('nalim_email', email);
-        if (data.tenant_id != null) localStorage.setItem('nalim_tenant_id', String(data.tenant_id));
-        if (data.tenant_nome) {
-          localStorage.setItem('nalim_tenant_nome', data.tenant_nome);
-          localStorage.setItem('nalim_empresa_nome', data.tenant_nome);
-        }
-        if (data.tenant_slug) localStorage.setItem('nalim_tenant_slug', data.tenant_slug);
 
         // Se for Master SuperAdmin, vai direto para o painel de clientes SaaS
         if (data.role === 'master') {

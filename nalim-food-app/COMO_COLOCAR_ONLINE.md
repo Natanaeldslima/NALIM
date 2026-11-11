@@ -36,7 +36,7 @@ Todo o ecossistema agora roda sob a marca e domínio oficial:
    - **Nome do Restaurante:** Ex.: *Pizzaria Bella Napoli*
    - **Slug do Cardápio:** Ex.: `bella-napoli` (gerado automaticamente)
    - **Responsável / Dono:** Ex.: *Marco Antônio*
-   - **WhatsApp:** Ex.: *(11) 98888-7777*
+   - **WhatsApp:** Ex.: *(85) 99270-9577*
    - **E-mail do Dono:** Ex.: `marco@bellanapoli.com.br`
    - **Senha de Acesso:** Defina uma senha inicial (ex.: `napoli123`)
    - **Plano:** Selecione *Starter (R$ 99)*, *Pro (R$ 199)* ou *Enterprise (R$ 349)*
