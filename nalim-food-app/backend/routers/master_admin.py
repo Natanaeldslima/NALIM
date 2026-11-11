@@ -325,7 +325,9 @@ def impersonar_cliente(
         "sucesso": True,
         "access_token": token,
         "nome": dono.nome,
+        "email": dono.email,
         "role": dono.role,
+        "tenant_id": tenant.id,
         "tenant_nome": tenant.nome,
         "tenant_slug": tenant.slug,
         "redirect_url": "/app"

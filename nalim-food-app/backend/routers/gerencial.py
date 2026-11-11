@@ -23,8 +23,8 @@ def calcular_dre_gerencial(
     cmv_total = sum(p.cmv_total for p in pedidos)
     taxas_canais = sum(p.taxa_canal for p in pedidos)
 
-    # Para meses históricos de demonstração se não houver pedidos gravados no banco
-    if len(pedidos) == 0:
+    # Para meses históricos de demonstração (somente Tenant 1 - Demo) se não houver pedidos gravados no banco
+    if len(pedidos) == 0 and current_user.tenant_id == 1:
         if mes == "2026-08":
             receita_bruta = 18380.00
             cmv_total = 5514.00
@@ -41,11 +41,16 @@ def calcular_dre_gerencial(
 
     # 2. Impostos conforme Regime Fiscal
     if regime == "MEI":
-        impostos = 75.00  # DAS fixo
+        impostos = 75.00 if (receita_bruta > 0 or current_user.tenant_id == 1) else 0.0
     else:
         impostos = receita_bruta * 0.06  # Simples Nacional 6%
 
-    receita_liquida = receita_bruta - impostos - taxas_canais
+    # 1.1 Contabilização de Cupons e Descontos de Marketplaces (iFood / 99)
+    total_cupons_descontados = sum((getattr(p, 'desconto_cupom', 0.0) or 0.0) + (getattr(p, 'subsidio_frete', 0.0) or 0.0) for p in pedidos)
+    if len(pedidos) == 0 and current_user.tenant_id == 1 and mes == "2026-08":
+        total_cupons_descontados = 840.00  # Estimativa real de cupons em R$ 18.380 de faturamento
+
+    receita_liquida = receita_bruta - impostos - taxas_canais - total_cupons_descontados
     lucro_bruto = receita_liquida - cmv_total
     margem_bruta_pct = (lucro_bruto / receita_bruta * 100) if receita_bruta > 0 else 0.0
 
@@ -55,14 +60,14 @@ def calcular_dre_gerencial(
         CustoFixo.mes_vigencia == mes
     ).all()
     custos_fixos_total = sum(c.valor for c in custos_fixos_db)
-    if custos_fixos_total == 0:
+    if custos_fixos_total == 0 and current_user.tenant_id == 1:
         custos_fixos_total = 6450.00
 
     # 4. Perdas e Desperdício no Mês
     perdas_db = db.query(PerdaItem).filter(PerdaItem.tenant_id == current_user.tenant_id).all()
     perdas_mes = [p for p in perdas_db if p.data and p.data.startswith(mes)]
     total_perdas = sum(p.quantidade * p.custo_unitario for p in perdas_mes)
-    if total_perdas == 0:
+    if total_perdas == 0 and current_user.tenant_id == 1:
         if mes == "2026-08":
             total_perdas = 145.00
         elif mes == "2026-09":
@@ -119,15 +124,19 @@ def calcular_dre_gerencial(
     # U6: Conciliação de Vendas (Até 10 pts)
     u6 = 10.0  # Conciliação confirmada
 
-    score = round(max(0.0, min(100.0, u2 + u3 + u4 + u5 + u6)), 1)
-    if score >= 80.0:
-        classificacao = "SAUDÁVEL"
-    elif score >= 60.0:
-        classificacao = "ATENÇÃO"
-    elif score >= 40.0:
-        classificacao = "RISCO"
+    if receita_bruta == 0 and custos_fixos_total == 0 and total_perdas == 0 and current_user.tenant_id != 1:
+        score = 0.0
+        classificacao = "SEM MOVIMENTO"
     else:
-        classificacao = "CRÍTICO"
+        score = round(max(0.0, min(100.0, u2 + u3 + u4 + u5 + u6)), 1)
+        if score >= 80.0:
+            classificacao = "SAUDÁVEL"
+        elif score >= 60.0:
+            classificacao = "ATENÇÃO"
+        elif score >= 40.0:
+            classificacao = "RISCO"
+        else:
+            classificacao = "CRÍTICO"
 
     return {
         "mes_vigencia": mes,
@@ -135,6 +144,7 @@ def calcular_dre_gerencial(
         "receita_bruta": round(receita_bruta, 2),
         "deducoes_impostos": round(impostos, 2),
         "taxas_canais_ifood": round(taxas_canais, 2),
+        "total_cupons_descontados": round(total_cupons_descontados, 2),
         "receita_liquida": round(receita_liquida, 2),
         "cmv_total": round(cmv_total, 2),
         "lucro_bruto": round(lucro_bruto, 2),
@@ -154,6 +164,8 @@ def simular_precificacao_ifood(
     custo_insumos: float = Query(11.50, description="Custo dos insumos da receita"),
     custo_embalagem: float = Query(2.50, description="Embalagem e sacola térmica"),
     taxa_comissao_pct: float = Query(23.0, description="Comissão cobrada pelo iFood"),
+    desconto_cupom: float = Query(0.0, description="Cupom de desconto pago pela loja"),
+    subsidio_frete: float = Query(0.0, description="Subsídio de frete grátis pago pela loja"),
     imposto_pct: float = Query(6.0, description="Alíquota fiscal do restaurante"),
     margem_lucro_desejada_pct: float = Query(25.0, description="Margem de lucro limpa desejada"),
     current_user: User = Depends(require_role(["dono"]))
@@ -166,19 +178,27 @@ def simular_precificacao_ifood(
     custo_direto = custo_insumos + custo_embalagem
     preco_venda_sugerido = custo_direto / divisor
 
+    # Comissão cobrada pelo app sobre o preço bruto de venda
     comissao_reais = preco_venda_sugerido * (taxa_comissao_pct / 100.0)
     imposto_reais = preco_venda_sugerido * (imposto_pct / 100.0)
-    repasse_liquido = preco_venda_sugerido - comissao_reais
+    
+    # Desconto total de campanhas / cupons suportado pelo restaurante
+    descontos_loja = float(desconto_cupom or 0.0) + float(subsidio_frete or 0.0)
+    repasse_liquido = preco_venda_sugerido - comissao_reais - descontos_loja
     lucro_reais = repasse_liquido - custo_direto - imposto_reais
 
     return {
         "custo_direto": round(custo_direto, 2),
         "preco_venda_sugerido": round(preco_venda_sugerido, 2),
         "comissao_ifood_reais": round(comissao_reais, 2),
+        "desconto_cupom_loja": round(desconto_cupom, 2),
+        "subsidio_frete_loja": round(subsidio_frete, 2),
+        "total_descontos_promocoes": round(descontos_loja, 2),
         "imposto_reais": round(imposto_reais, 2),
         "repasse_liquido_ifood": round(repasse_liquido, 2),
         "lucro_liquido_reais": round(lucro_reais, 2),
-        "margem_efetiva_pct": round((lucro_reais / preco_venda_sugerido * 100), 1)
+        "margem_efetiva_pct": round((lucro_reais / preco_venda_sugerido * 100), 1),
+        "prejuizo_detectado": lucro_reais < 0
     }
 
 # Endpoints do Módulo de Perdas e Desperdício

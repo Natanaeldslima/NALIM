@@ -41,6 +41,8 @@ def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
         "token_type": "bearer",
         "role": user.role,
         "nome": user.nome,
+        "tenant_id": user.tenant_id,
+        "tenant_nome": user.tenant.nome if user.tenant else "Master",
         "tenant_slug": user.tenant.slug if user.tenant else "master"
     }
 
@@ -50,5 +52,8 @@ def me(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "nome": current_user.nome,
         "email": current_user.email,
-        "role": current_user.role
+        "role": current_user.role,
+        "tenant_id": current_user.tenant_id,
+        "tenant_nome": current_user.tenant.nome if current_user.tenant else "Master",
+        "tenant_slug": current_user.tenant.slug if current_user.tenant else "master"
     }
