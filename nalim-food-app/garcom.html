@@ -654,8 +654,8 @@
       verificarStatusPushInicial();
 
       // Sincronização contínua com Balcão e Cozinha a cada 3 segundos
-      setInterval(sincronizarMesasApi, 3000);
-      setInterval(verificarPedidosProntosCozinha, 3000);
+      setInterval(sincronizarMesasApi, 5000);
+      setInterval(verificarPedidosProntosCozinha, 5000);
 
       // Listener de eventos do navegador para sincronização instantânea entre abas
       window.addEventListener('storage', (e) => {
@@ -705,13 +705,24 @@
       } catch (e) {}
     }
 
+    let isSyncingMesasGarcom = false;
+    let lastMesasJsonGarcom = '';
+
     async function sincronizarMesasApi() {
+      if (isSyncingMesasGarcom) return;
+      isSyncingMesasGarcom = true;
       try {
         const headers = authToken ? { 'Authorization': `Bearer ${authToken}` } : {};
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
         const res = await fetch(`${API_BASE}/api/operacional/mesas?_t=${Date.now()}`, {
           headers,
-          cache: 'no-store'
+          cache: 'no-store',
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
+
         if (res.ok) {
           const data = await res.json();
           if (data.mesas && Array.isArray(data.mesas)) {
@@ -723,18 +734,32 @@
                 abertaEm: m.aberta_em || null
               };
             });
-            salvarEstadoMesasLocal();
-            renderGridMesas();
-            atualizarBannerMesaAtiva();
+            const novoJson = JSON.stringify(mesasConsumoState);
+            if (novoJson !== lastMesasJsonGarcom) {
+              lastMesasJsonGarcom = novoJson;
+              salvarEstadoMesasLocal();
+              renderGridMesas();
+              atualizarBannerMesaAtiva();
+            }
           }
         }
-      } catch (err) {}
+      } catch (err) {
+      } finally {
+        isSyncingMesasGarcom = false;
+      }
     }
 
-    function safeLucide() {
-      if (typeof lucide !== 'undefined' && lucide && typeof lucide.createIcons === 'function') {
-        try { lucide.createIcons(); } catch(e) {}
+    let _lucideDebounce = null;
+    function safeLucide(target) {
+      if (typeof lucide === 'undefined' || !lucide || typeof lucide.createIcons !== 'function') return;
+      if (target && target.nodeType === 1) {
+        try { lucide.createIcons({ root: target }); } catch(e) {}
+        return;
       }
+      if (_lucideDebounce) cancelAnimationFrame(_lucideDebounce);
+      _lucideDebounce = requestAnimationFrame(() => {
+        try { lucide.createIcons(); } catch(e) {}
+      });
     }
 
     function irParaViewMesas() {

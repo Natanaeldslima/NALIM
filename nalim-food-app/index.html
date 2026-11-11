@@ -4648,23 +4648,18 @@
 
 
 
-    function safeLucide() {
-
-      if (typeof lucide !== 'undefined' && lucide && typeof lucide.createIcons === 'function') {
-
-        try { lucide.createIcons(); } catch(e) {}
-
+    let _lucideDebounce = null;
+    function safeLucide(target) {
+      if (typeof lucide === 'undefined' || !lucide || typeof lucide.createIcons !== 'function') return;
+      if (target && target.nodeType === 1) {
+        try { lucide.createIcons({ root: target }); } catch(e) {}
+        return;
       }
-
+      if (_lucideDebounce) cancelAnimationFrame(_lucideDebounce);
+      _lucideDebounce = requestAnimationFrame(() => {
+        try { lucide.createIcons(); } catch(e) {}
+      });
     }
-
-
-
-    // ==============================================================
-
-    // FORMATAÇÃO PADRÃO BRASILEIRO (MILHAR COM PONTO, CENTAVOS COM VÍRGULA)
-
-    // ==============================================================
 
     function formatarMoeda(val) {
 
@@ -6365,9 +6360,9 @@
       // Se navegou para o Calendário Financeiro, renderiza o mês
 
       if (viewId === 'calendario-financeiro') {
-
         renderCalendarioFinanceiro();
-
+      } else if (viewId === 'dashboard') {
+        renderDashboard();
       }
 
 
@@ -7181,6 +7176,11 @@
       const grid = document.getElementById('pdv-product-grid');
 
       grid.innerHTML = '';
+
+      if (!data || !data.produtos || data.produtos.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-16 text-center text-slate-400"><span class="text-4xl block mb-2">🍔</span><p class="font-extrabold text-sm text-slate-700">Nenhum produto cadastrado</p><p class="text-xs text-slate-400 mt-1">Cadastre seus pratos na aba "Fichas Técnicas / Produtos" para começar.</p></div>';
+        return;
+      }
 
 
 
@@ -8776,114 +8776,79 @@
 
 
 
-    async function sincronizarKdsRealtime() {
+    async let isSyncingKds = false;
+    let lastKdsSignature = '';
 
+    async function sincronizarKdsRealtime() {
+      if (isSyncingKds) return;
+      isSyncingKds = true;
       let apiConectada = false;
 
       try {
-
         const token = localStorage.getItem('nalim_token') || authToken;
-
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
 
         const res = await fetch(`${API_BASE}/api/operacional/kds/realtime?_t=${Date.now()}`, {
-
           headers,
-
-          cache: 'no-store'
-
+          cache: 'no-store',
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
-
           const data = await res.json();
-
           if (data.tickets && Array.isArray(data.tickets)) {
-
             apiConectada = true;
-
-            // A Cozinha KDS exibe exclusivamente os pedidos ativos "Na Chapa" (em preparo na cozinha)
-
             const ativos = data.tickets.filter(tk => tk.status === 'Na Chapa');
+            const novaAssinatura = JSON.stringify(ativos.map(a => `${a.id}_${a.status}_${a.numero_comanda || ''}`));
 
-            
-
-            store.kdsOrders = ativos.map(tk => ({
-
-              id: tk.id,
-
-              numero_comanda: tk.numero_comanda,
-
-              dataHora: tk.data_hora,
-
-              identificacao: tk.identificacao,
-
-              solicitante: tk.solicitante || (tk.canal === 'Balcão' ? 'Balcão' : 'Garçom'),
-
-              canal: tk.canal || 'Salão',
-
-              status: tk.status,
-
-              tempoDecorrido: 'Na Chapa',
-
-              items: (tk.itens || []).map(it => ({
-
-                nome: it.nome,
-
-                qtd: it.quantidade,
-
-                modificacoes: it.modificacoes
-
-              }))
-
-            }));
-
-            
-
-            renderKds();
-
+            if (novaAssinatura !== lastKdsSignature) {
+              lastKdsSignature = novaAssinatura;
+              store.kdsOrders = ativos.map(tk => ({
+                id: tk.id,
+                numero_comanda: tk.numero_comanda,
+                dataHora: tk.data_hora,
+                identificacao: tk.identificacao,
+                solicitante: tk.solicitante || (tk.canal === 'Balcão' ? 'Balcão' : 'Garçom'),
+                canal: tk.canal || 'Salão',
+                status: tk.status,
+                tempoDecorrido: 'Na Chapa',
+                items: (tk.itens || []).map(it => ({
+                  nome: it.nome,
+                  qtd: it.quantidade,
+                  modificacoes: it.modificacoes
+                }))
+              }));
+              renderKds();
+            }
           }
-
         }
-
       } catch (err) {}
 
-
-
       // Fallback somente se a API backend estiver offline
-
       if (!apiConectada) {
-
         try {
-
           const localOrders = JSON.parse(localStorage.getItem('nalim_kds_orders') || '[]');
+          const ativosLocais = localOrders.filter(lo => lo.status === 'Na Chapa');
+          const novaAssinaturaLocal = JSON.stringify(ativosLocais.map(a => `${a.id}_${a.status}_${a.numero_comanda || ''}`));
 
-          if (localOrders.length > 0) {
-
-            store.kdsOrders = localOrders.filter(lo => lo.status === 'Na Chapa');
-
+          if (novaAssinaturaLocal !== lastKdsSignature) {
+            lastKdsSignature = novaAssinaturaLocal;
+            store.kdsOrders = ativosLocais;
             renderKds();
-
           }
-
         } catch (e) {}
-
       }
 
-
-
       verificarPedidosProntosBalcao();
-
+      isSyncingKds = false;
     }
 
-
-
     // ================================================================
-
     // NOTIFICAÇÃO E AVISO EXCLUSIVO DO BALCÃO (PEDIDOS PRONTOS)
-
     // ================================================================
-
     let pedidosProntosBalcao = [];
 
     let ultimoAlertaBalcaoTocadoId = null;
@@ -10662,10 +10627,17 @@
 
     // ================================================================
 
+    let dashboardPrecisaAtualizar = false;
+
     function renderDashboard() {
+      const viewDash = document.getElementById('view-dashboard');
+      if (viewDash && viewDash.classList.contains('hidden')) {
+        dashboardPrecisaAtualizar = true;
+        return;
+      }
+      dashboardPrecisaAtualizar = false;
 
       const data = getActiveData();
-
       const mesAtivo = store.activeMonth; // ex: '2026-10' ou '2026-08'
 
 
@@ -15571,255 +15543,146 @@
 
      */
 
+    let isSyncingPedidos = false;
+    let lastPedidosJson = '';
+
     async function sincronizarPedidosApi() {
+      if (isSyncingPedidos) return;
+      isSyncingPedidos = true;
 
       // 1. DEDUPLICAÇÃO DE CONTROLE NO store.pedidos
-
       let pedidosUnicos = [];
-
       let teveDuplicata = false;
-
       if (Array.isArray(store.pedidos) && store.pedidos.length > 0) {
-
         store.pedidos.forEach(p => {
-
           normalizarDataPedido(p);
-
           const jaTem = pedidosUnicos.find(u => saoMesmoPedido(u, p));
-
           if (!jaTem) {
-
             pedidosUnicos.push(p);
-
           } else {
-
             mesclarDadosPedido(jaTem, p);
-
             teveDuplicata = true;
-
           }
-
         });
-
         if (teveDuplicata || pedidosUnicos.length !== store.pedidos.length) {
-
           store.pedidos = pedidosUnicos;
-
-          renderDashboard();
-
+          const viewDash = document.getElementById('view-dashboard');
+          if (viewDash && !viewDash.classList.contains('hidden')) renderDashboard();
           renderHistoricoPedidos();
-
-          renderCalendarioFinanceiro();
-
+          const viewCal = document.getElementById('view-calendario-financeiro');
+          if (viewCal && !viewCal.classList.contains('hidden')) renderCalendarioFinanceiro();
         }
-
       }
-
-
 
       let pedidosReais = [];
-
       try {
-
         const localReais = JSON.parse(localStorage.getItem('nalim_pedidos_reais') || '[]');
-
         if (Array.isArray(localReais)) {
-
           pedidosReais = pedidosReais.concat(localReais);
-
         }
-
       } catch (e) {}
 
-
-
       try {
-
         const token = localStorage.getItem('nalim_token') || authToken;
-
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-        const res = await fetch('/api/operacional/pedidos', { headers });
+        const res = await fetch(`${API_BASE}/api/operacional/pedidos`, {
+          headers,
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
-
           const data = await res.json();
-
           const lista = Array.isArray(data) ? data : (Array.isArray(data.pedidos) ? data.pedidos : []);
-
           let cacheMudou = false;
 
-
-
           lista.forEach(dbPed => {
-
             const idx = pedidosReais.findIndex(r => saoMesmoPedido(r, dbPed));
-
             const pedFormatado = {
-
               id: dbPed.id,
-
               numero_comanda: dbPed.numero_comanda,
-
               dataHora: dbPed.data_hora || `${getHojeIsoLocal()} 12:00`,
-
               dataIso: dbPed.data_iso || (dbPed.data_hora ? dbPed.data_hora.split(' ')[0] : getHojeIsoLocal()),
-
               identificacao: dbPed.identificacao || `Comanda #${dbPed.numero_comanda || dbPed.id}`,
-
               canal: dbPed.canal || 'Cardápio Digital',
-
               pagto: dbPed.forma_pagto || 'PIX',
-
               solicitante: dbPed.solicitante || 'Balcão',
-
               vendedor: dbPed.vendedor || dbPed.solicitante || 'Balcão',
-
               total: dbPed.valor_bruto || 0,
-
               cmv: dbPed.cmv_total || ((dbPed.valor_bruto || 0) * 0.28),
-
               lucro: dbPed.lucro_liquido || ((dbPed.valor_bruto || 0) - (dbPed.cmv_total || ((dbPed.valor_bruto || 0) * 0.28)) - (dbPed.taxa_canal || 0)),
-
               itens: (dbPed.itens || []).map(it => `${it.quantidade}x ${it.nome}`).join(' | '),
-
               itensDetalhados: (dbPed.itens || []).map(it => ({
-
                 produtoCodigo: 'PROD_DIGITAL',
-
                 nome: it.nome,
-
                 qtd: it.quantidade,
-
                 precoUnit: it.preco_unitario || 0,
-
                 cmvUnit: it.cmv_unitario || ((it.preco_unitario || 0) * 0.28)
-
               }))
-
             };
-
             normalizarDataPedido(pedFormatado);
 
-
-
             if (idx === -1) {
-
               pedidosReais.push(pedFormatado);
-
               cacheMudou = true;
-
             } else {
-
               const old = pedidosReais[idx];
-
-              mesclarDadosPedido(old, pedFormatado);
-
-              cacheMudou = true;
-
+              if (old.status !== pedFormatado.status || old.total !== pedFormatado.total) {
+                mesclarDadosPedido(old, pedFormatado);
+                cacheMudou = true;
+              }
             }
-
           });
-
-
 
           // Limpeza e deduplicação de pedidosReais
-
           const unicosReais = [];
-
           pedidosReais.forEach(p => {
-
             normalizarDataPedido(p);
-
-            const jaExiste = unicosReais.find(u => saoMesmoPedido(u, p));
-
-            if (!jaExiste) {
-
-              unicosReais.push(p);
-
-            } else {
-
-              mesclarDadosPedido(jaExiste, p);
-
-            }
-
+            const ja = unicosReais.find(u => saoMesmoPedido(u, p));
+            if (!ja) unicosReais.push(p);
+            else mesclarDadosPedido(ja, p);
           });
-
           pedidosReais = unicosReais;
 
-
-
           if (cacheMudou) {
-
             try {
-
               localStorage.setItem('nalim_pedidos_reais', JSON.stringify(pedidosReais));
-
             } catch (e) {}
-
           }
-
         }
-
       } catch (err) {}
 
-
-
       if (pedidosReais.length > 0) {
-
         let mudou = false;
-
         pedidosReais.forEach(pr => {
-
           const idxStore = store.pedidos.findIndex(p => saoMesmoPedido(p, pr));
-
           if (idxStore === -1) {
-
             store.pedidos.unshift(pr);
-
             mudou = true;
-
           } else {
-
             const p = store.pedidos[idxStore];
-
             const pagtoAntes = p.pagto;
-
             const vendAntes = p.solicitante;
-
             mesclarDadosPedido(p, pr);
-
             if (p.pagto !== pagtoAntes || p.solicitante !== vendAntes) {
-
               mudou = true;
-
             }
-
           }
-
         });
-
         if (mudou) {
-
-          renderDashboard();
-
+          const viewDash = document.getElementById('view-dashboard');
+          if (viewDash && !viewDash.classList.contains('hidden')) renderDashboard();
           renderHistoricoPedidos();
-
-          renderCalendarioFinanceiro();
-
+          const viewCal = document.getElementById('view-calendario-financeiro');
+          if (viewCal && !viewCal.classList.contains('hidden')) renderCalendarioFinanceiro();
         }
-
       }
 
+      isSyncingPedidos = false;
     }
-
-
-
-    /**
-
-     * Refatoração: Notificações por Exceção (Substituição de Alertas Estáticos)
-
-     */
 
     function renderNotificacoesExcecao(metrics) {
 
@@ -17352,65 +17215,52 @@ _Painel Estratégico NALIM Food Service_`;
 
 
 
+    async let isSyncingMesas = false;
+    let lastMesasJson = '';
+
     async function sincronizarMesasPdv() {
+      if (isSyncingMesas) return;
+      isSyncingMesas = true;
 
       // 1. Atualização imediata via cache local compartilhado com o Garçom
-
       carregarMesasPdvLocal();
 
-
-
       // 2. Consulta API backend
-
       try {
-
         const token = localStorage.getItem('nalim_token') || authToken;
-
         const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
 
         const res = await fetch(`${API_BASE}/api/operacional/mesas?_t=${Date.now()}`, {
-
           headers,
-
-          cache: 'no-store'
-
+          cache: 'no-store',
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (res.ok) {
-
           const data = await res.json();
-
           if (data.mesas && Array.isArray(data.mesas)) {
-
             data.mesas.forEach(m => {
-
               mesasPdvState[m.numero] = {
-
                 status: m.status || 'LIVRE',
-
                 total: m.consumo_acumulado || 0.0,
-
                 itens: m.itens || [],
-
                 abertaEm: m.aberta_em || null
-
               };
-
             });
-
-            salvarMesasPdvLocal();
-
+            const novoJson = JSON.stringify(mesasPdvState);
+            if (novoJson !== lastMesasJson) {
+              lastMesasJson = novoJson;
+              salvarMesasPdvLocal();
+            }
           }
-
         }
-
       } catch (e) {
-
-        console.log('[NALIM MESAS] Modo offline / sincronização via cache local');
-
+      } finally {
+        isSyncingMesas = false;
       }
-
-
 
       let totalOcupadas = 0;
 
@@ -18304,19 +18154,19 @@ _Painel Estratégico NALIM Food Service_`;
 
         sincronizarKdsRealtime();
 
-        setInterval(sincronizarKdsRealtime, 3000);
+        setInterval(sincronizarKdsRealtime, 6000);
 
         sincronizarMesasPdv();
 
-        setInterval(sincronizarMesasPdv, 3000);
+        setInterval(sincronizarMesasPdv, 6000);
 
         sincronizarPedidosApi();
 
-        setInterval(sincronizarPedidosApi, 4000);
+        setInterval(sincronizarPedidosApi, 8000);
 
         verificarPedidosProntosBalcao();
 
-        setInterval(verificarPedidosProntosBalcao, 3000);
+        setInterval(verificarPedidosProntosBalcao, 6000);
 
         carregarConfigTaxasAdmin();
 
