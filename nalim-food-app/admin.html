@@ -799,10 +799,31 @@
       renderizarTabelaClientes(todosClientes);
     }
 
+    function limparSessaoTenantLocal() {
+      const chavesTenant = [
+        'nalim_pedidos_reais', 'nalim_kds_orders', 'nalim_kds_finalizados',
+        'nalim_pedidos_prontos', 'nalim_perdas_itens', 'nalim_usuarios',
+        'nalim_mesas_pdv', 'nalim_mesas_consumo', 'nalim_comanda_seq',
+        'nalim_store', 'nalim_contas_pagar', 'nalim_saldo_caixa',
+        'nalim_movimentacoes_caixa', 'nalim_config_taxas',
+        'nalim_whatsapp_delivery', 'nalim_empresa_nome', 'nalim_taxa_entrega',
+        'nalim_tenant_id', 'nalim_tenant_slug', 'nalim_tenant_nome'
+      ];
+      chavesTenant.forEach(k => localStorage.removeItem(k));
+    }
+
     // Modal Novo Cliente
     function abrirModalNovoCliente() {
       const modal = document.getElementById('modal-novo-cliente');
       if (!modal) return;
+      ['novo-nome', 'novo-slug', 'novo-cnpj', 'novo-telefone', 'novo-responsavel', 'novo-email', 'novo-senha'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const slugInput = document.getElementById('novo-slug');
+      if (slugInput) delete slugInput.dataset.manual;
+      const clonarCheck = document.getElementById('novo-clonar-modelo');
+      if (clonarCheck) clonarCheck.checked = false;
       document.getElementById('novo-vencimento').value = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
       modal.classList.remove('hidden');
     }
@@ -859,8 +880,10 @@
         });
 
         if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Falha ao cadastrar cliente.');
+          const errData = await res.json().catch(() => ({}));
+          const httpErr = new Error(errData.detail || 'Falha ao cadastrar cliente.');
+          httpErr.isHttpError = true;
+          throw httpErr;
         }
 
         fecharModalNovoCliente();
@@ -868,7 +891,11 @@
         await carregarDadosMaster();
 
       } catch (err) {
-        // Fallback local se estiver offline
+        if (err.isHttpError || window.location.protocol !== 'file:') {
+          mostrarToast(`❌ ${err.message || 'Erro ao criar restaurante.'}`, true);
+          return;
+        }
+        // Fallback local apenas no modo arquivo offline (file://)
         const novoId = Date.now();
         const novoLocal = {
           id: novoId,
@@ -901,11 +928,17 @@
 
         if (res.ok) {
           const data = await res.json();
+          // Limpa caches operacionais do cliente anterior para evitar vazamento de dados
+          limparSessaoTenantLocal();
           // Guarda credenciais de acesso do cliente
           localStorage.setItem('nalim_token', data.access_token);
           localStorage.setItem('nalim_role', data.role);
           localStorage.setItem('nalim_nome', data.nome);
+          if (data.email) localStorage.setItem('nalim_email', data.email);
+          if (data.tenant_id != null) localStorage.setItem('nalim_tenant_id', String(data.tenant_id));
           localStorage.setItem('nalim_tenant_nome', data.tenant_nome);
+          localStorage.setItem('nalim_tenant_slug', data.tenant_slug);
+          localStorage.setItem('nalim_empresa_nome', data.tenant_nome);
           mostrarToast(`🔑 Acessando painel de "${data.tenant_nome}"...`);
           setTimeout(() => {
             window.location.href = window.location.protocol === 'file:' ? 'index.html' : '/app';
@@ -917,9 +950,14 @@
       // Fallback
       const c = todosClientes.find(item => item.id === tenantId);
       if (c) {
+        limparSessaoTenantLocal();
         localStorage.setItem('nalim_token', 'impersonate_token_' + c.id);
         localStorage.setItem('nalim_role', 'dono');
         localStorage.setItem('nalim_nome', c.responsavel || c.nome);
+        if (c.dono_email || c.email_dono) localStorage.setItem('nalim_email', c.dono_email || c.email_dono);
+        localStorage.setItem('nalim_tenant_id', String(c.id));
+        localStorage.setItem('nalim_tenant_nome', c.nome);
+        localStorage.setItem('nalim_tenant_slug', c.slug || '');
         localStorage.setItem('nalim_empresa_nome', c.nome);
         mostrarToast(`🔑 Acessando painel de "${c.nome}"...`);
         setTimeout(() => {
