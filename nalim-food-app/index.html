@@ -16557,11 +16557,7 @@ _Painel Estratégico NALIM Food Service_`;
             <div class="bold" style="font-size: 12px; margin-top: 6px;">📱 WhatsApp: ${zap}</div>
             <div class="divider"></div>
             <div style="font-size: 9px; font-style: italic;">Obrigado pela preferência! Feito com carinho ❤️</div>
-            <script>
-              window.onload = function() {
-                setTimeout(function() { window.print(); }, 400);
-              };
-            </script>
+
           </body>
           </html>
         `;
@@ -16631,11 +16627,7 @@ _Painel Estratégico NALIM Food Service_`;
               ${bilheteCardHtml}
               ${bilheteCardHtml}
             </div>
-            <script>
-              window.onload = function() {
-                setTimeout(function() { window.print(); }, 500);
-              };
-            </script>
+
           </body>
           </html>
         `;
@@ -16644,6 +16636,12 @@ _Painel Estratégico NALIM Food Service_`;
       janela.document.open();
       janela.document.write(conteudoHtml);
       janela.document.close();
+      setTimeout(() => {
+        try {
+          janela.focus();
+          janela.print();
+        } catch(e) {}
+      }, 500);
     }
 
     function imprimirBilheteSacolaRapido(identificacao) {
@@ -16700,15 +16698,17 @@ _Painel Estratégico NALIM Food Service_`;
           <div class="bold" style="font-size: 12px;">📱 WhatsApp: ${zapFormatado}</div>
           <div class="divider"></div>
           <div style="font-size: 9px; font-style: italic;">Obrigado pela preferência! Feito com carinho ❤️</div>
-          <script>
-            window.onload = function() {
-              setTimeout(function() { window.print(); }, 400);
-            };
-          </script>
+
         </body>
         </html>
       `);
       janela.document.close();
+      setTimeout(() => {
+        try {
+          janela.focus();
+          janela.print();
+        } catch(e) {}
+      }, 500);
     }
 
 
